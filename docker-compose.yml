@@ -1,0 +1,74 @@
+# Version du format docker-compose
+# La version 3.8 est stable et compatible avec Docker Desktop Windows
+version: '3.8'
+
+# services = les conteneurs à lancer
+services:
+
+  # ── Service 1 : PostgreSQL ──────────────────────────────
+  postgres:
+    # L'image officielle PostgreSQL version 16
+    # Le :16 fixe la version — sans ça Docker prendrait
+    # la dernière version et ça pourrait changer sans prévenir
+    image: postgres:16
+
+    # Nom du conteneur visible dans Docker Desktop
+    container_name: docmaster_postgres
+
+    # Si le conteneur plante, Docker le redémarre automatiquement
+    # Sauf si vous l'arrêtez manuellement avec docker-compose down
+    restart: unless-stopped
+
+    # Variables d'environnement transmises au conteneur
+    # PostgreSQL les lit au premier démarrage pour créer la base
+    environment:
+      POSTGRES_USER: postgres        # nom d'utilisateur de la BDD
+      POSTGRES_PASSWORD: Maestro&223 # mot de passe (changez en prod)
+      POSTGRES_DB: docmaster-app       # nom de la base créée automatiquement
+
+    # Port mapping : localhost:5432 → conteneur:5432
+    # Votre code Node.js se connecte à localhost:5432 normalement
+    ports:
+      - "5434:5432"
+
+    # Volume nommé : les données PostgreSQL survivent
+    # même si vous faites docker-compose down
+    # Sans ça, toutes vos tables disparaissent à chaque arrêt
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+    # Ce conteneur doit démarrer avant le backend Node.js
+    # (utile quand vous ajouterez le service backend plus tard)
+
+  # ── Service 2 : Redis ───────────────────────────────────
+  redis:
+    # Image officielle Redis version 7, variante alpine
+    # alpine = version ultra-légère basée sur Alpine Linux
+    # Résultat : image de 30 Mo au lieu de 130 Mo
+    image: redis:7-alpine
+
+    container_name: docmaster_redis
+    restart: unless-stopped
+
+    # Port Redis standard
+    ports:
+      - "6379:6379"
+
+    # Volume pour persister les données Redis
+    # Bull Queue stocke ses jobs ici
+    volumes:
+      - redis_data:/data
+
+    # Commande de démarrage avec persistance activée
+    # --appendonly yes : Redis sauvegarde chaque opération sur disque
+    # Sans ça, les jobs en attente disparaissent si Redis redémarre
+    command: redis-server --appendonly yes
+
+# Déclaration des volumes nommés
+# Docker les crée automatiquement au premier docker-compose up
+volumes:
+  postgres_data:
+    # driver local = stockage sur votre disque dur
+    driver: local
+  redis_data:
+    driver: local
