@@ -7,6 +7,17 @@ import errorHandler from "./middlewares/errorHandler.js"
 import authRoutes from "./routes/auth.routes.js"
 import passport from './config/passport.js';
 import verifyToken from "./middlewares/verifyToken.js"
+import filesRoutes from './routes/files.routes.js';
+import jobsRoutes from './routes/jobs.routes.js';
+import { nettoyerFichiersExpires } from './jobs/cronCleanup.js';
+import { limiterGeneral, limiterUpload } from './middlewares/rateLimiter.js';
+
+// Lancer le nettoyage toutes les heures
+// 3600000 ms = 1 heure
+setInterval(nettoyerFichiersExpires, 3600000);
+
+// Lancer une première fois au démarrage
+nettoyerFichiersExpires();
 
 dotenv.config();
 
@@ -20,8 +31,12 @@ app.use(cors());
 app.use(passport.initialize());
 
 //Utilisation des Routes
-// app.use("/api", userRoutes);
 app.use("/api/auth", authRoutes);
+app.use('/api/files', filesRoutes);
+app.use('/api/jobs', jobsRoutes);
+app.use(limiterGeneral);
+app.use('/api/files', limiterUpload);
+app.use('/api/jobs', limiterUpload);
 
 //Middleware pour la gestion d'erreurs
 app.use(errorHandler);
