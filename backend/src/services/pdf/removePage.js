@@ -1,0 +1,52 @@
+import { PDFDocument } from 'pdf-lib';
+import fs from 'fs';
+import path from 'path';
+import { v4 as uuidv4 } from 'uuid';
+
+const OUTPUT_DIR = process.env.UPLOAD_DIR || './tmp/uploads';
+
+// ── Supprimer des pages spécifiques ─────────────────────────
+// pagesASupprimer : tableau de numéros 1-indexed
+export const removePageService = async (chemin, pagesASupprimer) => {
+
+  if (!fs.existsSync(chemin)) {
+    throw new Error('FICHIER_INTROUVABLE');
+  }
+
+  const pdfBytes = fs.readFileSync(chemin);
+  const pdfDoc = await PDFDocument.load(pdfBytes);
+
+  const totalPages = pdfDoc.getPageCount();
+
+  // Convertir en 0-indexed et trier en ordre décroissant
+  // ⚠️ Point technique important : on supprime du dernier index
+  // vers le premier, sinon les indices se décalent après
+  // chaque suppression et on supprime les mauvaises pages
+  const indicesASupprimer = pagesASupprimer
+    .map(p => p - 1)
+    .sort((a, b) => b - a);
+
+  for (const index of indicesASupprimer) {
+    if (index < 0 || index >= totalPages) {
+      throw new Error(`PAGE_INVALIDE:${index + 1}`);
+    }
+    pdfDoc.removePage(index);
+  }
+
+  if (pdfDoc.getPageCount() === 0) {
+    throw new Error('TOUTES_LES_PAGES_SUPPRIMEES');
+  }
+
+  const bytesResultat = await pdfDoc.save();
+  const nomResultat = `${uuidv4()}.pdf`;
+  const cheminResultat = path.join(OUTPUT_DIR, nomResultat);
+
+  fs.writeFileSync(cheminResultat, bytesResultat);
+
+  return {
+    nomStockage: nomResultat,
+    chemin: cheminResultat,
+    tailleOctets: bytesResultat.length,
+    pagesRestantes: pdfDoc.getPageCount()
+  };
+};

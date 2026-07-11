@@ -12,7 +12,7 @@ const OPERATIONS_VALIDES = [
 
 export const createJob = async (req, res) => {
   try {
-    const { type_operation, fichiers } = req.body;
+    const { type_operation, fichiers, options } = req.body;
     const userId = req.user.id;
 
     if (!type_operation || !fichiers || !Array.isArray(fichiers)) {
@@ -36,7 +36,7 @@ export const createJob = async (req, res) => {
       });
     }
 
-    const job = await createJobService(userId, type_operation, fichiers);
+    const job = await createJobService(userId, type_operation, fichiers, options);
 
     return res.status(201).json({
       success: true,

@@ -2,7 +2,7 @@ import pool from '../config/db.js';
 import pdfQueue from '../jobs/queue.js';
 
 // ── Créer un job ────────────────────────────────────────────
-export const createJobService = async (userId, typeOperation, fichiers) => {
+export const createJobService = async (userId, typeOperation, fichiers, options = {}) => {
 
   // Étape 1 — Vérifier que les fichiers appartiennent à l'utilisateur
   for (const fileId of fichiers) {
@@ -45,6 +45,7 @@ export const createJobService = async (userId, typeOperation, fichiers) => {
     jobId: job.id_jobs,
     type_operation: typeOperation,
     fichiers,
+    options,
     userId
   });
 
