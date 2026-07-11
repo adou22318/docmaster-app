@@ -1,8 +1,10 @@
 # Système de jobs (Bull Queue) — DocMaster
 
-**Date :** [date du jour]
-**Semaine :** S2
-**Statut :** ✅ Complet (traitement simulé — vrais services en S3)
+**Date :** 9 juillet 2026
+**Semaine :** S3
+**Statut :** ✅ Complet (Services réels connectés)
+
+Pour plus de détails sur le fonctionnement interne de Bull Queue et la liste des traitements PDF réels connectés en S3, voir la documentation détaillée [bullqueue.md](file:///c:/Users/USER/Desktop/docmaster-app/docs/jobs/bullqueue.md).
 
 ## Vue d'ensemble
 File d'attente asynchrone pour le traitement PDF. Permet de répondre
@@ -40,7 +42,7 @@ statut=done ou statut=error.
 
 **Bull + Redis :** sans file d'attente, un traitement de 8 secondes
 bloquerait le serveur pour tous les autres utilisateurs. Bull permet
-de répondre immédiatement avec un job_id et de traiter en arrière-plan.
+de répondre immédiatement avec un jobs_id et de traiter en arrière-plan.
 
 **Worker séparé du serveur Express :** lancé via `npm run worker`
 dans un processus distinct. Permet de scaler le traitement
