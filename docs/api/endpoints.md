@@ -102,6 +102,164 @@ Crée une tâche de traitement PDF et l'ajoute à la file d'attente asynchrone (
   }
   ```
 
+#### D. Filigrane (watermark)
+- **Fichiers** : Tableau contenant 1 seul UUID.
+- **Options** :
+  - `texte` (string) : Le texte du filigrane (défaut: `"CONFIDENTIEL"`).
+  - `opacite` (number) : Opacité de 0 à 1 (défaut: `0.3`).
+  - `rotation` (number) : Angle en degrés (défaut: `45`).
+  - `taillePolice` (number) : Taille du texte (défaut: `50`).
+  - `couleur` (string/object) : Code hexadécimal (ex: `"#FF0000"`) ou objet `{r, g, b}` (défaut: gris).
+  - `position` (string) : `'centre'`, `'haut-gauche'`, `'haut-droite'`, `'bas-gauche'`, `'bas-droite'`, `'haut-centre'`, `'bas-centre'` (défaut: `'centre'`).
+  - `pages` (string) : Syntaxe de sélection (ex: `"1-3, 5"`). Si absent, s'applique à toutes les pages.
+- **Exemple** :
+  ```json
+  {
+    "type_operation": "watermark",
+    "fichiers": ["8073ea45-56be-43ad-8d3f-42a1ab9430c2"],
+    "options": {
+      "texte": "BROUILLON",
+      "couleur": "#FF0000",
+      "position": "centre",
+      "pages": "1, 3"
+    }
+  }
+  ```
+
+#### E. Suppression de pages (remove_pages)
+- **Fichiers** : Tableau contenant 1 seul UUID.
+- **Options** :
+  - `selection` (string, requis) : Syntaxe de sélection des pages à supprimer (ex: `"2, 5-8"`).
+- **Exemple** :
+  ```json
+  {
+    "type_operation": "remove_pages",
+    "fichiers": ["8073ea45-56be-43ad-8d3f-42a1ab9430c2"],
+    "options": {
+      "selection": "2, 5-8"
+    }
+  }
+  ```
+
+#### F. Ajout de pages vierges (add_blank_pages)
+- **Fichiers** : Tableau contenant 1 seul UUID.
+- **Options** :
+  - `nombre` (number) : Nombre de pages à ajouter (défaut: `1`).
+  - `position` (string/number) : `'debut'`, `'fin'` (défaut), ou le numéro d'une page (ex: `"3"`) après laquelle insérer.
+  - `format` (string) : `'a4'`, `'a3'`, `'a5'`, `'letter'`, `'legal'` (défaut: `'a4'`).
+- **Exemple** :
+  ```json
+  {
+    "type_operation": "add_blank_pages",
+    "fichiers": ["8073ea45-56be-43ad-8d3f-42a1ab9430c2"],
+    "options": {
+      "nombre": 2,
+      "position": "fin",
+      "format": "a4"
+    }
+  }
+  ```
+
+#### G. Rasterisation de pages (pdf_to_images)
+- **Fichiers** : Tableau contenant 1 seul UUID.
+- **Options** :
+  - `dpi` (number) : Résolution en DPI (défaut: `150`).
+  - `format` (string) : Format de sortie, `'png'` ou `'jpg'` (défaut: `'png'`).
+  - `pages` (string) : Syntaxe de sélection (ex: `"1-3, 5"`). Défaut: toutes les pages.
+- **Exemple** :
+  ```json
+  {
+    "type_operation": "pdf_to_images",
+    "fichiers": ["8073ea45-56be-43ad-8d3f-42a1ab9430c2"],
+    "options": {
+      "dpi": 300,
+      "format": "png",
+      "pages": "1, 3"
+    }
+  }
+  ```
+
+#### G2. Extraction d'images embarquées (extract_images)
+- **Fichiers** : Tableau contenant 1 seul UUID.
+- **Options** :
+  - `pages` (string) : Syntaxe de sélection (ex: `"1-3, 5"`). Défaut: toutes les pages.
+- **Exemple** :
+  ```json
+  {
+    "type_operation": "extract_images",
+    "fichiers": ["8073ea45-56be-43ad-8d3f-42a1ab9430c2"],
+    "options": {
+      "pages": "1-5"
+    }
+  }
+  ```
+
+#### H. Ajout d'image (add_image)
+- **Fichiers** : Tableau contenant 2 UUIDs : `[ "uuid-pdf-cible", "uuid-image" ]`.
+- **Options** :
+  - `pages` (string) : Syntaxe de sélection (ex: `"1-3, 5"`). Défaut: toutes les pages.
+  - `position` (string) : `'centre'`, `'haut-gauche'`, `'haut-droite'`, `'bas-gauche'`, `'bas-droite'`, `'haut-centre'`, `'bas-centre'` (défaut: `'centre'`).
+  - `x`, `y` (number) : Coordonnées libres (écrasent la position prédéfinie).
+  - `largeur`, `hauteur` (number) : Dimensions finales en points PDF.
+- **Exemple** :
+  ```json
+  {
+    "type_operation": "add_image",
+    "fichiers": ["uuid-pdf-cible", "uuid-image-png-ou-jpg"],
+    "options": {
+      "position": "bas-droite",
+      "largeur": 100
+    }
+  }
+  ```
+
+#### I. Conversion Office vers PDF (convert_to_pdf)
+- **Fichiers** : Tableau contenant 1 seul UUID d'un fichier Office (DOCX, XLSX, PPTX).
+- **Options** : Aucune.
+- **Exemple** :
+  ```json
+  {
+    "type_operation": "convert_to_pdf",
+    "fichiers": ["uuid-fichier-docx"]
+  }
+  ```
+
+#### J. Extraction de texte (pdf_to_txt)
+- **Fichiers** : Tableau contenant 1 seul UUID.
+- **Options** :
+  - `pages` (string) : Syntaxe de sélection (ex: `"1-3, 5"`). Défaut: toutes les pages.
+- **Exemple** :
+  ```json
+  {
+    "type_operation": "pdf_to_txt",
+    "fichiers": ["uuid-pdf-cible"],
+    "options": {
+      "pages": "1-5"
+    }
+  }
+  ```
+
+#### K. Signature (sign)
+- **Fichiers** : Tableau contenant 2 UUIDs : `[ "uuid-pdf-cible", "uuid-image-signature" ]`.
+- **Options** :
+  - `page` (string/number) : Page cible 1-indexed (défaut: `1`).
+  - `x`, `y` (number) : Coordonnées (défaut: `50, 50`).
+  - `largeur` (number) : Largeur de l'image (défaut: `150`).
+  - `hauteur` (number) : Hauteur de l'image.
+- **Exemple** :
+  ```json
+  {
+    "type_operation": "sign",
+    "fichiers": ["uuid-pdf-cible", "uuid-signature-image"],
+    "options": {
+      "page": "1",
+      "x": 400,
+      "y": 100,
+      "largeur": 200
+    }
+  }
+  ```
+
 - **Réponse de création (201)** :
   ```json
   {

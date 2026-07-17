@@ -6,6 +6,14 @@ import { rotateService } from '../services/pdf/rotate.js';
 import { compressService } from '../services/pdf/compress.js';
 import { protectService } from '../services/pdf/protect.js';
 import { watermarkService } from '../services/pdf/watermark.js';
+import { removePageService } from '../services/pdf/removePage.js';
+import { addBlankPagesService } from '../services/pdf/addBlankPages.js';
+import { rasterizeService } from '../services/pdf/rasterize.js';
+import { extractImagesService } from '../services/pdf/extractImages.js';
+import { addImageService } from '../services/pdf/addImage.js';
+import { convertToPdfService } from '../services/pdf/convertToPdf.js';
+import { pdfToTxtService } from '../services/pdf/pdfToTxt.js';
+import { signService } from '../services/pdf/sign.js';
 
 pdfQueue.process(async (job) => {
 
@@ -74,6 +82,63 @@ pdfQueue.process(async (job) => {
         );
         break;
 
+      case 'remove_pages':
+        resultat = await removePageService(
+          cheminsFichiers[0],
+          options.selection
+        );
+        break;
+
+      case 'add_blank_pages':
+        resultat = await addBlankPagesService(
+          cheminsFichiers[0],
+          options
+        );
+        break;
+
+      case 'extract_images':
+        resultat = await extractImagesService(
+          cheminsFichiers[0],
+          options
+        );
+        break;
+
+      case 'pdf_to_images':
+        resultat = await rasterizeService(
+          cheminsFichiers[0],
+          options
+        );
+        break;
+
+      case 'add_image':
+        resultat = await addImageService(
+          cheminsFichiers[0], // PDF cible
+          cheminsFichiers[1], // Image à incrustrer
+          options
+        );
+        break;
+
+      case 'convert_to_pdf':
+        resultat = await convertToPdfService(
+          cheminsFichiers[0]
+        );
+        break;
+
+      case 'pdf_to_txt':
+        resultat = await pdfToTxtService(
+          cheminsFichiers[0],
+          options
+        );
+        break;
+
+      case 'sign':
+        resultat = await signService(
+          cheminsFichiers[0], // PDF cible
+          cheminsFichiers[1], // Image de signature
+          options
+        );
+        break;
+
       default:
         throw new Error(`TYPE_OPERATION_INCONNU:${type_operation}`);
     }
@@ -81,9 +146,13 @@ pdfQueue.process(async (job) => {
     await job.progress(80);
 
     // Déterminer le type MIME et l'extension du résultat
-    // Le split en mode 'separate' peut produire un ZIP au lieu d'un PDF
     const typeMime = resultat.typeMime || 'application/pdf';
-    const extension = typeMime === 'application/zip' ? 'zip' : 'pdf';
+    let extension = 'pdf';
+    
+    if (typeMime === 'application/zip') extension = 'zip';
+    else if (typeMime === 'image/png') extension = 'png';
+    else if (typeMime === 'image/jpeg') extension = 'jpg';
+    else if (typeMime === 'text/plain') extension = 'txt';
 
     // Enregistrer le fichier résultat dans la table files
     const fileResult = await pool.query(
@@ -102,6 +171,12 @@ pdfQueue.process(async (job) => {
     );
 
     const resultatUrl = `/api/files/download/${resultFileId}`;
+    
+    // Ajout du disclaimer de signature dans le résultat renvoyé à l'API si présent
+    const resultPayload = { success: true, resultatUrl };
+    if (resultat.disclaimer) {
+      resultPayload.disclaimer = resultat.disclaimer;
+    }
 
     await pool.query(
       `UPDATE jobs SET statut = 'done', progression = 100, resultat_url = $1, completed_at = NOW()
@@ -112,7 +187,7 @@ pdfQueue.process(async (job) => {
     await job.progress(100);
     console.log(`✅ Job ${jobId} terminé avec succès`);
 
-    return { success: true, resultatUrl };
+    return resultPayload;
 
   } catch (error) {
     await pool.query(

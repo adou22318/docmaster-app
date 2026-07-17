@@ -3,7 +3,7 @@ import { promisify } from 'util';
 import fs from 'fs';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
-import os from 'os';
+import GS_CMD from './gsCommand.js';
 
 // promisify transforme exec (callback) en version Promise (async/await)
 const execAsync = promisify(exec);
@@ -19,37 +19,6 @@ const NIVEAUX_COMPRESSION = {
   moyenne: '/ebook',
   basse: '/printer'
 };
-
-// ── Détection de l'exécutable Ghostscript ───────────────────
-// Sur Windows, exec() peut ne pas trouver gswin64c si le PATH
-// du processus Node.js ne contient pas le dossier Ghostscript.
-// On utilise le chemin absolu pour éviter ce problème.
-const getGhostscriptCmd = () => {
-  if (os.platform() !== 'win32') {
-    return 'gs'; // Linux / macOS
-  }
-
-  // Chercher Ghostscript dans Program Files
-  const gsBase = 'C:\\Program Files\\gs';
-  if (fs.existsSync(gsBase)) {
-    const versions = fs.readdirSync(gsBase)
-      .filter(d => d.startsWith('gs'))
-      .sort()
-      .reverse(); // version la plus récente en premier
-
-    if (versions.length > 0) {
-      const gsPath = path.join(gsBase, versions[0], 'bin', 'gswin64c.exe');
-      if (fs.existsSync(gsPath)) {
-        return `"${gsPath}"`;
-      }
-    }
-  }
-
-  // Fallback : espérer que gswin64c est dans le PATH
-  return 'gswin64c';
-};
-
-const GS_CMD = getGhostscriptCmd();
 
 // ── Compression PDF via Ghostscript CLI ─────────────────────
 export const compressService = async (chemin, niveau = 'moyenne') => {

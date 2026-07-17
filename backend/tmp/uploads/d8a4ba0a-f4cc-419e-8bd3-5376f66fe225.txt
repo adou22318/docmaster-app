@@ -1,0 +1,92 @@
+Cybersecurity : Apprendre et
+comprendre la sécurité et les attaques
+web
+
+Introduction à la sécurité des applications web
+Pourquoi la sécurité web est essentielle ?
+Principaux risques et menaces
+Conclusion
+Les vulnérabilités web les plus courantes
+Injection SQL
+Cross-Site Scripting (XSS)
+Cross-Site Request Forgery (CSRF)
+Inclusion de fichiers (LFI/RFI)
+Attaques par force brute et credential stuffing
+🔍 Comment fonctionnent ces attaques ?
+🚨 1. Démonstration simple du processus utilisé par les hackers
+🛠 2. Outils couramment utilisés par les hackers
+🛡 Protection et bonnes pratiques en sécurité web
+✅ 1. Sécurisation des entrées utilisateur
+🔑 2. Gestion des sessions et des cookies
+🛠 3. Configuration sécurisée des serveurs et bases de données
+🔥 4. Utilisation de WAF et autres solutions de protection
+🔍 Études de cas et exemples pratiques
+⚠ 1. Analyse de failles célèbres
+🏦 Injection SQL – La faille qui a vidé les comptes bancaires
+🎭 Cross-Site Scripting (XSS) – Piratage d’un réseau social
+🏗 2. Exercices et scénarios pour comprendre les attaques et protections
+💻 Exercice 1 : Trouver une faille XSS dans un formulaire
+🔓 Exercice 2 : Intercepter des requêtes avec Burp Suite
+🎯 Conclusion et ressources pour aller plus loin
+✅ Récapitulatif des bonnes pratiques
+📚 Ressources recommandées pour approfondir
+
+Introduction à la sécurité des
+applications web
+Pourquoi la sécurité web est essentielle ?
+Aujourd'hui, presque toutes nos activités passent par le web : achats en ligne, banques,
+réseaux sociaux, services administratifs... Les applications web sont omniprésentes et
+manipulent d'innombrables données sensibles, telles que des informations personnelles, des
+identifiants de connexion et des données bancaires.
+Cependant, cette omniprésence en fait aussi une cible privilégiée pour les hackers. Une
+faille de sécurité peut compromettre non seulement les données des utilisateurs mais aussi
+la réputation et la stabilité d'une entreprise. Une application web mal sécurisée peut
+entraîner des conséquences catastrophiques :
+● Vol de données personnelles : Les pirates peuvent récupérer des informations
+sensibles et les revendre ou les utiliser pour des actions malveillantes.
+● Perte de confiance des utilisateurs : Une violation de données peut dissuader les
+utilisateurs d’utiliser une plateforme.
+● Conséquences légales : De nombreuses lois (RGPD, CCPA, etc.) imposent des
+obligations strictes en matière de protection des données.
+● Dommages financiers : Certaines cyberattaques peuvent coûter des millions
+d’euros aux entreprises affectées.
+Principaux risques et menaces
+Les applications web sont exposées à de nombreuses attaques exploitant des vulnérabilités
+courantes. Voici les menaces les plus répandues :
+● Injection SQL : Une technique permettant aux attaquants d’exécuter des requêtes
+SQL malveillantes pour manipuler ou extraire des données d’une base de données.
+● Cross-Site Scripting (XSS) : Une attaque qui injecte du code malveillant dans une
+page web, affectant les utilisateurs qui la visitent.
+● Cross-Site Request Forgery (CSRF) : Une attaque qui force un utilisateur à
+exécuter une action non souhaitée sur une application où il est authentifié.
+● Attaques par force brute : Tentative de deviner des identifiants en testant de
+nombreuses combinaisons.
+
+● Exploitation des mauvaises configurations : Une application mal configurée peut
+permettre un accès non autorisé ou exposer des données sensibles.
+● Fuite d'informations sensibles : Un développeur qui stocke des données sensibles
+dans le code source ou les journaux peut involontairement donner accès à des
+hackers.
+Conclusion
+La sécurité des applications web est un enjeu majeur que tout développeur ou
+administrateur de site doit prendre au sérieux. Comprendre les menaces et les risques
+permet d’adopter de bonnes pratiques pour protéger les données et assurer un
+environnement web plus sûr.
+Dans les prochains chapitres, nous allons analyser en détail chaque type d’attaque,
+comprendre comment les hackers procèdent et apprendre à nous en protéger.
+
+Les vulnérabilités web les plus
+courantes
+Injection SQL
+L'injection SQL est une attaque où un attaquant insère du code SQL malveillant dans une
+requête afin d'accéder ou de manipuler une base de données. Cette faille survient
+généralement lorsque les entrées utilisateur ne sont pas correctement filtrées.
+Exemple d'injection SQL :
+SELECT * FROM users WHERE username = 'admin' --' AND password =
+'password';
+Dans cet exemple, l'ajout de -- en SQL commente la fin de la requête, permettant à un
+attaquant de se connecter sans connaître le mot de passe.
+Comment se protéger ?
+● Utiliser des requêtes préparées (paramétrées).
+● Valider et filtrer les entrées utilisateur.
+● Limiter les permissions des comptes de base de données.

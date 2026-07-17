@@ -1,0 +1,203 @@
+Cybersecurity : Apprendre et
+comprendre la sécurité et les attaques
+web
+
+Introduction à la sécurité des applications web
+Pourquoi la sécurité web est essentielle ?
+Principaux risques et menaces
+Conclusion
+Les vulnérabilités web les plus courantes
+Injection SQL
+Cross-Site Scripting (XSS)
+Cross-Site Request Forgery (CSRF)
+Inclusion de fichiers (LFI/RFI)
+Attaques par force brute et credential stuffing
+🔍 Comment fonctionnent ces attaques ?
+🚨 1. Démonstration simple du processus utilisé par les hackers
+🛠 2. Outils couramment utilisés par les hackers
+🛡 Protection et bonnes pratiques en sécurité web
+✅ 1. Sécurisation des entrées utilisateur
+🔑 2. Gestion des sessions et des cookies
+🛠 3. Configuration sécurisée des serveurs et bases de données
+🔥 4. Utilisation de WAF et autres solutions de protection
+🔍 Études de cas et exemples pratiques
+⚠ 1. Analyse de failles célèbres
+🏦 Injection SQL – La faille qui a vidé les comptes bancaires
+🎭 Cross-Site Scripting (XSS) – Piratage d’un réseau social
+🏗 2. Exercices et scénarios pour comprendre les attaques et protections
+💻 Exercice 1 : Trouver une faille XSS dans un formulaire
+🔓 Exercice 2 : Intercepter des requêtes avec Burp Suite
+🎯 Conclusion et ressources pour aller plus loin
+✅ Récapitulatif des bonnes pratiques
+📚 Ressources recommandées pour approfondir
+
+Introduction à la sécurité des
+applications web
+Pourquoi la sécurité web est essentielle ?
+Aujourd'hui, presque toutes nos activités passent par le web : achats en ligne, banques,
+réseaux sociaux, services administratifs... Les applications web sont omniprésentes et
+manipulent d'innombrables données sensibles, telles que des informations personnelles, des
+identifiants de connexion et des données bancaires.
+Cependant, cette omniprésence en fait aussi une cible privilégiée pour les hackers. Une
+faille de sécurité peut compromettre non seulement les données des utilisateurs mais aussi
+la réputation et la stabilité d'une entreprise. Une application web mal sécurisée peut
+entraîner des conséquences catastrophiques :
+● Vol de données personnelles : Les pirates peuvent récupérer des informations
+sensibles et les revendre ou les utiliser pour des actions malveillantes.
+● Perte de confiance des utilisateurs : Une violation de données peut dissuader les
+utilisateurs d’utiliser une plateforme.
+● Conséquences légales : De nombreuses lois (RGPD, CCPA, etc.) imposent des
+obligations strictes en matière de protection des données.
+● Dommages financiers : Certaines cyberattaques peuvent coûter des millions
+d’euros aux entreprises affectées.
+Principaux risques et menaces
+Les applications web sont exposées à de nombreuses attaques exploitant des vulnérabilités
+courantes. Voici les menaces les plus répandues :
+● Injection SQL : Une technique permettant aux attaquants d’exécuter des requêtes
+SQL malveillantes pour manipuler ou extraire des données d’une base de données.
+● Cross-Site Scripting (XSS) : Une attaque qui injecte du code malveillant dans une
+page web, affectant les utilisateurs qui la visitent.
+● Cross-Site Request Forgery (CSRF) : Une attaque qui force un utilisateur à
+exécuter une action non souhaitée sur une application où il est authentifié.
+● Attaques par force brute : Tentative de deviner des identifiants en testant de
+nombreuses combinaisons.
+
+● Exploitation des mauvaises configurations : Une application mal configurée peut
+permettre un accès non autorisé ou exposer des données sensibles.
+● Fuite d'informations sensibles : Un développeur qui stocke des données sensibles
+dans le code source ou les journaux peut involontairement donner accès à des
+hackers.
+Conclusion
+La sécurité des applications web est un enjeu majeur que tout développeur ou
+administrateur de site doit prendre au sérieux. Comprendre les menaces et les risques
+permet d’adopter de bonnes pratiques pour protéger les données et assurer un
+environnement web plus sûr.
+Dans les prochains chapitres, nous allons analyser en détail chaque type d’attaque,
+comprendre comment les hackers procèdent et apprendre à nous en protéger.
+
+Les vulnérabilités web les plus
+courantes
+Injection SQL
+L'injection SQL est une attaque où un attaquant insère du code SQL malveillant dans une
+requête afin d'accéder ou de manipuler une base de données. Cette faille survient
+généralement lorsque les entrées utilisateur ne sont pas correctement filtrées.
+Exemple d'injection SQL :
+SELECT * FROM users WHERE username = 'admin' --' AND password =
+'password';
+Dans cet exemple, l'ajout de -- en SQL commente la fin de la requête, permettant à un
+attaquant de se connecter sans connaître le mot de passe.
+Comment se protéger ?
+● Utiliser des requêtes préparées (paramétrées).
+● Valider et filtrer les entrées utilisateur.
+● Limiter les permissions des comptes de base de données.
+
+Si l’attaquant passe page=../../../../../etc/passwd, il pourrait lire des fichiers
+sensibles du serveur.
+Comment se protéger ?
+● Ne jamais inclure des fichiers dynamiquement à partir d’entrées utilisateur.
+● Désactiver allow_url_include en PHP.
+● Restreindre l'accès aux fichiers sensibles.
+Attaques par force brute et credential stuffing
+Ces attaques consistent à tester de nombreuses combinaisons de mots de passe jusqu'à
+trouver la bonne.
+● Force brute : tester toutes les combinaisons possibles.
+● Credential stuffing : utiliser des identifiants volés d’autres sites.
+Comment se protéger ?
+● Imposer une limite d’essais sur les connexions.
+● Utiliser une authentification multifactorielle (MFA).
+● Implémenter un système de captchas.
+Ces vulnérabilités sont parmi les plus répandues sur le web et peuvent entraîner des
+conséquences désastreuses si elles ne sont pas correctement prises en compte. La
+prochaine section expliquera comment sécuriser une application web efficacement !
+
+🛡 Protection et bonnes pratiques en sécurité web
+Maintenant qu'on a vu comment les attaques fonctionnent, voyons comment se protéger et
+éviter que nos applications web ne deviennent des cibles faciles.
+✅ 1. Sécurisation des entrées utilisateur
+L'une des premières portes d’entrée des hackers, c’est les champs de saisie utilisateur. Si
+on ne les sécurise pas, un simple champ de connexion peut devenir une faille critique.
+🔹 Filtrer et valider toutes les entrées : Toujours vérifier et limiter ce qu'un utilisateur peut
+entrer (ex. : empêcher les caractères spéciaux dans un champ de login).
+🔹 Échapper les caractères dangereux : Par exemple, pour éviter une injection SQL, il
+faut utiliser des requêtes préparées au lieu de concaténer des entrées utilisateur.
+🔹 Utiliser un pare-feu d’application web (WAF) : Il permet de bloquer automatiquement
+certaines attaques comme les injections SQL et XSS.
+🔑 2. Gestion des sessions et des cookies
+Les hackers peuvent voler des sessions et utiliser des failles comme le session hijacking
+pour se faire passer pour un utilisateur légitime.
+
+🔹 Utiliser des cookies sécurisés : Toujours activer les flags HttpOnly et Secure pour
+éviter que les cookies ne soient accessibles via JavaScript ou envoyés en clair.
+🔹 Expirer les sessions après une période d'inactivité : Un utilisateur qui reste connecté
+trop longtemps sans activité peut être une cible facile.
+🔹 Utiliser des tokens CSRF : Cela empêche qu’un site malveillant effectue des actions au
+nom de l’utilisateur connecté.
+🛠 3. Configuration sécurisée des serveurs et bases de données
+Un serveur mal configuré est une mine d’or pour les attaquants. Voici quelques bonnes
+pratiques :
+🔹 Limiter les permissions de la base de données : Un utilisateur ne devrait pas avoir
+plus de droits que nécessaire.
+🔹 Ne jamais stocker les mots de passe en clair : Toujours les hacher avec bcrypt,
+Argon2 ou PBKDF2.
+🔹 Désactiver les messages d’erreur détaillés en production : Un message comme
+"Erreur SQL syntaxique" donne des indices précieux aux attaquants.
+🔹 Garder les logiciels à jour : Beaucoup de hackers exploitent des vulnérabilités connues
+sur des applications non mises à jour.
+
+🔥 4. Utilisation de WAF et autres solutions de protection
+Un Web Application Firewall (WAF) est une barrière qui surveille et filtre le trafic HTTP
+pour bloquer les attaques courantes.
+🔹 ModSecurity : Un WAF open-source qui protège contre les injections SQL, XSS et
+autres menaces.
+🔹 Cloudflare / AWS WAF : Solutions cloud qui filtrent le trafic malveillant avant même qu’il
+n’atteigne votre serveur.
+🔹 Surveiller les logs : Les fichiers journaux peuvent révéler des tentatives d’attaques et
+permettre d’agir rapidement.
+Avec ces bonnes pratiques, on réduit énormément les risques d’attaques. Mais attention,
+aucune protection n'est parfaite ! La cybersécurité, c'est un travail continu qui nécessite
+vigilance et mises à jour constantes.
+
+🔍 Études de cas et exemples pratiques
+Maintenant qu'on a vu les types d’attaques et les méthodes de protection, passons à
+des cas concrets pour comprendre comment ces failles ont été exploitées et comment
+elles auraient pu être évitées.
+⚠ 1. Analyse de failles célèbres
+🏦 Injection SQL – La faille qui a vidé les comptes bancaires
+En 2008, une banque européenne a subi une attaque par injection SQL qui a permis à un
+hacker d’accéder à la base de données clients. Résultat :
+✅ Il a pu voir les identifiants et mots de passe des clients.
+✅ Il a modifié les soldes des comptes bancaires.
+✅ Il a transféré de l’argent vers ses propres comptes.
+📌 Le problème : L’application web utilisait des requêtes SQL non sécurisées avec des
+entrées utilisateur mal filtrées.
+💡 La solution : Utiliser des requêtes préparées et valider toutes les entrées pour éviter
+l’injection SQL.
+
+🎭 Cross-Site Scripting (XSS) – Piratage d’un réseau social
+Un hacker a découvert qu’il pouvait injecter un script malveillant dans les commentaires
+d’un célèbre réseau social. Dès qu’un utilisateur affichait la page :
+✅ Son cookie de session était volé.
+✅ Le hacker pouvait se connecter à son compte sans mot de passe.
+✅ Il publiait des liens piégés à son insu.
+📌 Le problème : Le site n’échappait pas les caractères spéciaux (<script> a été
+interprété et exécuté).
+💡 La solution : Échapper les caractères HTML (<, >, ", ') et désactiver l’exécution des
+scripts dans les champs utilisateurs.
+🏗 2. Exercices et scénarios pour comprendre les
+attaques et protections
+💻 Exercice 1 : Trouver une faille XSS dans un formulaire
+👉 Objectif : Tester si un champ de saisie accepte du code malveillant.
+🛠 Matériel : Un site d’entraînement comme XSS Labs ou un serveur local.
+🔹 Étape 1 : Entrez <script>alert('XSS!')</script> dans un champ.
+
+🔹 Étape 2 : Si une alerte s’affiche, la faille XSS est présente.
+🔹 Étape 3 : Ajoutez une protection côté serveur pour filtrer ce type d’entrée.
+🔓 Exercice 2 : Intercepter des requêtes avec Burp Suite
+👉 Objectif : Voir comment fonctionne une attaque Man-in-the-Middle.
+🛠 Matériel : Burp Suite (outil de test de sécurité).
+🔹 Étape 1 : Configurez Burp Suite en mode proxy.
+🔹 Étape 2 : Ouvrez une application web non sécurisée (HTTP).
+🔹 Étape 3 : Capturez les requêtes et observez les données qui transitent en clair.
+En pratiquant avec ces exemples, vous comprendrez comment les attaquants pensent et
+comment sécuriser vos applications efficacement.
+🔍 Prochaine étape : Conclusion et recommandations finales ! 🚀
