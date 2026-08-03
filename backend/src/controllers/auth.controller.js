@@ -110,6 +110,10 @@ export const refresh = async (req, res) => {
     });
 
   } catch (error) {
+    console.error('Erreur dans /refresh :', error.message);
+    if (error.stack) {
+        console.error(error.stack);
+    }
     return res.status(401).json({
       success: false,
       message: 'Session expirée. Veuillez vous reconnecter.'

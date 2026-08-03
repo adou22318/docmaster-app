@@ -1,6 +1,6 @@
 //Gestion centralisée simple des erreurs
-const errorHandler = (req, err, res, next) => {
-    console.log(err.stack);
+const errorHandler = (err, req, res, next) => {
+    console.error("Erreur serveur non gérée :", err);
     res.status(500).json({
         status: 500,
         message: "Something went wrong",

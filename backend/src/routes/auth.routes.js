@@ -30,17 +30,17 @@ router.get('/google/callback',
 
     // Rediriger vers le frontend avec les tokens dans l'URL
     // Le frontend les récupère et les stocke en mémoire
-    // res.redirect(
-    //   `${process.env.FRONTEND_URL}/auth/callback` +
-    //   `?access_token=${tokens.accessToken}` +
-    //   `&refresh_token=${tokens.refreshToken}`
-    // );
+    res.redirect(
+      `${process.env.FRONTEND_URL}/auth/callback` +
+      `?access_token=${tokens.accessToken}` +
+      `&refresh_token=${tokens.refreshToken}`
+    );
     
-    return res.json({
-      success: true,
-      message: 'OAuth Google fonctionnel',
-      data: tokens
-    });
+    // return res.json({
+    //   success: true,
+    //   message: 'OAuth Google fonctionnel',
+    //   data: tokens
+    // });
   }
 );
 

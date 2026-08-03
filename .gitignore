@@ -5,3 +5,11 @@ node_modules/
 /uploads/
 dist/
 .DS_Store
+
+# Fichiers de l'agent IA (ne pas commiter)
+.agents/
+skills/
+AGENTS.md
+.sixth/
+code.html
+malidevPDF.html

@@ -38,12 +38,13 @@ passport.use(new GoogleStrategy(
         );
         user = insertResult.rows[0];
       } else {
-        // Utilisateur existant — mettre à jour la photo
-        user = result.rows[0];
-        await pool.query(
-          'UPDATE users SET photo_url = $1 WHERE id_users = $2',
-          [photo_url, user.id_users]
+        // Utilisateur existant — mettre à jour la photo et le nom complet
+        // (au cas où le nom a changé sur Google)
+        const updateResult = await pool.query(
+          'UPDATE users SET photo_url = $1, nom_complet = $2 WHERE id_users = $3 RETURNING *',
+          [photo_url, nom_complet, result.rows[0].id_users]
         );
+        user = updateResult.rows[0];
       }
 
       // Générer les tokens DocMaster

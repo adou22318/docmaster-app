@@ -69,6 +69,7 @@ export const generateTokens = (user) => {
     {
       id: user.id_users,
       email: user.email,
+      nom_complet: user.nom_complet,
       plan: user.plan
     },
     process.env.JWT_SECRET,
@@ -194,7 +195,7 @@ export const refreshTokenService = async (refreshToken) => {
   // On ne régénère PAS le refresh token — il reste valide
   // jusqu'à son expiration ou un logout
   const accessToken = jwt.sign(
-    { id: user.id_users, email: user.email, plan: user.plan },
+    { id: user.id_users, email: user.email, nom_complet: user.nom_complet, plan: user.plan },
     process.env.JWT_SECRET,
     { expiresIn: '15m' }
   );
