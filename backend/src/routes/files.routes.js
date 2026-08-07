@@ -1,7 +1,7 @@
 import express from 'express';
 import upload from '../middlewares/uploads.js';
 import verifyToken from '../middlewares/verifyToken.js';
-import { uploadFile, downloadFile, deleteFile } from '../controllers/files.controller.js';
+import { uploadFile, downloadFile, deleteFile, getUserFiles } from '../controllers/files.controller.js';
 
 const router = express.Router();
 // Gestion des erreurs Multer — doit être faite ici
@@ -35,10 +35,13 @@ const handleUpload = (req, res, next) => {
   });
 };
 
-//Accessible aux visiteurs et aux connectés
+// Route pour l'upload (Accessible aux connectés)
 router.post('/upload', verifyToken, handleUpload, uploadFile);
 
-// Route protégée — utilisateur doit être connecté pour télécharger
+// Route pour lister les fichiers récents
+router.get('/', verifyToken, getUserFiles);
+
+// Routes pour manipuler un fichier
 router.get('/download/:id', verifyToken, downloadFile);
 router.delete('/:id', verifyToken, deleteFile);
 

@@ -80,15 +80,20 @@
     background-color: #fdbc13;
   }
 
-  .custom-scrollbar::-webkit-scrollbar {
-    width: 4px;
+  /* Scrollbar globale et classe utilitaire */
+  ::-webkit-scrollbar, .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
   }
-  .custom-scrollbar::-webkit-scrollbar-track {
+  ::-webkit-scrollbar-track, .custom-scrollbar::-webkit-scrollbar-track {
     background: transparent;
   }
-  .custom-scrollbar::-webkit-scrollbar-thumb {
+  ::-webkit-scrollbar-thumb, .custom-scrollbar::-webkit-scrollbar-thumb {
     background: #c5c6ca;
     border-radius: 10px;
+  }
+  ::-webkit-scrollbar-thumb:hover, .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #a0a1a5;
   }
 
   .paper-border-bottom {
@@ -109,3 +114,68 @@
     100% { border-color: #c5c6ca; box-shadow: 0 0 0 0 rgba(253, 188, 19, 0); }
   }
 }
+
+/* ===== ANIMATIONS D'ENTRÉE AU SCROLL ===== */
+
+/* --- État initial commun --- */
+.animate-hidden {
+  opacity: 0;
+}
+
+/* --- Fade + glissement vers le haut --- */
+/* Usage : cartes d'outils, dropzone, section populaire */
+.animate-fade-up {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+.animate-fade-up.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* --- Fade seul --- */
+/* Usage : titres de section, badges, textes secondaires */
+.animate-fade {
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+.animate-fade.visible {
+  opacity: 1;
+}
+
+/* --- Glissement depuis la gauche --- */
+/* Usage : lignes de fichiers récents, historique des jobs */
+.animate-slide-left {
+  opacity: 0;
+  transform: translateX(-16px);
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+.animate-slide-left.visible {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* --- Scale in --- */
+/* Usage : modals, notifications de succès, messages d'erreur */
+.animate-scale {
+  opacity: 0;
+  transform: scale(0.94);
+  transition: opacity 0.35s cubic-bezier(0.34, 1.56, 0.64, 1),
+              transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.animate-scale.visible {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* --- Délais de cascade (pour les grilles de cartes) --- */
+.delay-0  { transition-delay: 0ms; }
+.delay-1  { transition-delay: 80ms; }
+.delay-2  { transition-delay: 160ms; }
+.delay-3  { transition-delay: 240ms; }
+.delay-4  { transition-delay: 320ms; }
+.delay-5  { transition-delay: 400ms; }
+.delay-6  { transition-delay: 480ms; }
+
+/* Animations forcées pour tous les utilisateurs (pour garantir le rendu lors de la soutenance) */

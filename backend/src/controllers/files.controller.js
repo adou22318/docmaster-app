@@ -142,3 +142,25 @@ export const deleteFile = async (req, res) => {
     });
   }
 };
+
+export const getUserFiles = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const result = await pool.query(
+      'SELECT id_files as id, nom_original, taille_octets, created_at FROM files WHERE owner_id = $1 ORDER BY created_at DESC LIMIT 10',
+      [userId]
+    );
+
+    return res.status(200).json({
+      success: true,
+      data: result.rows
+    });
+  } catch (error) {
+    console.error('Erreur getUserFiles:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Erreur lors de la récupération des fichiers.'
+    });
+  }
+};
