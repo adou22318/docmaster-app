@@ -4,6 +4,7 @@ import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import { ZipArchive } from 'archiver';
 import { PDFDocument } from 'pdf-lib';
+import { loadPdf } from './loadPdf.js';
 import GS_CMD from './gsCommand.js';
 import { parsePageSelection } from './parsePages.js';
 
@@ -102,7 +103,7 @@ export const rasterizeService = async (chemin, options = {}) => {
 
   // Déterminer le nombre total de pages du PDF
   const pdfBytes = fs.readFileSync(chemin);
-  const pdfDoc = await PDFDocument.load(pdfBytes);
+  const pdfDoc = await loadPdf(pdfBytes);
   const totalPages = pdfDoc.getPageCount();
 
   // Résoudre les pages à rasteriser

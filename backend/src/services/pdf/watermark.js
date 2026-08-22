@@ -1,4 +1,5 @@
 import { PDFDocument, rgb, degrees, StandardFonts } from 'pdf-lib';
+import { loadPdf } from './loadPdf.js';
 import fs from 'fs';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
@@ -79,7 +80,7 @@ function parseCouleur(couleur) {
 //                   "bas-centre" (défaut: "centre")
 //   pages         : sélection de pages (ex: "1-3, 5") — si absent,
 //                   applique sur toutes les pages
-export const watermarkService = async (chemin, options = {}) => {
+export const watermarkService = async (chemin, options = {}, motDePasse = null) => {
 
   const {
     texte = 'CONFIDENTIEL',
@@ -96,7 +97,7 @@ export const watermarkService = async (chemin, options = {}) => {
   }
 
   const pdfBytes = fs.readFileSync(chemin);
-  const pdfDoc = await PDFDocument.load(pdfBytes);
+  const pdfDoc = await loadPdf(pdfBytes);
 
   // Police standard intégrée — pas besoin de fichier de police externe
   const police = await pdfDoc.embedFont(StandardFonts.HelveticaBold);

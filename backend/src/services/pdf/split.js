@@ -1,4 +1,5 @@
 import { PDFDocument } from 'pdf-lib';
+import { loadPdf } from './loadPdf.js';
 import fs from 'fs';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
@@ -53,14 +54,14 @@ function creerArchiveZip(fichiersPdf, cheminZip) {
 //
 //   selection="1-3, 7, 12-15", mode="separate"
 //     → 3 PDF (pages 1-3, page 7, pages 12-15) compressés en ZIP
-export const splitService = async (chemin, selection, mode = 'single') => {
+export const splitService = async (chemin, selection, mode = 'single', motDePasse = null) => {
 
   if (!fs.existsSync(chemin)) {
     throw new Error('FICHIER_INTROUVABLE');
   }
 
   const pdfBytes = fs.readFileSync(chemin);
-  const pdfSource = await PDFDocument.load(pdfBytes);
+  const pdfSource = await loadPdf(pdfBytes);
   const totalPages = pdfSource.getPageCount();
 
   // ── Mode "single" : toutes les pages sélectionnées dans 1 PDF ──

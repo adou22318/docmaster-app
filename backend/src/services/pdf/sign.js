@@ -1,4 +1,5 @@
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
+import { loadPdf } from './loadPdf.js';
 import fs from 'fs';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
@@ -14,7 +15,7 @@ const OUTPUT_DIR = process.env.UPLOAD_DIR || './tmp/uploads';
 //   x, y      : coordonnées de la signature
 //   largeur   : largeur souhaitée (défaut: 150)
 //   hauteur   : hauteur souhaitée
-export const signService = async (cheminPdf, cheminSignature, options = {}) => {
+export const signService = async (cheminPdf, cheminSignature, options = {}, motDePasse = null) => {
 
   if (!fs.existsSync(cheminPdf)) {
     throw new Error('FICHIER_PDF_INTROUVABLE');
@@ -29,12 +30,13 @@ export const signService = async (cheminPdf, cheminSignature, options = {}) => {
     x = 50,
     y = 50,
     largeur = 150,
-    hauteur
+    hauteur,
+    ajouterDate = false
   } = options;
 
   // 1. Charger le PDF
   const pdfBytes = fs.readFileSync(cheminPdf);
-  const pdfDoc = await PDFDocument.load(pdfBytes);
+  const pdfDoc = await loadPdf(pdfBytes);
   const totalPages = pdfDoc.getPageCount();
 
   // 2. Déterminer la page cible
@@ -81,17 +83,19 @@ export const signService = async (cheminPdf, cheminSignature, options = {}) => {
     height: finalHeight
   });
 
-  // 5. Ajouter la date et heure automatiquement sous la signature
-  const police = await pdfDoc.embedFont(StandardFonts.Helvetica);
-  const dateStr = `Signé le : ${new Date().toLocaleString('fr-FR')}`;
-  
-  pageCible.drawText(dateStr, {
-    x: finalX,
-    y: finalY - 12, // Légèrement en dessous de l'image
-    size: 10,
-    font: police,
-    color: rgb(0, 0, 0)
-  });
+  // 5. Ajouter la date et heure sous la signature (uniquement si demandé)
+  if (ajouterDate) {
+    const police = await pdfDoc.embedFont(StandardFonts.Helvetica);
+    const dateStr = `Signé le : ${new Date().toLocaleString('fr-FR')}`;
+    
+    pageCible.drawText(dateStr, {
+      x: finalX,
+      y: finalY - 12, // Légèrement en dessous de l'image
+      size: 10,
+      font: police,
+      color: rgb(0, 0, 0)
+    });
+  }
 
   // 6. Sauvegarder
   const bytesResultat = await pdfDoc.save();
@@ -109,3 +113,4 @@ export const signService = async (cheminPdf, cheminSignature, options = {}) => {
     disclaimer: "Attention: Cette signature est une simple incrustation visuelle et n'a pas de valeur légale conforme au règlement européen eIDAS (pas de certificat cryptographique)."
   };
 };
+

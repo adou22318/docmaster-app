@@ -43,6 +43,7 @@ export const compressService = async (chemin, niveau = 'moyenne') => {
   // -dPDFSETTINGS : le niveau de compression choisi
   // -dNOPAUSE -dBATCH : exécution sans interaction
   // -dQUIET : moins de logs
+  // -dQUIET : moins de logs
   const commande = `${GS_CMD} -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 ` +
     `-dPDFSETTINGS=${gsParametre} -dNOPAUSE -dBATCH -dQUIET ` +
     `-sOutputFile="${cheminResultat}" "${chemin}"`;
@@ -59,6 +60,20 @@ export const compressService = async (chemin, niveau = 'moyenne') => {
   }
 
   const tailleApres = fs.statSync(cheminResultat).size;
+
+  if (tailleApres >= tailleAvant) {
+    try { fs.unlinkSync(cheminResultat); } catch (e) {}
+    
+    return {
+      nomStockage: path.basename(chemin),
+      chemin: chemin,
+      tailleOctets: tailleAvant,
+      tailleAvant,
+      tailleApres: tailleAvant,
+      pourcentageReduction: 0
+    };
+  }
+
   const pourcentageReduction = ((tailleAvant - tailleApres) / tailleAvant * 100).toFixed(1);
 
   return {

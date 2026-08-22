@@ -5,20 +5,37 @@ import { useAuthStore } from '../store/useAuthStore';
 export const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [validationError, setValidationError] = useState(null);
   const { loginUser, error, clearError } = useAuthStore();
   const navigate = useNavigate();
 
   // Nettoyer l'erreur quand le composant est monté
   useEffect(() => {
     clearError();
+    setValidationError(null);
   }, [clearError]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
     
-    const email = e.target.email.value;
+    const email = e.target.email.value.trim();
     const password = e.target.password.value;
+
+    setValidationError(null);
+
+    if (!email) {
+      setValidationError('Veuillez saisir votre adresse email.');
+      setIsSubmitting(false);
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setValidationError('Adresse email invalide. Vérifiez le format (exemple : nom@domaine.com)');
+      setIsSubmitting(false);
+      return;
+    }
 
     const result = await loginUser(email, password);
     setIsSubmitting(false);
@@ -81,15 +98,14 @@ export const Login = () => {
             </p>
           </div>
           
-          <form className="space-y-10" onSubmit={handleSubmit}>
-            {/* Affichage des erreurs globales */}
-            {error && (
-              <div className="bg-error/10 text-error p-4 rounded-lg font-label-bold flex items-center gap-3">
-                <span className="material-symbols-outlined">error</span>
-                {error}
-              </div>
-            )}
+          {(error || validationError) && (
+            <div className="bg-error/10 text-error p-4 rounded-lg font-label-bold flex items-center gap-3 mb-8 animate-fade-in shadow-sm border border-error/20">
+              <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>error</span>
+              {validationError || error}
+            </div>
+          )}
 
+          <form className="space-y-8" onSubmit={handleSubmit}>
             {/* Email Input */}
             <div className="relative group">
               <label className="block font-label-bold text-label-bold text-on-surface-variant mb-2 transition-colors group-focus-within:text-secondary" htmlFor="email">
@@ -103,7 +119,7 @@ export const Login = () => {
                 required 
                 type="email" 
                 autoComplete="username"
-                onChange={clearError} // Nettoyer l'erreur à la saisie
+                onChange={() => { clearError(); setValidationError(null); }}
               />
             </div>
             
@@ -126,6 +142,7 @@ export const Login = () => {
                   required 
                   autoComplete="current-password"
                   type={showPassword ? "text" : "password"} 
+                  onChange={() => { clearError(); setValidationError(null); }}
                 />
                 <button 
                   className="absolute right-0 top-1/2 -translate-y-1/2 p-2 text-on-surface-variant hover:text-primary transition-colors" 

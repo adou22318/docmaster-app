@@ -1,4 +1,5 @@
 import { PDFDocument } from 'pdf-lib';
+import { loadPdf } from './loadPdf.js';
 import fs from 'fs';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
@@ -47,7 +48,7 @@ const POSITIONS = {
 //   x, y      : coordonnées libres (écrasent la position prédéfinie)
 //   largeur   : largeur souhaitée en points PDF
 //   hauteur   : hauteur souhaitée en points PDF
-export const addImageService = async (cheminPdf, cheminImage, options = {}) => {
+export const addImageService = async (cheminPdf, cheminImage, options = {}, motDePasse = null) => {
 
   const {
     pages: selectionPages,
@@ -68,7 +69,7 @@ export const addImageService = async (cheminPdf, cheminImage, options = {}) => {
 
   // 1. Charger le PDF
   const pdfBytes = fs.readFileSync(cheminPdf);
-  const pdfDoc = await PDFDocument.load(pdfBytes);
+  const pdfDoc = await loadPdf(pdfBytes);
   const totalPages = pdfDoc.getPageCount();
 
   // 2. Déterminer les pages cibles
@@ -161,3 +162,4 @@ export const addImageService = async (cheminPdf, cheminImage, options = {}) => {
     pagesModifiees: indicesCibles.length
   };
 };
+

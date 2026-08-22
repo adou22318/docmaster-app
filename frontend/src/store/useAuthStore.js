@@ -100,8 +100,19 @@ export const useAuthStore = create((set, get) => ({
 
       return { success: true };
     } catch (err) {
-      const message =
-        err.response?.data?.message || 'Une erreur est survenue.';
+      const status = err.response?.status;
+      let message = 'Une erreur est survenue. Vérifiez votre connexion et réessayez.';
+      
+      if (status === 401) {
+        message = 'Email ou mot de passe incorrect.';
+      } else if (status === 400) {
+        message = 'Veuillez remplir tous les champs correctement.';
+      } else if (status === 429) {
+        message = 'Trop de tentatives. Attendez quelques minutes avant de réessayer.';
+      } else if (err.response?.data?.message) {
+        message = err.response.data.message;
+      }
+      
       set({ error: message });
       return { success: false, message };
     }
@@ -121,8 +132,17 @@ export const useAuthStore = create((set, get) => ({
       const result = await get().loginUser(email, mot_de_passe);
       return result;
     } catch (err) {
-      const message =
-        err.response?.data?.message || 'Une erreur est survenue lors de l\'inscription.';
+      const status = err.response?.status;
+      let message = 'Une erreur est survenue lors de l\'inscription.';
+      
+      if (status === 409) {
+        message = 'Cette adresse email est déjà associée à un compte. Connectez-vous ou utilisez une autre adresse.';
+      } else if (status === 400) {
+        message = 'Données invalides. Vérifiez les informations saisies.';
+      } else if (err.response?.data?.message) {
+        message = err.response.data.message;
+      }
+      
       set({ error: message });
       return { success: false, message };
     }

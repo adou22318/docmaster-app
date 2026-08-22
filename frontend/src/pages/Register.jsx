@@ -4,11 +4,13 @@ import { useAuthStore } from '../store/useAuthStore';
 
 export const Register = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [validationError, setValidationError] = useState(null);
   const { registerUser, error, clearError } = useAuthStore();
   const navigate = useNavigate();
 
   useEffect(() => {
     clearError();
+    setValidationError(null);
   }, [clearError]);
 
   const handleSubmit = async (e) => {
@@ -18,19 +20,31 @@ export const Register = () => {
     const email = e.target.email.value.trim();
     const pass = e.target.password.value;
     const confirm = e.target['password-confirm'].value;
-    
+    setValidationError(null);
+
+    if (!email) {
+      setValidationError('Veuillez saisir votre adresse email.');
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setValidationError('Adresse email invalide. Vérifiez le format (exemple : nom@domaine.com)');
+      return;
+    }
+
     if (fullName.length < 2) {
-      alert('Le nom complet doit faire au moins 2 caractères.');
+      setValidationError('Le nom complet doit faire au moins 2 caractères.');
       return;
     }
 
     if (pass.length < 8) {
-      alert('Le mot de passe doit faire au moins 8 caractères.');
+      setValidationError('Le mot de passe doit faire au moins 8 caractères.');
       return;
     }
 
     if (pass !== confirm) {
-      alert('Les mots de passe ne correspondent pas.');
+      setValidationError('Les mots de passe ne correspondent pas.');
       return;
     }
 
@@ -103,32 +117,32 @@ export const Register = () => {
             </p>
           </header>
           
-          {error && (
+          {(error || validationError) && (
             <div className="bg-error/10 text-error p-4 rounded-lg font-label-bold flex items-center gap-3 mb-8">
               <span className="material-symbols-outlined">error</span>
-              {error}
+              {validationError || error}
             </div>
           )}
 
           <form className="space-y-10" onSubmit={handleSubmit}>
             <div className="group">
               <label className="font-label-bold text-label-bold text-on-surface block mb-2 transition-colors group-focus-within:text-secondary-container" htmlFor="full-name">Nom complet <span className="text-error">*</span></label>
-              <input className="paper-input w-full py-3 font-body-md text-on-surface placeholder:text-outline-variant/60" id="full-name" name="full-name" placeholder="Jean Dupont" required type="text" />
+              <input className="paper-input w-full py-3 font-body-md text-on-surface placeholder:text-outline-variant/60" id="full-name" name="full-name" placeholder="Jean Dupont" required type="text" onChange={() => { clearError(); setValidationError(null); }} />
             </div>
             
             <div className="group">
               <label className="font-label-bold text-label-bold text-on-surface block mb-2 transition-colors group-focus-within:text-secondary-container" htmlFor="email">Adresse email <span className="text-error">*</span></label>
-              <input className="paper-input w-full py-3 font-body-md text-on-surface placeholder:text-outline-variant/60" id="email" name="email" placeholder="nom@entreprise.com" required autoComplete="username" type="email" />
+              <input className="paper-input w-full py-3 font-body-md text-on-surface placeholder:text-outline-variant/60" id="email" name="email" placeholder="nom@entreprise.com" required autoComplete="username" type="email" onChange={() => { clearError(); setValidationError(null); }} />
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div className="group">
                 <label className="font-label-bold text-label-bold text-on-surface block mb-2 transition-colors group-focus-within:text-secondary-container" htmlFor="password">Mot de passe <span className="text-error">*</span></label>
-                <input className="paper-input w-full py-3 font-body-md text-on-surface placeholder:text-outline-variant/60" id="password" name="password" placeholder="••••••••" required autoComplete="new-password" type="password" />
+                <input className="paper-input w-full py-3 font-body-md text-on-surface placeholder:text-outline-variant/60" id="password" name="password" placeholder="••••••••" required autoComplete="new-password" type="password" onChange={() => { clearError(); setValidationError(null); }} />
               </div>
               <div className="group">
                 <label className="font-label-bold text-label-bold text-on-surface block mb-2 transition-colors group-focus-within:text-secondary-container" htmlFor="password-confirm">Confirmation <span className="text-error">*</span></label>
-                <input className="paper-input w-full py-3 font-body-md text-on-surface placeholder:text-outline-variant/60" id="password-confirm" name="password-confirm" placeholder="••••••••" required autoComplete="new-password" type="password" />
+                <input className="paper-input w-full py-3 font-body-md text-on-surface placeholder:text-outline-variant/60" id="password-confirm" name="password-confirm" placeholder="••••••••" required autoComplete="new-password" type="password" onChange={() => { clearError(); setValidationError(null); }} />
               </div>
             </div>
             

@@ -49,13 +49,20 @@ export const registerService = async(email, mot_de_passe, nom_complet) => {
     const SALT_ROUNDS = 12;
     const mot_de_passe_hash = await bcrypt.hash(mot_de_passe, SALT_ROUNDS);
 
-    const result = await pool.query(
-        `INSERT INTO users (email, mot_de_passe, nom_complet)
-         VALUES ($1, $2, $3) 
-         RETURNING id_users, email, nom_complet, plan, created_at`,
-         [email, mot_de_passe_hash, nom_complet]
-    );
-    return result.rows[0];
+    try {
+        const result = await pool.query(
+            `INSERT INTO users (email, mot_de_passe, nom_complet)
+             VALUES ($1, $2, $3) 
+             RETURNING id_users, email, nom_complet, plan, created_at`,
+             [email, mot_de_passe_hash, nom_complet]
+        );
+        return result.rows[0];
+    } catch (err) {
+        if (err.code === '23505') {
+            throw new Error("Email_Already_Exists");
+        }
+        throw err;
+    }
 }
 
 // ─── Fonction utilitaire : générer les tokens ──────────────

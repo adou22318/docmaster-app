@@ -1,4 +1,5 @@
 import { PDFDocument } from 'pdf-lib';
+import { loadPdf } from './loadPdf.js';
 import fs from 'fs';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
@@ -8,7 +9,7 @@ const OUTPUT_DIR = process.env.UPLOAD_DIR || './tmp/uploads';
 // ── Fusionner plusieurs PDF en un seul ──────────────────────
 // cheminsFichiers : tableau de chemins absolus des PDF à fusionner
 // L'ordre du tableau détermine l'ordre dans le résultat final
-export const mergeService = async (cheminsFichiers) => {
+export const mergeService = async (cheminsFichiers, motDePasse = null) => {
 
   // Créer un nouveau document PDF vide
   // C'est dans celui-ci qu'on va copier toutes les pages
@@ -23,7 +24,7 @@ export const mergeService = async (cheminsFichiers) => {
 
     // Charger le PDF source
     const pdfBytes = fs.readFileSync(chemin);
-    const pdfSource = await PDFDocument.load(pdfBytes);
+    const pdfSource = await loadPdf(pdfBytes);
 
     // copyPages copie TOUTES les pages du document source
     // pdfSource.getPageIndices() retourne [0, 1, 2, ...] 

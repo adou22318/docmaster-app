@@ -5,16 +5,33 @@ import { useFileStore } from '../../store/useFileStore';
 import { ErrorBanner } from '../layout/ErrorBanner';
 import { tools } from '../../data/tools';
 import { useScrollAnimation } from '../../hooks/useScrollAnimation';
+import { formatSize } from '../../utils/formatters';
+import { detecterProtectionPdf } from '../../hooks/usePdfPasswordDetection';
+import { ModalePdfProtege } from '../workspace/ModalePdfProtege';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const ALLOWED_EXTENSIONS = ['.pdf', '.jpg', '.jpeg', '.png', '.docx', '.xlsx', '.pptx', '.tiff', '.tif'];
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50 Mo
 
-export const DropZone = () => {
+export const DropZone = ({ toolId, onPdfNonProtege }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
+  const [modalePdfProtege, setModalePdfProtege] = useState(false);
+  const [fichierEnAttente, setFichierEnAttente] = useState(null);
   const fileInputRef = useRef(null);
   const { ref: scrollRef, inView } = useScrollAnimation(0.1);
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // Traiter un fichier préchargé (ex: depuis la modale PDF protégé)
+  React.useEffect(() => {
+    if (location.state?.preloadedFile) {
+      processFile(location.state.preloadedFile);
+      // Nettoyer l'état pour ne pas re-traiter au retour
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state?.preloadedFile]);
   
   const { 
     currentFile, 
@@ -69,9 +86,31 @@ export const DropZone = () => {
     return true;
   };
 
-  const processFile = async (file) => {
+  const processFile = async (file, motDePasse = null) => {
     if (!validateFile(file)) return;
 
+    if (file.type === 'application/pdf' && !motDePasse) {
+      const { estProtege } = await detecterProtectionPdf(file);
+      
+      if (toolId === 'unprotect') {
+        if (!estProtege) {
+          if (onPdfNonProtege) {
+            onPdfNonProtege(file);
+          } else {
+            setUploadError("Ce PDF n'est pas protégé. Aucun déverrouillage n'est nécessaire.");
+          }
+          return;
+        }
+      } else {
+        if (estProtege) {
+          setFichierEnAttente(file);
+          setModalePdfProtege(true);
+          return;
+        }
+      }
+    }
+
+    setModalePdfProtege(false);
     startUpload();
     
     const formData = new FormData();
@@ -105,7 +144,8 @@ export const DropZone = () => {
         uploadSuccess({
           fileId: resolvedId,
           nomOriginal: fileData.file?.nom_original || fileData.nom_original || file.name,
-          tailleOctets: fileData.file?.taille_octets || fileData.taille_octets || file.size
+          tailleOctets: fileData.file?.taille_octets || fileData.taille_octets || file.size,
+          motDePassePdf: motDePasse
         });
       }
     } catch (error) {
@@ -137,13 +177,7 @@ export const DropZone = () => {
     e.target.value = '';
   };
 
-  const formatSize = (bytes) => {
-    if (!bytes) return '0 B';
-    const k = 1024;
-    const sizes = ['o', 'Ko', 'Mo', 'Go'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
-  };
+
 
   // Détermine les outils compatibles avec le type de fichier uploadé
   const getSuggestedTools = () => {
@@ -167,8 +201,11 @@ export const DropZone = () => {
   return (
     <section ref={scrollRef} className={`relative group animate-fade-up ${inView ? 'visible' : ''}`}>
       {/* Affichage des erreurs avec ErrorBanner */}
-      {uploadError && typeof uploadError === 'string' && (
-        <ErrorBanner message={uploadError} onDismiss={() => setUploadError(null)} />
+      {uploadError && uploadError !== "Ce PDF n'est pas protégé. Aucun déverrouillage n'est nécessaire." && (
+        <ErrorBanner 
+          message={uploadError} 
+          onDismiss={() => setUploadError(null)} 
+        />
       )}
 
       <div className="absolute -inset-2 bg-gradient-to-r from-secondary-container/20 to-tertiary-fixed/20 blur-xl rounded-[2rem] opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
@@ -315,6 +352,49 @@ export const DropZone = () => {
           accept=".pdf,.jpg,.jpeg,.png,.docx,.xlsx,.pptx,.tiff,.tif"
         />
       </div>
+
+      {/* MODALE POUR PDF PROTÉGÉ */}
+      {modalePdfProtege && (
+        <ModalePdfProtege
+          fichier={fichierEnAttente}
+          onAnnuler={() => {
+            setModalePdfProtege(false);
+            setFichierEnAttente(null);
+          }}
+          onEntrerMotDePasse={(mdp) => {
+            setModalePdfProtege(false);
+            processFile(fichierEnAttente, mdp);
+          }}
+          onDevrouiller={() => {
+            setModalePdfProtege(false);
+            navigate('/dashboard/tools/unprotect', { state: { preloadedFile: fichierEnAttente } });
+          }}
+        />
+      )}
+
+      {/* MODALE D'ERREUR SPÉCIFIQUE (ex: unprotect sur fichier non protégé) */}
+      {uploadError === "Ce PDF n'est pas protégé. Aucun déverrouillage n'est nécessaire." && (
+        <>
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 animate-fade" onClick={() => setUploadError(null)} />
+          <div className="fixed inset-0 flex items-center justify-center p-4 z-50 animate-scale pointer-events-none">
+            <div className="bg-surface rounded-2xl shadow-xl max-w-sm w-full p-6 text-center pointer-events-auto">
+              <div className="w-16 h-16 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="material-symbols-outlined text-3xl">info</span>
+              </div>
+              <h3 className="font-display-xl text-title-md text-on-surface mb-2">Fichier non protégé</h3>
+              <p className="text-body-md text-on-surface-variant mb-6">
+                Ce PDF n'a pas de mot de passe. Aucun déverrouillage n'est nécessaire.
+              </p>
+              <button 
+                onClick={() => setUploadError(null)}
+                className="w-full py-2.5 bg-primary text-on-primary font-label-bold rounded-xl hover:bg-primary/90 transition-colors"
+              >
+                J'ai compris
+              </button>
+            </div>
+          </div>
+        </>
+      )}
 
       {/* MODAL DE CONFIRMATION D'ANNULATION */}
       {showCancelConfirm && (

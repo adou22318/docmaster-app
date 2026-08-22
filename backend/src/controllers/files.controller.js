@@ -14,6 +14,12 @@ export const uploadFile = async (req, res) => {
 
     const userId = req.user.id;
 
+    // Correction d'encodage Multer : les navigateurs envoient le nom en UTF-8
+    // mais Multer le lit en latin1 par défaut → on re-encode correctement.
+    if (req.file.originalname) {
+      req.file.originalname = Buffer.from(req.file.originalname, 'latin1').toString('utf8');
+    }
+
     await checkQuotaService(userId, req.file.size);
 
     const file = await createFileService(req.file, userId);
@@ -47,6 +53,39 @@ export const uploadFile = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: 'Erreur lors de l\'upload.'
+    });
+  }
+};
+
+export const uploadTempFile = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: 'Aucun fichier reçu.'
+      });
+    }
+
+    // Le fichier a été enregistré sur le disque par Multer.
+    // On ne l'insère PAS en base de données et on ne vérifie PAS le quota
+    // car il est destiné à être supprimé automatiquement après traitement.
+    // Multer génère "uuid.ext" — on retire l'extension pour retourner un UUID pur
+    const filenameWithoutExt = req.file.filename.replace(/\.[^.]+$/, '');
+
+    return res.status(201).json({
+      success: true,
+      message: 'Fichier temporaire uploadé avec succès.',
+      data: {
+        id_files: filenameWithoutExt,
+        nom_original: req.file.originalname
+      }
+    });
+
+  } catch (error) {
+    console.error('Erreur upload temporaire:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Erreur lors de l\'upload temporaire.'
     });
   }
 };
@@ -96,6 +135,34 @@ export const downloadFile = async (req, res) => {
       success: false,
       message: 'Erreur lors du téléchargement.'
     });
+  }
+};
+
+export const streamFile = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+
+    // Récupérer le fichier en BDD
+    const result = await pool.query('SELECT * FROM files WHERE id_files = $1', [id]);
+    if (result.rows.length === 0) return res.status(404).json({ success: false, message: 'Fichier introuvable.' });
+
+    const file = result.rows[0];
+    if (file.owner_id !== userId) return res.status(403).json({ success: false, message: 'Accès refusé.' });
+    if (!fs.existsSync(file.chemin)) return res.status(404).json({ success: false, message: 'Fichier expiré ou supprimé.' });
+
+    // Stream en ligne pour react-pdf
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'inline; filename="' + encodeURIComponent(file.nom_original) + '"');
+    // Important pour CORS et Range requests via react-pdf
+    res.setHeader('Access-Control-Expose-Headers', 'Accept-Ranges, Content-Length, Content-Range');
+    
+    // sendFile gère nativement le Range Request
+    res.sendFile(file.chemin, { root: '.' });
+
+  } catch (error) {
+    console.error('Erreur stream:', error);
+    return res.status(500).json({ success: false, message: 'Erreur lors du chargement.' });
   }
 };
 

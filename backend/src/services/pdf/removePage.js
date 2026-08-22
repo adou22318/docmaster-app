@@ -1,4 +1,5 @@
 import { PDFDocument } from 'pdf-lib';
+import { loadPdf } from './loadPdf.js';
 import fs from 'fs';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
@@ -12,14 +13,14 @@ const OUTPUT_DIR = process.env.UPLOAD_DIR || './tmp/uploads';
 //                     (ex: "2, 5-8, 12") — même syntaxe que le split
 //
 // Accepte aussi un tableau de numéros 1-indexed pour rétrocompatibilité
-export const removePageService = async (chemin, selectionPages) => {
+export const removePageService = async (chemin, selectionPages, motDePasse = null) => {
 
   if (!fs.existsSync(chemin)) {
     throw new Error('FICHIER_INTROUVABLE');
   }
 
   const pdfBytes = fs.readFileSync(chemin);
-  const pdfDoc = await PDFDocument.load(pdfBytes);
+  const pdfDoc = await loadPdf(pdfBytes);
 
   const totalPages = pdfDoc.getPageCount();
 

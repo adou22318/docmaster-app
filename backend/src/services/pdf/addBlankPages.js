@@ -1,4 +1,5 @@
 import { PDFDocument } from 'pdf-lib';
+import { loadPdf } from './loadPdf.js';
 import fs from 'fs';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
@@ -22,7 +23,7 @@ const FORMATS_PAGE = {
 //   position : "debut", "fin", ou un numéro de page 1-indexed
 //              après laquelle insérer (défaut: "fin")
 //   format   : "a4", "a3", "a5", "letter", "legal" (défaut: "a4")
-export const addBlankPagesService = async (chemin, options = {}) => {
+export const addBlankPagesService = async (chemin, options = {}, motDePasse = null) => {
 
   const {
     nombre = 1,
@@ -48,7 +49,7 @@ export const addBlankPagesService = async (chemin, options = {}) => {
   }
 
   const pdfBytes = fs.readFileSync(chemin);
-  const pdfDoc = await PDFDocument.load(pdfBytes);
+  const pdfDoc = await loadPdf(pdfBytes);
   const totalPages = pdfDoc.getPageCount();
 
   // Résoudre la position d'insertion
@@ -87,3 +88,4 @@ export const addBlankPagesService = async (chemin, options = {}) => {
     pagesTotal: pdfDoc.getPageCount()
   };
 };
+

@@ -2,7 +2,8 @@ import { registerService, loginService, refreshTokenService, logoutService } fro
 
 export const register = async (req, res) => {
     try {
-        const { email, mot_de_passe, nom_complet } = req.body;
+        let { email, mot_de_passe, nom_complet } = req.body;
+        email = email?.trim().toLowerCase();
 
         //validation basique
         if(!email || !mot_de_passe || !nom_complet) {

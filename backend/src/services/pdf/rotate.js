@@ -1,4 +1,5 @@
 import { PDFDocument, degrees } from 'pdf-lib';
+import { loadPdf } from './loadPdf.js';
 import fs from 'fs';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
@@ -9,7 +10,7 @@ const OUTPUT_DIR = process.env.UPLOAD_DIR || './tmp/uploads';
 // angle : 90, 180 ou 270 degrés
 // pages : tableau optionnel de numéros de pages (1-indexed)
 //         si vide ou non fourni, rotation de TOUTES les pages
-export const rotateService = async (chemin, angle, pages = []) => {
+export const rotateService = async (chemin, angle, pages = [], motDePasse = null) => {
 
   if (![90, 180, 270].includes(angle)) {
     throw new Error('ANGLE_INVALIDE');
@@ -20,7 +21,7 @@ export const rotateService = async (chemin, angle, pages = []) => {
   }
 
   const pdfBytes = fs.readFileSync(chemin);
-  const pdfDoc = await PDFDocument.load(pdfBytes);
+  const pdfDoc = await loadPdf(pdfBytes);
 
   const toutesLesPages = pdfDoc.getPages();
   const totalPages = toutesLesPages.length;

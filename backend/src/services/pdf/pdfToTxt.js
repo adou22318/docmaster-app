@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { PDFParse } from 'pdf-parse';
 import { PDFDocument } from 'pdf-lib';
 import { parsePageSelection } from './parsePages.js';
+import { loadPdf } from './loadPdf.js';
 
 const OUTPUT_DIR = process.env.UPLOAD_DIR || './tmp/uploads';
 
@@ -42,7 +43,7 @@ function buildPdfParseFilter(pagesArray, totalPages) {
 // chemin : fichier source PDF
 // options :
 //   pages : sélection de pages (ex: "1-3, 5") — optionnel
-export const pdfToTxtService = async (chemin, options = {}) => {
+export const pdfToTxtService = async (chemin, options = {}, motDePasse = null) => {
 
   if (!fs.existsSync(chemin)) {
     throw new Error('FICHIER_INTROUVABLE');
@@ -53,7 +54,7 @@ export const pdfToTxtService = async (chemin, options = {}) => {
   const dataBuffer = fs.readFileSync(chemin);
 
   // Obtenir le nombre total de pages (via pdf-lib, rapide et synchrone)
-  const pdfDoc = await PDFDocument.load(dataBuffer, { ignoreEncryption: true });
+  const pdfDoc = await loadPdf(dataBuffer);
   const totalPages = pdfDoc.getPageCount();
 
   // Construire le filtre de pages
@@ -64,9 +65,15 @@ export const pdfToTxtService = async (chemin, options = {}) => {
   }
 
   try {
+    // Si le PDF était chiffré, on le déchiffre via pdf-lib en mémoire
+    let bufferToParse = dataBuffer;
+    if (motDePasse) {
+      bufferToParse = await pdfDoc.save();
+    }
+
     // pdf-parse v2 : constructeur reçoit { data: Uint8Array }
     // getText() reçoit les options de filtrage (partial / first / last)
-    const parser = new PDFParse({ data: new Uint8Array(dataBuffer) });
+    const parser = new PDFParse({ data: new Uint8Array(bufferToParse) });
     const result = await parser.getText(parseFilter);
 
     // result.pages = [{text: string, num: number}, ...]
@@ -99,3 +106,4 @@ export const pdfToTxtService = async (chemin, options = {}) => {
     throw new Error(`ECHEC_EXTRACTION_TEXTE:${error.message}`);
   }
 };
+

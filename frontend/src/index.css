@@ -179,3 +179,9 @@
 .delay-6  { transition-delay: 480ms; }
 
 /* Animations forcées pour tous les utilisateurs (pour garantir le rendu lors de la soutenance) */
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+

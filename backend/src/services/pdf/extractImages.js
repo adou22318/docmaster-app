@@ -6,6 +6,7 @@ import { PDFDocument, PDFName, PDFDict, PDFRawStream, PDFArray } from 'pdf-lib';
 import sharp from 'sharp';
 import { ZipArchive } from 'archiver';
 import { parsePageSelection } from './parsePages.js';
+import { loadPdf } from './loadPdf.js';
 
 const OUTPUT_DIR = process.env.UPLOAD_DIR || './tmp/uploads';
 
@@ -97,7 +98,7 @@ function getChannels(dict, context) {
 // chemin   : fichier source PDF
 // options  :
 //   pages  : sélection de pages (ex: "1-3, 5") — optionnel, défaut = toutes
-export const extractImagesService = async (chemin, options = {}) => {
+export const extractImagesService = async (chemin, options = {}, motDePasse = null) => {
   if (!fs.existsSync(chemin)) {
     throw new Error('FICHIER_INTROUVABLE');
   }
@@ -114,7 +115,7 @@ export const extractImagesService = async (chemin, options = {}) => {
 
   try {
     const pdfBytes = fs.readFileSync(chemin);
-    const pdfDoc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
+    const pdfDoc = await loadPdf(pdfBytes);
     const allPages = pdfDoc.getPages();
     const totalPages = allPages.length;
     const context = pdfDoc.context;
@@ -296,3 +297,4 @@ export const extractImagesService = async (chemin, options = {}) => {
     throw new Error(`ECHEC_EXTRACTION_IMAGES:${error.message}`);
   }
 };
+

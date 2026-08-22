@@ -9,12 +9,7 @@ import { Register } from './pages/Register';
 import { AuthCallback } from './pages/AuthCallback';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { Dashboard } from './pages/Dashboard';
-import { Signature } from './pages/tools/Signature';
-import { Compression } from './pages/tools/Compression';
-import { Watermark } from './pages/tools/Watermark';
-import { Security } from './pages/tools/Security';
-import { Conversion } from './pages/tools/Conversion';
-import { SplitMerge } from './pages/tools/SplitMerge';
+import { ToolPage } from './pages/ToolPage';
 
 function App() {
   const initializeAuth = useAuthStore((state) => state.initializeAuth);
@@ -39,12 +34,7 @@ function App() {
         <Route path="/dashboard" element={<ProtectedRoute />}>
           <Route element={<AppLayout />}>
             <Route index element={<Dashboard />} />
-            <Route path="tools/sign" element={<Signature />} />
-            <Route path="tools/compress" element={<Compression />} />
-            <Route path="tools/watermark" element={<Watermark />} />
-            <Route path="tools/security" element={<Security />} />
-            <Route path="tools/convert" element={<Conversion />} />
-            <Route path="tools/split-merge" element={<SplitMerge />} />
+            <Route path="tools/:toolId" element={<ToolPage />} />
           </Route>
         </Route>
       </Routes>

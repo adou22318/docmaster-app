@@ -3,6 +3,7 @@ import axiosClient from '../../services/api/axiosClient';
 import { useFileStore } from '../../store/useFileStore';
 import { ErrorBanner } from '../layout/ErrorBanner';
 import { useScrollAnimation } from '../../hooks/useScrollAnimation';
+import { formatSize } from '../../utils/formatters';
 
 // ─── COMPOSANT ENFANT POUR ANIMER CHAQUE LIGNE ───────────────────────
 const FileRow = ({ file, index, onDownload, onDelete, downloadingId }) => {
@@ -64,13 +65,6 @@ const FileRow = ({ file, index, onDownload, onDelete, downloadingId }) => {
 };
 
 // ─── UTILITAIRES ─────────────────────────────────────────────────────
-function formatSize(bytes) {
-  if (!bytes) return '0 o';
-  const k = 1024;
-  const sizes = ['o', 'Ko', 'Mo', 'Go'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
-}
 
 function formatDate(dateString) {
   const date = new Date(dateString);

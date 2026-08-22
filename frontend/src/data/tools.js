@@ -1,17 +1,5 @@
 export const tools = [
   {
-    id: "convert_images_to_pdf",
-    nom: "Images vers PDF",
-    description: "Convertissez vos images (JPG, PNG, TIFF) en un document PDF unique.",
-    icone: "image",
-    couleur: "default",
-    categorie: "conversion",
-    typeOperation: "convert_images_to_pdf",
-    populaire: false,
-    route: "/dashboard/tools/convert",
-    accepteMultiple: true,
-  },
-  {
     id: "pdf_to_images",
     nom: "PDF vers Images",
     description: "Extrayez chaque page de votre PDF en images individuelles.",
@@ -20,8 +8,19 @@ export const tools = [
     categorie: "conversion",
     typeOperation: "pdf_to_images",
     populaire: false,
-    route: "/dashboard/tools/convert",
+    route: "/dashboard/tools/pdf_to_images",
     accepteMultiple: false,
+    utiliseVisualiseur: true,
+    selectionMode: "multiple",
+    selectionStyle: "blue",
+    howItWorks: {
+      etapes: [
+        { titre: "Importez votre document PDF", description: "Chargez le fichier dont vous souhaitez extraire les pages sous forme d'images." },
+        { titre: "Sélectionnez les pages", description: "Choisissez les pages spécifiques que vous souhaitez convertir en cliquant dessus." },
+        { titre: "Téléchargez les images", description: "Récupérez vos pages converties (format ZIP si plusieurs)." }
+      ],
+      conseil: "Idéal pour utiliser des pages de présentation ou de documents dans des logiciels qui n'acceptent pas le PDF."
+    }
   },
   {
     id: "convert_to_pdf",
@@ -32,8 +31,17 @@ export const tools = [
     categorie: "conversion",
     typeOperation: "convert_to_pdf",
     populaire: false,
-    route: "/dashboard/tools/convert",
+    route: "/dashboard/tools/convert_to_pdf",
     accepteMultiple: false,
+    sansOptions: true,
+    howItWorks: {
+      etapes: [
+        { titre: "Importez votre document Office", description: "Chargez un fichier Word, Excel ou PowerPoint." },
+        { titre: "Conversion automatique", description: "Le système convertira automatiquement votre document en préservant sa mise en page." },
+        { titre: "Téléchargez le PDF", description: "Votre document converti est prêt à être partagé." }
+      ],
+      conseil: "La conversion maintient les polices et la mise en page d'origine pour un rendu parfait."
+    }
   },
   {
     id: "pdf_to_txt",
@@ -44,8 +52,17 @@ export const tools = [
     categorie: "conversion",
     typeOperation: "pdf_to_txt",
     populaire: false,
-    route: "/dashboard/tools/convert",
+    route: "/dashboard/tools/pdf_to_txt",
     accepteMultiple: false,
+    sansOptions: true,
+    howItWorks: {
+      etapes: [
+        { titre: "Importez votre PDF", description: "Sélectionnez le PDF dont vous souhaitez extraire le texte." },
+        { titre: "Extraction automatique", description: "L'outil parcourt le document pour en récupérer tout le texte sélectionnable." },
+        { titre: "Téléchargez le texte", description: "Récupérez un fichier .txt brut contenant tout le texte." }
+      ],
+      conseil: "L'extraction ne fonctionne que sur les PDF textuels (les documents scannés sous forme d'image ne seront pas reconnus)."
+    }
   },
   {
     id: "merge",
@@ -56,8 +73,26 @@ export const tools = [
     categorie: "organisation",
     typeOperation: "merge",
     populaire: true,
-    route: "/dashboard/tools/split-merge",
+    route: "/dashboard/tools/merge",
     accepteMultiple: true,
+    sansOptions: true,
+    howItWorks: {
+      etapes: [
+        {
+          titre: "Importez vos fichiers PDF",
+          description: "Glissez-déposez deux fichiers PDF ou plus dans la zone de dépôt."
+        },
+        {
+          titre: "Réorganisez l'ordre",
+          description: "Faites glisser les fichiers pour définir l'ordre dans lequel ils seront fusionnés."
+        },
+        {
+          titre: "Téléchargez le résultat",
+          description: "Cliquez sur 'Fusionner les PDF' et téléchargez votre document combiné."
+        }
+      ],
+      conseil: "Vous pouvez fusionner jusqu'à 20 fichiers PDF en une seule opération."
+    }
   },
   {
     id: "split",
@@ -68,8 +103,32 @@ export const tools = [
     categorie: "organisation",
     typeOperation: "split",
     populaire: true,
-    route: "/dashboard/tools/split-merge",
+    route: "/dashboard/tools/split",
     accepteMultiple: false,
+    utiliseVisualiseur: true,
+    selectionMode: "range",
+    selectionStyle: "blue",
+    howItWorks: {
+      etapes: [
+        {
+          titre: "Importez votre PDF",
+          description: "Chargez le document que vous souhaitez diviser."
+        },
+        {
+          titre: "Sélectionnez les pages",
+          description: "3 modes disponibles : Plage (1er clic = début, 2e clic = fin), Individuel (cliquez sur chaque page), Mixte (simple-clic = page isolée, double-clic = début/fin de plage)."
+        },
+        {
+          titre: "Choisissez le mode de sortie",
+          description: "Un seul PDF avec toutes les pages sélectionnées, ou un PDF séparé par groupe de pages (archive ZIP)."
+        },
+        {
+          titre: "Téléchargez le résultat",
+          description: "Votre PDF divisé sera prêt en quelques secondes."
+        }
+      ],
+      conseil: "Le mode Mixte combine les avantages des deux autres : sélectionnez librement des pages individuelles et des plages dans la même opération."
+    }
   },
   {
     id: "rotate",
@@ -80,8 +139,19 @@ export const tools = [
     categorie: "organisation",
     typeOperation: "rotate",
     populaire: false,
-    route: "/dashboard/tools/split-merge",
+    route: "/dashboard/tools/rotate",
     accepteMultiple: false,
+    utiliseVisualiseur: true,
+    selectionMode: "multiple",
+    selectionStyle: "blue",
+    howItWorks: {
+      etapes: [
+        { titre: "Importez votre PDF", description: "Chargez le document dont vous souhaitez faire pivoter certaines pages." },
+        { titre: "Sélectionnez les pages et pivotez", description: "Choisissez les pages à pivoter et définissez l'angle (90°, 180°, ou 270°)." },
+        { titre: "Appliquez la rotation", description: "Téléchargez le fichier mis à jour avec les pages réorientées." }
+      ],
+      conseil: "Utile pour corriger l'orientation de documents numérisés à l'envers."
+    }
   },
   {
     id: "remove_pages",
@@ -92,8 +162,19 @@ export const tools = [
     categorie: "organisation",
     typeOperation: "remove_pages",
     populaire: false,
-    route: "/dashboard/tools/split-merge",
+    route: "/dashboard/tools/remove_pages",
     accepteMultiple: false,
+    utiliseVisualiseur: true,
+    selectionMode: "multiple",
+    selectionStyle: "red",
+    howItWorks: {
+      etapes: [
+        { titre: "Importez votre PDF", description: "Chargez le document dont vous souhaitez supprimer des pages." },
+        { titre: "Sélectionnez les pages à retirer", description: "Cliquez sur les pages indésirables, elles seront marquées en rouge." },
+        { titre: "Confirmez la suppression", description: "Le document final sera généré sans les pages sélectionnées." }
+      ],
+      conseil: "Les numéros de pages seront automatiquement réajustés sur le document final."
+    }
   },
   {
     id: "add_blank_pages",
@@ -104,13 +185,22 @@ export const tools = [
     categorie: "organisation",
     typeOperation: "add_blank_pages",
     populaire: false,
-    route: "/dashboard/tools/split-merge",
+    route: "/dashboard/tools/add_blank_pages",
     accepteMultiple: false,
+    howItWorks: {
+      etapes: [
+        { titre: "Importez votre PDF", description: "Chargez le document nécessitant l'ajout de pages vierges." },
+        { titre: "Définissez la position", description: "Choisissez d'insérer les pages au début, à la fin ou après une page spécifique." },
+        { titre: "Indiquez la quantité", description: "Précisez le nombre de pages blanches à insérer." },
+        { titre: "Validez", description: "Téléchargez votre document mis à jour." }
+      ],
+      conseil: "Pratique pour préparer des documents destinés à une impression recto verso avec pages de séparation."
+    }
   },
   {
     id: "watermark",
     nom: "Ajouter un filigrane",
-    description: "Apposez un texte ou une image en filigrane sur vos pages.",
+    description: "Apposez un texte en filigrane sur les pages de votre PDF.",
     icone: "branding_watermark",
     couleur: "default",
     categorie: "edition",
@@ -118,18 +208,54 @@ export const tools = [
     populaire: false,
     route: "/dashboard/tools/watermark",
     accepteMultiple: false,
+    utiliseVisualiseur: true,
+    selectionMode: "multiple",
+    selectionStyle: "blue",
+    howItWorks: {
+      etapes: [
+        { titre: "Importez votre PDF", description: "Chargez le document à protéger." },
+        { titre: "Configurez le filigrane", description: "Définissez le texte, sa couleur, taille, opacité et rotation." },
+        { titre: "Sélectionnez l'emplacement", description: "Choisissez la position du filigrane et les pages concernées." },
+        { titre: "Appliquez le filigrane", description: "Téléchargez le document avec le filigrane intégré." }
+      ],
+      conseil: "Un filigrane semi-transparent et placé au centre ou en diagonale offre la meilleure protection sans nuire à la lecture."
+    }
   },
   {
-    id: "add_images",
-    nom: "Ajouter des images",
-    description: "Insérez des images supplémentaires dans votre PDF existant.",
+    id: "add_image",
+    nom: "Ajouter une image",
+    description: "Incrustez une image sur les pages de votre PDF existant.",
     icone: "add_photo_alternate",
     couleur: "default",
     categorie: "edition",
-    typeOperation: "add_images",
+    typeOperation: "add_image",
     populaire: false,
-    route: "/dashboard/tools/split-merge",
-    accepteMultiple: true,
+    route: "/dashboard/tools/add_image",
+    accepteMultiple: false,
+    utiliseVisualiseur: true,
+    selectionMode: "multiple",
+    selectionStyle: "blue",
+    howItWorks: {
+      etapes: [
+        {
+          titre: "Importez votre PDF",
+          description: "Chargez le document sur lequel vous souhaitez ajouter une image."
+        },
+        {
+          titre: "Importez votre image",
+          description: "Ajoutez l'image à insérer (logo, tampon, illustration). PNG recommandé pour la transparence."
+        },
+        {
+          titre: "Configurez le placement",
+          description: "Choisissez la position (9 emplacements disponibles), les dimensions, et les pages concernées."
+        },
+        {
+          titre: "Téléchargez le résultat",
+          description: "Votre PDF avec l'image intégrée sera prêt en quelques secondes."
+        }
+      ],
+      conseil: "Utilisez un PNG avec fond transparent pour que votre image ne masque pas le contenu existant du document."
+    }
   },
   {
     id: "extract_images",
@@ -140,13 +266,24 @@ export const tools = [
     categorie: "edition",
     typeOperation: "extract_images",
     populaire: true,
-    route: "/dashboard/tools/split-merge",
+    route: "/dashboard/tools/extract_images",
     accepteMultiple: false,
+    utiliseVisualiseur: true,
+    selectionMode: "multiple",
+    selectionStyle: "blue",
+    howItWorks: {
+      etapes: [
+        { titre: "Importez votre PDF", description: "Sélectionnez le fichier dont vous voulez extraire les images intégrées." },
+        { titre: "Sélectionnez les pages (optionnel)", description: "Si vous le souhaitez, limitez l'extraction à certaines pages spécifiques." },
+        { titre: "Téléchargez les images", description: "L'outil récupérera toutes les photos et graphiques sous forme d'archive ZIP." }
+      ],
+      conseil: "Seules les véritables images intégrées seront extraites, les graphiques vectoriels ou textes stylisés ne le seront pas."
+    }
   },
   {
     id: "sign",
     nom: "Signer un PDF",
-    description: "Apposez une signature électronique ou un cachet sur votre PDF.",
+    description: "Apposez une signature électronique simple sur votre document PDF.",
     icone: "history_edu",
     couleur: "primary",
     categorie: "edition",
@@ -154,6 +291,24 @@ export const tools = [
     populaire: true,
     route: "/dashboard/tools/sign",
     accepteMultiple: false,
+    utiliseVisualiseurSignature: true,
+    howItWorks: {
+      etapes: [
+        {
+          titre: "Créez votre signature",
+          description: "Dessinez votre signature avec la souris ou votre doigt, saisissez votre nom en style calligraphique, ou importez une image PNG."
+        },
+        {
+          titre: "Positionnez la signature",
+          description: "Faites glisser votre signature à l'endroit souhaité sur la page du document. Utilisez les poignées pour la redimensionner."
+        },
+        {
+          titre: "Téléchargez le document signé",
+          description: "Votre PDF avec la signature apposée sera disponible immédiatement."
+        }
+      ],
+      conseil: "Pour une signature sans fond blanc, utilisez l'onglet 'Dessiner' ou importez une image PNG avec fond transparent."
+    }
   },
   {
     id: "protect",
@@ -164,8 +319,16 @@ export const tools = [
     categorie: "securite",
     typeOperation: "protect",
     populaire: true,
-    route: "/dashboard/tools/security",
+    route: "/dashboard/tools/protect",
     accepteMultiple: false,
+    howItWorks: {
+      etapes: [
+        { titre: "Importez votre PDF", description: "Sélectionnez le document que vous souhaitez verrouiller." },
+        { titre: "Définissez un mot de passe", description: "Saisissez un mot de passe robuste qui sera requis pour ouvrir le fichier." },
+        { titre: "Téléchargez le PDF protégé", description: "Votre fichier chiffré est prêt et sécurisé." }
+      ],
+      conseil: "Utilisez un mot de passe contenant des lettres, des chiffres et des caractères spéciaux pour une sécurité maximale."
+    }
   },
   {
     id: "unprotect",
@@ -176,8 +339,16 @@ export const tools = [
     categorie: "securite",
     typeOperation: "unprotect",
     populaire: false,
-    route: "/dashboard/tools/security",
+    route: "/dashboard/tools/unprotect",
     accepteMultiple: false,
+    howItWorks: {
+      etapes: [
+        { titre: "Importez le PDF protégé", description: "Sélectionnez le document chiffré." },
+        { titre: "Saisissez le mot de passe actuel", description: "Vous devez connaître le mot de passe actuel pour pouvoir le retirer." },
+        { titre: "Téléchargez le PDF déverrouillé", description: "Votre document est de nouveau librement accessible." }
+      ],
+      conseil: "Idéal pour retirer la protection d'un document que vous consultez fréquemment et dont vous êtes le propriétaire."
+    }
   },
   {
     id: "compress",
@@ -190,5 +361,43 @@ export const tools = [
     populaire: true,
     route: "/dashboard/tools/compress",
     accepteMultiple: false,
+    howItWorks: {
+      etapes: [
+        {
+          titre: "Importez votre PDF",
+          description: "Sélectionnez le fichier PDF que vous souhaitez réduire."
+        },
+        {
+          titre: "Choisissez le niveau de compression",
+          description: "Haute : fichier très léger mais qualité réduite. Moyenne : bon équilibre. Basse : qualité maximale, réduction légère."
+        },
+        {
+          titre: "Téléchargez votre PDF allégé",
+          description: "Le pourcentage de réduction sera affiché une fois le traitement terminé."
+        }
+      ],
+      conseil: "Pour les PDF contenant beaucoup d'images, la compression Haute peut réduire la taille de plus de 70%."
+    }
+  },
+  {
+    id: "convert_images_to_pdf",
+    nom: "Images vers PDF",
+    description: "Assemblez plusieurs images (JPG, PNG, TIFF) en un seul document PDF.",
+    icone: "photo_library",
+    couleur: "default",
+    categorie: "conversion",
+    typeOperation: "convert_images_to_pdf",
+    populaire: false,
+    route: "/dashboard/tools/convert_images_to_pdf",
+    accepteMultiple: true,
+    howItWorks: {
+      etapes: [
+        { titre: "Importez vos images", description: "Ajoutez vos fichiers JPG, PNG ou TIFF. Vous pouvez en importer jusqu'à 20 en une fois." },
+        { titre: "Réorganisez l'ordre", description: "Faites glisser les images pour définir l'ordre d'apparition dans le PDF final." },
+        { titre: "Configurez la mise en page", description: "Choisissez l'orientation (portrait/paysage), le format de page et les marges." },
+        { titre: "Téléchargez le PDF", description: "Votre document PDF regroupant toutes les images sera généré automatiquement." }
+      ],
+      conseil: "Utilisez des images PNG pour une meilleure qualité ; les JPEG sont recommandés si la taille du fichier final est importante."
+    }
   },
 ];

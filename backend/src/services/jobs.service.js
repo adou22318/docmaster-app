@@ -5,6 +5,7 @@ import pdfQueue from '../jobs/queue.js';
 export const createJobService = async (userId, typeOperation, fichiers, options = {}) => {
 
   // Étape 1 — Vérifier que les fichiers appartiennent à l'utilisateur
+  // Les fichiers temporaires (upload-temp) ne sont pas en BDD, on les ignore ici
   for (const fileId of fichiers) {
     const result = await pool.query(
       'SELECT owner_id FROM files WHERE id_files = $1',
@@ -12,7 +13,9 @@ export const createJobService = async (userId, typeOperation, fichiers, options 
     );
 
     if (result.rows.length === 0) {
-      throw new Error('FILE_NOT_FOUND');
+      // Fichier introuvable en BDD → probablement un fichier temporaire (signature, image incrustée)
+      // On ne bloque pas, le worker vérifiera l'existence sur le disque
+      continue;
     }
 
     if (result.rows[0].owner_id !== userId) {
@@ -31,12 +34,19 @@ export const createJobService = async (userId, typeOperation, fichiers, options 
   const job = jobResult.rows[0];
 
   // Étape 3 — Lier les fichiers au job dans jobs_files
+  // On ne lie que les fichiers qui existent en BDD (pas les fichiers temporaires)
   for (const fileId of fichiers) {
-    await pool.query(
-      `INSERT INTO jobs_files (jobs_id, files_id, role)
-       VALUES ($1, $2, 'input')`,
-      [job.id_jobs, fileId]
+    const exists = await pool.query(
+      'SELECT 1 FROM files WHERE id_files = $1',
+      [fileId]
     );
+    if (exists.rows.length > 0) {
+      await pool.query(
+        `INSERT INTO jobs_files (jobs_id, files_id, role)
+         VALUES ($1, $2, 'input')`,
+        [job.id_jobs, fileId]
+      );
+    }
   }
 
   // Étape 4 — Ajouter dans Bull Queue
@@ -56,11 +66,16 @@ export const createJobService = async (userId, typeOperation, fichiers, options 
 export const getJobStatusService = async (jobId, userId) => {
 
   const result = await pool.query(
-    `SELECT id_jobs, type_operation, statut, progression,
-            resultat_url, erreur_message, created_at,
-            started_at, completed_at
-     FROM jobs
-     WHERE id_jobs = $1 AND user_id = $2`,
+    `SELECT j.id_jobs, j.type_operation, j.statut, j.progression,
+            j.resultat_url, j.erreur_message, j.created_at,
+            j.started_at, j.completed_at,
+            (SELECT f.taille_octets 
+             FROM jobs_files jf 
+             JOIN files f ON jf.files_id = f.id_files 
+             WHERE jf.jobs_id = j.id_jobs AND jf.role = 'output' 
+             LIMIT 1) as taille_result
+     FROM jobs j
+     WHERE j.id_jobs = $1 AND j.user_id = $2`,
     [jobId, userId]
   );
 

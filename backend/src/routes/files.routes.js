@@ -1,7 +1,7 @@
 import express from 'express';
 import upload from '../middlewares/uploads.js';
 import verifyToken from '../middlewares/verifyToken.js';
-import { uploadFile, downloadFile, deleteFile, getUserFiles } from '../controllers/files.controller.js';
+import { uploadFile, uploadTempFile, downloadFile, streamFile, deleteFile, getUserFiles } from '../controllers/files.controller.js';
 
 const router = express.Router();
 // Gestion des erreurs Multer — doit être faite ici
@@ -38,11 +38,15 @@ const handleUpload = (req, res, next) => {
 // Route pour l'upload (Accessible aux connectés)
 router.post('/upload', verifyToken, handleUpload, uploadFile);
 
+// Route pour upload temporaire (sans insertion DB, ne compte pas dans quota)
+router.post('/upload-temp', verifyToken, handleUpload, uploadTempFile);
+
 // Route pour lister les fichiers récents
 router.get('/', verifyToken, getUserFiles);
 
 // Routes pour manipuler un fichier
 router.get('/download/:id', verifyToken, downloadFile);
+router.get('/stream/:id', verifyToken, streamFile);
 router.delete('/:id', verifyToken, deleteFile);
 
 export default router;
