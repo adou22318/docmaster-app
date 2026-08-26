@@ -2,7 +2,7 @@ import fs from 'fs';
 import pool from '../config/db.js';
 
 export const nettoyerFichiersExpires = async () => {
-  console.log('🧹 Nettoyage des fichiers expirés...');
+  console.log(`[${new Date().toISOString()}] 🧹 Nettoyage des fichiers expirés...`);
 
   try {
     // Récupérer tous les fichiers expirés

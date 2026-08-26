@@ -1,6 +1,7 @@
 import pool from "../config/db.js"
 import bcrypt from "bcrypt"
 import jwt from "jsonwebtoken"
+import fs from "fs"
 
 export const getAllUsersService = async() => {
     const result = await pool.query(
@@ -231,3 +232,54 @@ export const logoutService = async (refreshToken) => {
   return true;
 };
 
+// ─── Service Suppression de compte ──────────────────────────
+export const deleteAccountService = async (userId) => {
+  // 1. Récupérer tous les fichiers de l'utilisateur pour les supprimer du disque
+  const userFiles = await pool.query(
+    'SELECT chemin FROM files WHERE owner_id = $1',
+    [userId]
+  );
+
+  for (const file of userFiles.rows) {
+    if (fs.existsSync(file.chemin)) {
+      fs.unlinkSync(file.chemin);
+    }
+  }
+
+  // 2. Supprimer les fichiers de la base (cascades aux jobs_files)
+  await pool.query('DELETE FROM files WHERE owner_id = $1', [userId]);
+
+  // 3. Supprimer les jobs de l'utilisateur
+  await pool.query('DELETE FROM jobs WHERE user_id = $1', [userId]);
+
+  // 4. Supprimer les refresh tokens
+  await pool.query('DELETE FROM refresh_tokens WHERE user_id = $1', [userId]);
+
+  // 5. Supprimer l'utilisateur
+  await pool.query('DELETE FROM users WHERE id_users = $1', [userId]);
+
+  return true;
+};
+
+export const updateProfileService = async (id, nom_complet, email, newPassword = null) => {
+    // Vérifier si l'email existe déjà pour un autre user
+    const emailCheck = await pool.query("SELECT * FROM users WHERE email = $1 AND id_users != $2", [email, id]);
+    if (emailCheck.rows.length > 0) {
+        throw new Error("Cet email est déjà utilisé par un autre compte.");
+    }
+    
+    if (newPassword) {
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        const result = await pool.query(
+            "UPDATE users SET nom_complet = $1, email = $2, mot_de_passe = $3 WHERE id_users = $4 RETURNING id_users, email, nom_complet, plan, photo_url",
+            [nom_complet, email, hashedPassword, id]
+        );
+        return result.rows[0];
+    } else {
+        const result = await pool.query(
+            "UPDATE users SET nom_complet = $1, email = $2 WHERE id_users = $3 RETURNING id_users, email, nom_complet, plan, photo_url",
+            [nom_complet, email, id]
+        );
+        return result.rows[0];
+    }
+};

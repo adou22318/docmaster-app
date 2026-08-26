@@ -185,3 +185,12 @@
   to { transform: rotate(360deg); }
 }
 
+@keyframes slideInRight {
+  from { transform: translateX(110%); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+
+@keyframes scaleIn {
+  from { transform: translate(-50%, -50%) scale(0.95); opacity: 0; }
+  to   { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+}

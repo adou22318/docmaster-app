@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from 'react';
+import { useToast } from '../../context/ToastContext';
 import { useNavigate } from 'react-router-dom';
 import { useFileStore } from '../../store/useFileStore';
 import axiosClient from '../../services/api/axiosClient';
@@ -92,6 +93,7 @@ const ErrorBanner = ({ error, onUnlock }) => {
 
 export const ToolWorkspaceLayout = ({ tool, step, setStep, onReset, onBack }) => {
   const navigate = useNavigate();
+  const toast = useToast();
   const [activeJobId, setActiveJobId] = useState(null);
   const [jobResult, setJobResult] = useState(null);
   const [startError, setStartError] = useState(null);
@@ -119,8 +121,10 @@ export const ToolWorkspaceLayout = ({ tool, step, setStep, onReset, onBack }) =>
   // État local pour le statut "non protégé" (BUG-01)
   const [pdfNonProtege, setPdfNonProtege] = useState(false);
 
+  const [isStarting, setIsStarting] = useState(false);
+
   const OptionsComponent = OPTIONS_MAP[tool.id] || null;
-  const isProcessing = step === 'traitement';
+  const isProcessing = step === 'traitement' || isStarting;
 
   // Étapes adaptées à l'outil
   const toolSteps = getToolSteps(tool);
@@ -128,6 +132,7 @@ export const ToolWorkspaceLayout = ({ tool, step, setStep, onReset, onBack }) =>
   // Appelé quand l'utilisateur clique sur "Lancer"
   const handleStart = useCallback(async (options, extraFiles = []) => {
     setStartError(null);
+    setIsStarting(true);
     try {
       // Pour la signature, injecter les coordonnées calculées
       let finalOptions = { ...options };
@@ -162,19 +167,23 @@ export const ToolWorkspaceLayout = ({ tool, step, setStep, onReset, onBack }) =>
       }
     } catch (err) {
       setStartError(err.response?.data?.message || err.message || 'Erreur réseau.');
+    } finally {
+      setIsStarting(false);
     }
   }, [tool.typeOperation, tool.accepteMultiple, currentFile, multiFiles, setStep, tool.id, pdfCoords]);
 
   const handleComplete = useCallback((result) => {
     setJobResult(result);
     setStep('resultat');
-  }, [setStep]);
+    toast.success(`${tool.nom} terminé avec succès ! Téléchargez votre fichier ci-dessous.`);
+  }, [setStep, tool.nom]);
 
   const handleError = useCallback((errMsg) => {
     setActiveJobId(null);
     setStartError(errMsg || null);
     // Pour les outils sans options, on revient en sélection
     setStep(tool.sansOptions ? 'selection' : 'configuration');
+    toast.error(errMsg || 'Une erreur est survenue lors du traitement.');
   }, [setStep, tool.sansOptions]);
 
   const handleReset = () => {
@@ -308,6 +317,7 @@ export const ToolWorkspaceLayout = ({ tool, step, setStep, onReset, onBack }) =>
                     setMultiFiles={setMultiFiles}
                     onStart={tool.sansOptions ? handleStart : undefined}
                     onContinue={tool.sansOptions ? undefined : () => setStep('configuration')}
+                    isProcessing={isProcessing}
                   />
                 ) : currentFile ? (
                   /* Fichier déjà sélectionné */

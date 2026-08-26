@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
 export const Home = () => {
+  const currentYear = new Date().getFullYear();
   useEffect(() => {
     // Micro-interactions and subtle scroll effects
     const observerOptions = {
@@ -31,7 +32,7 @@ export const Home = () => {
           {/* Content */}
           <div className="md:col-span-7 z-10">
             <div className="mb-6 inline-block bg-secondary-container/10 px-4 py-1 rounded-full">
-              <span className="font-label-bold text-secondary uppercase tracking-widest text-[10px]">Édition Technique 2024</span>
+              <span className="font-label-bold text-secondary uppercase tracking-widest text-[10px]">Édition Technique {currentYear}</span>
             </div>
             <h1 className="font-display-xl text-display-xl md:text-[80px] leading-[0.95] text-primary mb-8 max-w-2xl">
                 L'art du document, <span className="text-secondary">maîtrisé.</span>
@@ -176,7 +177,7 @@ export const Home = () => {
           <span className="material-symbols-outlined text-secondary text-[48px] mb-8" style={{ fontVariationSettings: "'FILL' 1" }}>verified</span>
           <h2 className="font-display-xl text-headline-lg mb-8 italic">"La rigueur d'un ingénieur, l'œil d'un éditeur."</h2>
           <p className="font-body-lg text-on-surface-variant mb-12">
-              Développé avec passion à Bamako, DocMaster respecte les normes les plus strictes en matière de souveraineté des données. Aucun de vos documents ne transite par des serveurs tiers sans votre consentement explicite.
+              Développé avec passion à MALI DEVELOPPEUR SARL, DocMaster respecte les normes les plus strictes en matière de souveraineté des données. Aucun de vos documents ne transite par des serveurs tiers sans votre consentement explicite.
           </p>
           <div className="flex flex-wrap justify-center gap-12 grayscale opacity-40">
             <span className="font-headline-md">ISO 27001</span>

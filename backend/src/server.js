@@ -1,12 +1,12 @@
-import express from "express"
-import dotenv from "dotenv"
-import cors from "cors"
-import pool from "./config/db.js"
+import "dotenv/config";
+import express from "express";
+import cors from "cors";
+import pool from "./config/db.js";
 // import userRoutes from "./routes/userRoutes.js"
-import errorHandler from "./middlewares/errorHandler.js"
-import authRoutes from "./routes/auth.routes.js"
+import errorHandler from "./middlewares/errorHandler.js";
+import authRoutes from "./routes/auth.routes.js";
 import passport from './config/passport.js';
-import verifyToken from "./middlewares/verifyToken.js"
+import verifyToken from "./middlewares/verifyToken.js";
 import filesRoutes from './routes/files.routes.js';
 import jobsRoutes from './routes/jobs.routes.js';
 import { nettoyerFichiersExpires } from './jobs/cronCleanup.js';
@@ -18,8 +18,6 @@ setInterval(nettoyerFichiersExpires, 3600000);
 
 // Lancer une première fois au démarrage
 nettoyerFichiersExpires();
-
-dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 3001;

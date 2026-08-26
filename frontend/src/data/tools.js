@@ -400,4 +400,25 @@ export const tools = [
       conseil: "Utilisez des images PNG pour une meilleure qualité ; les JPEG sont recommandés si la taille du fichier final est importante."
     }
   },
+  {
+    id: "clean_metadata",
+    nom: "Nettoyer (Métadonnées)",
+    description: "Supprimez toutes les métadonnées de votre document PDF.",
+    icone: "cleaning_services",
+    couleur: "default",
+    categorie: "securite",
+    typeOperation: "clean_metadata",
+    populaire: false,
+    route: "/dashboard/tools/clean_metadata",
+    accepteMultiple: false,
+    sansOptions: true,
+    howItWorks: {
+      etapes: [
+        { titre: "Importez le PDF", description: "Sélectionnez le document à nettoyer." },
+        { titre: "Nettoyage automatique", description: "L'outil supprime l'auteur, la date de création, etc." },
+        { titre: "Téléchargez le PDF", description: "Votre document est maintenant anonymisé." }
+      ],
+      conseil: "Idéal avant d'envoyer un document sensible à un tiers."
+    }
+  }
 ];

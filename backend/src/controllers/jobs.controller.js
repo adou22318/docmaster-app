@@ -9,7 +9,8 @@ const OPERATIONS_VALIDES = [
   'protect', 'unprotect', 'watermark', 'sign',
   'remove_pages', 'add_blank_pages',
   'extract_images', 'add_image',
-  'convert_to_pdf', 'pdf_to_images', 'pdf_to_txt'
+  'convert_to_pdf', 'pdf_to_images', 'pdf_to_txt',
+  'clean_metadata'
 ];
 
 export const createJob = async (req, res) => {

@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
 
 export const Register = () => {
+  const currentYear = new Date().getFullYear();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [validationError, setValidationError] = useState(null);
   const { registerUser, error, clearError } = useAuthStore();
@@ -96,7 +97,7 @@ export const Register = () => {
         
         {/* Footer Branding */}
         <div className="z-10">
-          <p className="font-label-sm text-label-sm opacity-50">© 2024 PDF DocMaster. Tous droits réservés.</p>
+          <p className="font-label-sm text-label-sm opacity-50">© {currentYear} PDF DocMaster. Tous droits réservés.</p>
         </div>
       </section>
 

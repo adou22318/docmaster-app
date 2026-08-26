@@ -3,6 +3,7 @@ import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import axiosClient from '../../services/api/axiosClient';
 import { ErrorBanner } from '../layout/ErrorBanner';
 import { formatSize } from '../../utils/formatters';
+import { ConfirmDialog } from '../ui/ConfirmDialog';
 
 const ALLOWED_EXTENSIONS = {
   merge: ['.pdf'],
@@ -11,10 +12,11 @@ const ALLOWED_EXTENSIONS = {
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50 Mo
 const MAX_FILES = 20;
 
-export const MultiFileSelection = ({ tool, multiFiles, setMultiFiles, onStart, onContinue }) => {
+export const MultiFileSelection = ({ tool, multiFiles, setMultiFiles, onStart, onContinue, isProcessing }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [uploadError, setUploadError] = useState(null);
   const [uploadingFiles, setUploadingFiles] = useState([]); // Array de { id, name, progress }
+  const [fileToRemove, setFileToRemove] = useState(null);
   const fileInputRef = useRef(null);
 
   const allowedExts = ALLOWED_EXTENSIONS[tool.id] || ['.pdf', '.jpg', '.jpeg', '.png', '.docx', '.xlsx', '.pptx', '.tiff', '.tif'];
@@ -118,8 +120,11 @@ export const MultiFileSelection = ({ tool, multiFiles, setMultiFiles, onStart, o
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  const handleRemove = (fileId) => {
-    setMultiFiles(prev => prev.filter(f => f.fileId !== fileId));
+  const confirmRemove = () => {
+    if (fileToRemove) {
+      setMultiFiles(prev => prev.filter(f => f.fileId !== fileToRemove.fileId));
+      setFileToRemove(null);
+    }
   };
 
   const onDragEnd = (result) => {
@@ -142,35 +147,58 @@ export const MultiFileSelection = ({ tool, multiFiles, setMultiFiles, onStart, o
 
       {/* Zone de dépôt (visible si on a la place) */}
       {multiFiles.length + uploadingFiles.length < MAX_FILES && (
-        <div
-          onDrop={handleDrop}
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          onClick={() => fileInputRef.current?.click()}
-          className={`w-full p-8 border-2 border-dashed rounded-3xl transition-all cursor-pointer flex flex-col items-center justify-center text-center group ${
-            isDragging
-              ? 'border-secondary bg-secondary-container/30'
-              : 'border-outline-variant hover:border-secondary hover:bg-surface-container/50'
-          }`}
-        >
-          <input
-            type="file"
-            ref={fileInputRef}
-            onChange={handleFileChange}
-            className="hidden"
-            accept={allowedExts.join(',')}
-            multiple
-          />
-          <div className="w-16 h-16 rounded-full bg-surface-container flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-            <span className="material-symbols-outlined text-[32px] text-primary">note_add</span>
+        <div className="relative group w-full">
+          <div className="absolute -inset-2 bg-gradient-to-r from-secondary-container/20 to-tertiary-fixed/20 blur-xl rounded-[2rem] opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+          <div
+            onDrop={handleDrop}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onClick={() => fileInputRef.current?.click()}
+            className={`relative bg-surface border-4 border-dashed rounded-[2rem] flex flex-col items-center justify-center text-center overflow-hidden transition-all duration-500 shadow-sm cursor-pointer hover:border-secondary ${
+              multiFiles.length > 0 ? 'p-8 min-h-[200px]' : 'p-16 min-h-[400px]'
+            } ${
+              isDragging
+                ? 'border-secondary bg-secondary-container/5 highlight-zone'
+                : 'border-outline-variant'
+            }`}
+          >
+            <div className="absolute inset-0 dropzone-pattern opacity-5 pointer-events-none"></div>
+            
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              className="hidden"
+              accept={allowedExts.join(',')}
+              multiple
+            />
+            
+            <div className="z-10 flex flex-col items-center pointer-events-none">
+              <div className={`mb-6 p-6 bg-secondary-container/10 rounded-full text-secondary transition-transform duration-700 ${multiFiles.length > 0 ? 'scale-100 group-hover:scale-110' : 'scale-125 group-hover:scale-150'}`}>
+                <span className={`material-symbols-outlined ${multiFiles.length > 0 ? 'text-4xl' : 'text-6xl'}`} style={{ fontVariationSettings: "'wght' 200" }}>cloud_upload</span>
+              </div>
+              <h3 className={`font-display-xl text-primary mb-3 ${multiFiles.length > 0 ? 'text-title-lg' : 'text-headline-md'}`}>
+                {multiFiles.length > 0 ? 'Ajouter des fichiers' : 'Glissez vos fichiers ici'}
+              </h3>
+              <p className="text-body-md text-on-surface-variant max-w-md mb-6">
+                Formats acceptés : {allowedExts.join(', ')}. Jusqu'à 50 Mo par fichier.
+              </p>
+              
+              {multiFiles.length === 0 && (
+                <div className="flex gap-4 pointer-events-auto">
+                  <button 
+                    className="px-8 py-4 bg-primary text-on-primary font-label-bold rounded-lg hover:bg-secondary hover:text-primary transition-all shadow-lg active:scale-95"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      fileInputRef.current?.click();
+                    }}
+                  >
+                    Parcourir mes fichiers
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
-          <h3 className="font-display-md text-title-md text-on-surface mb-2">
-            Ajouter des fichiers
-          </h3>
-          <p className="text-body-sm text-on-surface-variant max-w-sm">
-            Faites glisser d'autres fichiers ici ou cliquez pour parcourir.
-            Formats : {allowedExts.join(', ')}.
-          </p>
         </div>
       )}
 
@@ -225,7 +253,8 @@ export const MultiFileSelection = ({ tool, multiFiles, setMultiFiles, onStart, o
                           </div>
                           
                           <button
-                            onClick={() => handleRemove(file.fileId)}
+                            type="button"
+                            onClick={() => setFileToRemove(file)}
                             className="w-8 h-8 rounded-full flex items-center justify-center text-on-surface-variant hover:text-error hover:bg-error-container transition-colors shrink-0"
                             title="Retirer"
                           >
@@ -269,17 +298,26 @@ export const MultiFileSelection = ({ tool, multiFiles, setMultiFiles, onStart, o
         // Lancer directement le traitement
         <button
           onClick={() => onStart({})}
-          disabled={multiFiles.length < 2 || uploadingFiles.length > 0}
+          disabled={multiFiles.length < 2 || uploadingFiles.length > 0 || isProcessing}
           className="w-full max-w-sm flex items-center justify-center gap-2 py-4 mt-4 bg-primary text-on-primary rounded-2xl font-label-bold text-label-lg hover:bg-primary/90 disabled:opacity-50 transition-all shadow-sm"
         >
-          <span className="material-symbols-outlined text-[20px]">merge</span>
-          <span>Fusionner les fichiers</span>
+          {isProcessing ? (
+            <>
+              <span className="material-symbols-outlined text-[20px] animate-spin">progress_activity</span>
+              <span>Traitement en cours...</span>
+            </>
+          ) : (
+            <>
+              <span className="material-symbols-outlined text-[20px]">merge</span>
+              <span>Fusionner les fichiers</span>
+            </>
+          )}
         </button>
       ) : (
         // Passer à la configuration
         <button
           onClick={onContinue}
-          disabled={multiFiles.length < 2 || uploadingFiles.length > 0}
+          disabled={multiFiles.length < 2 || uploadingFiles.length > 0 || isProcessing}
           className="w-full max-w-sm flex items-center justify-center gap-2 py-4 mt-4 bg-primary text-on-primary rounded-2xl font-label-bold text-label-lg hover:bg-primary/90 disabled:opacity-50 transition-all shadow-sm"
         >
           <span>Passer à la configuration</span>
@@ -293,6 +331,19 @@ export const MultiFileSelection = ({ tool, multiFiles, setMultiFiles, onStart, o
         </p>
       )}
 
+      <ConfirmDialog
+        isOpen={!!fileToRemove}
+        title="Retirer le fichier"
+        message={
+          <>
+            Voulez-vous vraiment retirer le fichier <strong>{fileToRemove?.fileName}</strong> de la sélection ?
+          </>
+        }
+        confirmText="Retirer"
+        onConfirm={confirmRemove}
+        onCancel={() => setFileToRemove(null)}
+        isDestructive={true}
+      />
     </div>
   );
 };

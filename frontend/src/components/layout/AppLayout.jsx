@@ -1,7 +1,7 @@
 import React from 'react';
 import { Outlet } from 'react-router-dom';
 import { TopAppBar } from './TopAppBar';
-import { PublicFooter } from './PublicFooter';
+import { AppFooter } from './AppFooter';
 
 export const AppLayout = () => {
   return (
@@ -10,7 +10,7 @@ export const AppLayout = () => {
       <main className="flex-grow">
         <Outlet />
       </main>
-      <PublicFooter />
+      <AppFooter />
     </div>
   );
 };

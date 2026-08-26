@@ -1,4 +1,4 @@
-import { registerService, loginService, refreshTokenService, logoutService } from "../services/auth.service.js";
+import { registerService, loginService, refreshTokenService, logoutService, deleteAccountService } from "../services/auth.service.js";
 
 export const register = async (req, res) => {
     try {
@@ -122,7 +122,6 @@ export const refresh = async (req, res) => {
   }
 };
 
-// Controller
 export const logout = async (req, res) => {
   try {
     const authHeader = req.headers['authorization'];
@@ -150,4 +149,60 @@ export const logout = async (req, res) => {
       // L'utilisateur est "déconnecté" de toute façon côté client
     });
   }
+};
+
+export const deleteAccount = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    
+    // Le service se chargera de supprimer les fichiers physiques, puis les données en base
+    await deleteAccountService(userId);
+    
+    return res.status(200).json({
+      success: true,
+      message: 'Compte et données associées supprimés avec succès.'
+    });
+  } catch (error) {
+    console.error('Erreur suppression compte:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Erreur lors de la suppression du compte.'
+    });
+  }
+};
+
+export const updateProfile = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { nom_complet, email, newPassword } = req.body;
+
+        if (!nom_complet || !email) {
+            return res.status(400).json({
+                success: false,
+                message: "L'email et le nom complet sont requis."
+            });
+        }
+
+        const { updateProfileService } = await import('../services/auth.service.js');
+        
+        const updatedUser = await updateProfileService(userId, nom_complet.trim(), email.trim().toLowerCase(), newPassword);
+
+        return res.status(200).json({
+            success: true,
+            message: "Profil mis à jour avec succès.",
+            data: {
+                id: updatedUser.id_users,
+                email: updatedUser.email,
+                nom_complet: updatedUser.nom_complet,
+                photo_url: updatedUser.photo_url,
+                plan: updatedUser.plan
+            }
+        });
+    } catch (error) {
+        console.error('Erreur mise à jour profil:', error);
+        return res.status(400).json({
+            success: false,
+            message: error.message || "Erreur lors de la mise à jour."
+        });
+    }
 };

@@ -4,6 +4,7 @@ import { useFileStore } from '../../store/useFileStore';
 import { ErrorBanner } from '../layout/ErrorBanner';
 import { useScrollAnimation } from '../../hooks/useScrollAnimation';
 import { formatSize } from '../../utils/formatters';
+import { ConfirmDialog } from '../ui/ConfirmDialog';
 
 // ─── COMPOSANT ENFANT POUR ANIMER CHAQUE LIGNE ───────────────────────
 const FileRow = ({ file, index, onDownload, onDelete, downloadingId }) => {
@@ -233,46 +234,19 @@ export const RecentFiles = () => {
         )}
       </div>
 
-      {/* MODAL DE CONFIRMATION DE SUPPRESSION — animate-scale immédiat */}
-      {fileToDelete && (
-        <>
-          {/* Fond sombre */}
-          <div className="animate-fade visible fixed inset-0 bg-black/40 backdrop-blur-sm z-40" />
-          
-          {/* Modal */}
-          <div className="animate-scale visible fixed inset-0 flex items-center justify-center p-4 z-50">
-            <div className="bg-surface rounded-2xl shadow-xl max-w-md w-full p-6">
-              <h3 className="font-display-xl text-title-lg text-on-surface mb-2">Confirmer la suppression</h3>
-              <p className="text-body-md text-on-surface-variant mb-6">
-                Voulez-vous vraiment supprimer le fichier <strong>{fileToDelete.nom_original}</strong> ? Cette action est irréversible.
-              </p>
-              <div className="flex justify-end gap-3">
-                <button 
-                  onClick={() => setFileToDelete(null)}
-                  className="px-5 py-2.5 border border-outline font-label-bold rounded-lg hover:bg-surface-container transition-colors"
-                  disabled={isDeleting}
-                >
-                  Annuler
-                </button>
-                <button 
-                  onClick={confirmDelete}
-                  className="px-5 py-2.5 bg-error text-on-error font-label-bold rounded-lg hover:bg-error/90 transition-colors flex items-center gap-2"
-                  disabled={isDeleting}
-                >
-                  {isDeleting ? (
-                    <>
-                      <span className="material-symbols-outlined animate-spin text-sm">progress_activity</span>
-                      Suppression...
-                    </>
-                  ) : (
-                    "Supprimer définitivement"
-                  )}
-                </button>
-              </div>
-            </div>
-          </div>
-        </>
-      )}
+      <ConfirmDialog
+        isOpen={!!fileToDelete}
+        title="Confirmer la suppression"
+        message={
+          <>
+            Voulez-vous vraiment supprimer le fichier <strong>{fileToDelete?.nom_original}</strong> ? Cette action est irréversible.
+          </>
+        }
+        confirmText={isDeleting ? "Suppression..." : "Supprimer définitivement"}
+        onConfirm={confirmDelete}
+        onCancel={() => !isDeleting && setFileToDelete(null)}
+        isDestructive={true}
+      />
     </section>
   );
 };
