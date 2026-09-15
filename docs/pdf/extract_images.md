@@ -1,73 +1,118 @@
 # Documentation — Extraction d'images embarquées (`extract_images`)
 
-**Semaine :** S4  
-**Statut :** ✅ Validé Postman  
+**Semaine :** S4 → Améliorations S5  
+**Statut :** ✅ Validé  
+**Accès :** 🔒 Abonnés Pro uniquement (`checkSubscription.js`)  
 **Service :** [`extractImages.js`](file:///c:/Users/USER/Desktop/docmaster-app/backend/src/services/pdf/extractImages.js)
 
 ---
 
 ## Rôle
 
-Extrait les **images incrustées nativement** dans un fichier PDF (objets `XObject` de type `Image`).
+Extrait les **images incrustées nativement** dans un fichier PDF (objets `XObject` de type `Image`), avec contrôle avancé de la taille de sortie et du format.
 
-> ⚠️ **Différence fondamentale avec `pdf_to_images` :**  
-> `pdf_to_images` prend une **photo de la page entière** (texte + images + mise en page) via Ghostscript.  
-> `extract_images` **pêche uniquement les fichiers images bruts** qui ont été incorporés dans le PDF — texte et structure sont ignorés.
-
-**Cas d'usage :** Un PDF de rapport de 10 pages contient des photos à la page 5. `extract_images` retournera ces photos dans leur résolution d'origine, sans le texte ni le fond de page.
+> ⚠️ **Différence avec `pdf_to_images` :**  
+> `pdf_to_images` rasterise la page entière (texte + images + mise en page) via Ghostscript.  
+> `extract_images` extrait uniquement les images brutes embarquées — texte et structure ignorés.
 
 ---
 
-## Options
+## Options complètes (S5)
 
-| Paramètre | Type   | Défaut      | Description                                        |
-|-----------|--------|-------------|----------------------------------------------------|
-| `pages`   | string | toutes      | Syntaxe de sélection : `"1-3, 5, 8"`. Si absent, analyse tout le document. |
+### Périmètre
+
+| Paramètre | Type   | Défaut  | Description |
+|-----------|--------|---------|-------------|
+| `pages`   | string | toutes  | Syntaxe : `"1-3, 5, 8"`. Si absent, toutes les pages. |
+
+### Redimensionnement — 3 modes exclusifs
+
+**Mode 1 — Taille originale** (défaut)
+```json
+{ "mode_taille": "original" }
+```
+
+**Mode 2 — Dimensions personnalisées**
+```json
+{
+  "mode_taille": "custom",
+  "largeur": 1920,
+  "hauteur": 1080,
+  "garder_ratio": true
+}
+```
+Si `garder_ratio: true` → ratio conservé, letterboxing si nécessaire.  
+Si une seule dimension → l'autre calculée proportionnellement.
+
+**Mode 3 — Raccourcis HD prédéfinis**
+```json
+{ "mode_taille": "preset", "preset": "4k" }
+```
+
+| `preset`    | Résolution     | Usage         |
+|-------------|----------------|---------------|
+| `hd`        | 1280 × 720 px  | HD standard   |
+| `full_hd`   | 1920 × 1080 px | Full HD       |
+| `4k`        | 3840 × 2160 px | Ultra HD      |
+| `a4_300dpi` | 2480 × 3508 px | Impression A4 |
+
+### Format de sortie
+
+| Paramètre       | Valeurs                  | Défaut     | Description |
+|-----------------|--------------------------|------------|-------------|
+| `format_sortie` | `original`, `png`, `jpg` | `original` | `original` conserve le format natif. `png` force sans perte. `jpg` force JPEG qualité 92%. |
 
 ---
 
 ## Comportement de sortie
 
-| Nombre d'images trouvées | Fichier retourné             |
-|--------------------------|------------------------------|
-| 1 seule image            | Fichier `.png` ou `.jpg` directement |
-| 2 images ou plus         | Archive `.zip` contenant toutes les images, nommées `page_N_img_M.png`. |
-| 0 image                  | Erreur `AUCUNE_IMAGE_EMBARQUEE_TROUVEE` |
+| Images trouvées | Résultat |
+|-----------------|----------|
+| 1 seule         | Fichier `.png` ou `.jpg` direct |
+| 2 ou plus       | Archive `.zip` (`page_N_img_M.ext`) |
+| 0               | Erreur `AUCUNE_IMAGE_EMBARQUEE_TROUVEE` |
 
 ---
 
-## Formats supportés
+## Formats internes supportés
 
-| Filtre interne (PDF) | Format de sortie |
-|----------------------|------------------|
-| `DCTDecode`          | `.jpg` (les octets bruts sont un fichier JPEG valide, sauvegarde directe) |
-| `FlateDecode`        | `.png` (décompression zlib + encodage PNG via `sharp`) |
-| `JPXDecode`          | `.jp2` (sauvegarde brute JPEG 2000) |
-| Autres (JBIG2, CCITT) | Ignorés (avertissement console) |
+| Filtre PDF    | Sortie par défaut |
+|---------------|-------------------|
+| `DCTDecode`   | `.jpg` (octets bruts JPEG, sauvegarde directe) |
+| `FlateDecode` | `.png` (décompression zlib + encodage via `sharp`) |
+| `JPXDecode`   | `.jp2` (brut JPEG 2000) |
+| Autres        | Ignorés (JBIG2, CCITT…) |
 
-> Les images de moins de 10×10 pixels (spacers, puces, masques de transparence) sont automatiquement ignorées.
+> Images < 10×10 px (spacers, puces, masques) automatiquement ignorées.
 
 ---
 
-## Exemple de requête
+## Exemples
 
+**Extraction simple :**
 ```json
 {
   "type_operation": "extract_images",
   "fichiers": ["8073ea45-56be-43ad-8d3f-42a1ab9430c2"],
-  "options": {
-    "pages": "5"
-  }
+  "options": { "pages": "5" }
 }
 ```
 
-## Réponse de résultat (`GET /api/jobs/:id`)
-
+**Full HD, forcé PNG :**
 ```json
 {
-  "statut": "done",
-  "resultat_url": "/api/files/download/uuid-du-resultat",
-  "imagesGenerees": 2
+  "type_operation": "extract_images",
+  "fichiers": ["uuid"],
+  "options": { "mode_taille": "preset", "preset": "full_hd", "format_sortie": "png" }
+}
+```
+
+**Largeur 800 px, ratio conservé, JPG :**
+```json
+{
+  "type_operation": "extract_images",
+  "fichiers": ["uuid"],
+  "options": { "mode_taille": "custom", "largeur": 800, "garder_ratio": true, "format_sortie": "jpg" }
 }
 ```
 
@@ -75,17 +120,26 @@ Extrait les **images incrustées nativement** dans un fichier PDF (objets `XObje
 
 ## Codes d'erreur
 
-| Code                              | Cause                                                        |
-|-----------------------------------|--------------------------------------------------------------|
-| `FICHIER_INTROUVABLE`             | L'UUID fourni ne correspond à aucun fichier.                 |
-| `AUCUNE_IMAGE_EMBARQUEE_TROUVEE`  | Aucune image XObject valide trouvée dans les pages sélectionnées. |
-| `ECHEC_EXTRACTION_IMAGES`         | Erreur de parsing ou d'encodage (PDF corrompu, etc.).        |
-| `PAGES_INVALIDES`                 | La syntaxe de sélection est incorrecte ou dépasse le nombre de pages. |
+| Code | Cause |
+|------|-------|
+| `FICHIER_INTROUVABLE` | UUID inconnu |
+| `AUCUNE_IMAGE_EMBARQUEE_TROUVEE` | Aucun XObject valide dans la sélection |
+| `ECHEC_EXTRACTION_IMAGES` | PDF corrompu ou erreur d'encodage |
+| `PAGES_INVALIDES` | Syntaxe incorrecte ou hors bornes |
+| `ABONNEMENT_REQUIS` | Utilisateur sans plan Pro actif |
+
+---
+
+## Restriction d'accès Pro (S5)
+
+Protégé par `checkSubscription.js`. Seuls les utilisateurs `statut = 'actif'` et `plan = 'pro'` peuvent accéder à cet outil. Les autres reçoivent `403 ABONNEMENT_REQUIS`.
+
+Côté frontend, `OUTILS_PRO` dans `ToolPage.jsx` affiche une `ProGateModal` avant même l'upload.
 
 ---
 
 ## Notes techniques
 
-- L'extraction utilise **`pdf-lib`** pour parcourir l'arbre binaire du PDF et accéder directement aux flux des objets `XObject`. Ce choix garantit un accès synchrone et complet à toutes les ressources du document, contrairement à `pdfjs-dist` qui requiert un contexte de rendu.
-- Le recodage des pixels bruts (`FlateDecode`) est effectué par la librairie native C++ **`sharp`**.
-- Les dossiers temporaires sont nettoyés automatiquement, y compris en cas d'erreur.
+- Extraction via **`pdf-lib`** (parcours direct de l'arbre XObject binaire).
+- Redimensionnement via **`sharp`** (natif C++).
+- Nettoyage automatique des fichiers temporaires, même en cas d'erreur.

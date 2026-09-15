@@ -319,3 +319,63 @@ Récupère l'historique des 50 derniers jobs soumis par l'utilisateur connecté.
     ]
   }
   ```
+
+---
+
+## 3. Opérations S5 — Nouvelles et améliorées
+
+### Images → PDF (`convert_images_to_pdf`)
+- **Fichiers** : 1 à 20 UUIDs d'images (JPG, PNG, TIFF), **dans l'ordre souhaité**.
+- **Options** :
+  - `format` : `"a4"` (défaut) ou `"letter"`
+  - `orientation` : `"auto"` (défaut), `"portrait"`, `"landscape"`
+  - `margin` : `"none"` (défaut), `"small"` (~6 mm), `"large"` (~12 mm)
+- **Exemple** :
+  ```json
+  {
+    "type_operation": "convert_images_to_pdf",
+    "fichiers": ["uuid-img-1", "uuid-img-2"],
+    "options": { "format": "a4", "orientation": "auto", "margin": "small" }
+  }
+  ```
+
+### Extraction d'images avancée (`extract_images`) — Accès Pro
+- Modes de redimensionnement : `original`, `custom` (largeur/hauteur + garder_ratio), `preset` (hd, full_hd, 4k, a4_300dpi)
+- Format de sortie : `original`, `png`, `jpg`
+- Voir [`docs/pdf/extract_images.md`](../pdf/extract_images.md) pour la documentation complète.
+
+### Ajout d'image avec positionnement libre (`add_image`)
+- Nouveau champ `placements` : tableau de `{ page, x, y, largeur, hauteur }` en points PDF.
+- Voir [`docs/pdf/add_image.md`](../pdf/add_image.md).
+
+### Signature simple avec date (`sign`)
+- Nouveau champ `addDate` (boolean) : ajoute la date courante sous la signature.
+- Positionnement via `x`, `y`, `largeur`, `hauteur`.
+- Voir [`docs/pdf/sign.md`](../pdf/sign.md).
+
+---
+
+## 4. Paiement et Abonnement (S5)
+
+### POST `/api/payment/initiate`
+Initie un paiement PayDunya (sandbox/test).
+- **Body** : `{ "plan": "pro" }`
+- **Réponse (200)** : `{ "success": true, "payment_url": "https://paydunya.com/..." }`
+
+### POST `/api/payment/webhook`
+Reçu automatiquement par PayDunya après paiement réussi. Active le plan Pro.
+
+### POST `/api/payment/confirm-return`
+Confirmation complémentaire au retour utilisateur depuis PayDunya.
+
+### GET `/api/payment/status`
+Retourne le statut d'abonnement de l'utilisateur connecté.
+- **Réponse (200)** :
+  ```json
+  {
+    "success": true,
+    "data": { "statut": "actif", "plan": "pro", "date_fin_plan": "2026-10-15T00:00:00Z" }
+  }
+  ```
+
+> Voir [`docs/api/payment.md`](./payment.md) pour la documentation complète.

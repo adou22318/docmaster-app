@@ -1,14 +1,15 @@
 # Documentation — Ajout d'image dans un PDF (`add_image`)
 
-**Semaine :** S4  
-**Statut :** ✅ Validé Postman  
-**Service :** [`addImage.js`](file:///c:/Users/USER/Desktop/docmaster-app/backend/src/services/pdf/addImage.js)
+**Semaine :** S4 → Refonte positionnement S5  
+**Statut :** ✅ Validé  
+**Service :** [`addImage.js`](file:///c:/Users/USER/Desktop/docmaster-app/backend/src/services/pdf/addImage.js)  
+**Viewer frontend :** [`PdfImageViewer.jsx`](file:///c:/Users/USER/Desktop/docmaster-app/frontend/src/components/workspace/viewer/PdfImageViewer.jsx)
 
 ---
 
 ## Rôle
 
-Incruste un fichier image (PNG ou JPG) sur une ou plusieurs pages d'un document PDF existant. L'image est positionnée via l'un des 7 raccourcis de position prédéfinis ou via des coordonnées libres.
+Incruste un fichier image (PNG ou JPG, max 5 Mo) sur une ou plusieurs pages d'un document PDF, avec positionnement libre défini par l'utilisateur via drag & drop dans l'interface.
 
 ---
 
@@ -24,26 +25,43 @@ Le tableau `fichiers` doit contenir **exactement 2 UUIDs** dans cet ordre :
 
 ## Options
 
-| Paramètre | Type          | Défaut       | Description |
-|-----------|---------------|--------------|-------------|
-| `pages`   | string        | toutes       | Syntaxe de sélection : `"1-3, 5"`. Si absent, l'image est ajoutée sur toutes les pages. |
-| `position`| string        | `'centre'`   | Position prédéfinie (voir tableau ci-dessous). |
-| `x`       | number        | —            | Coordonnée X en points PDF depuis le coin bas-gauche. Écrase `position`. |
-| `y`       | number        | —            | Coordonnée Y en points PDF depuis le coin bas-gauche. Écrase `position`. |
-| `largeur` | number        | auto         | Largeur cible en points PDF. Si seule `largeur` est fournie, la hauteur est calculée proportionnellement. |
-| `hauteur` | number        | auto         | Hauteur cible en points PDF. Si seule `hauteur` est fournie, la largeur est calculée proportionnellement. |
+| Paramètre    | Type    | Défaut  | Description |
+|--------------|---------|---------|-------------|
+| `placements` | array   | —       | Tableau de placements par page (voir ci-dessous). Si absent, centrage automatique sur toutes les pages. |
+| `pages`      | string  | toutes  | Sélection de pages (syntaxe `"1-3, 5"`). Utilisé uniquement si `placements` est absent. |
+| `largeur`    | number  | auto    | Largeur en points PDF. |
+| `hauteur`    | number  | auto    | Hauteur en points PDF. |
 
-### Positions prédéfinies
+### Structure d'un placement (S5)
 
-| Valeur          | Emplacement                   |
-|-----------------|-------------------------------|
-| `centre`        | Centre de la page             |
-| `haut-gauche`   | Coin supérieur gauche + marge |
-| `haut-droite`   | Coin supérieur droit + marge  |
-| `bas-gauche`    | Coin inférieur gauche + marge |
-| `bas-droite`    | Coin inférieur droit + marge  |
-| `haut-centre`   | Milieu du bord supérieur      |
-| `bas-centre`    | Milieu du bord inférieur      |
+```json
+{
+  "placements": [
+    { "page": 1, "x": 142.5, "y": 600.0, "largeur": 200, "hauteur": 100 },
+    { "page": 3, "x": 50.0,  "y": 400.0, "largeur": 150, "hauteur": 75  }
+  ]
+}
+```
+
+- `x`, `y` : coordonnées en **points PDF** depuis le coin bas-gauche de la page
+- `largeur`, `hauteur` : dimensions en points PDF
+- Pages non présentes dans `placements` → image centrée automatiquement
+
+---
+
+## Comportement de positionnement (S5 — refonte complète)
+
+### Ancienne approche (S4 — abandonnée)
+7 positions prédéfinies (`centre`, `haut-gauche`, `bas-droite`…) + boutons de déplacement par pas de 0,5 cm.
+
+### Nouvelle approche (S5)
+1. **Centrage automatique à l'import** : `x = (largeur_page - largeur_image) / 2`
+2. **Drag & Drop libre** sur la prévisualisation PDF (`PdfImageViewer.jsx`) avec contraintes de bords
+3. **Coordonnées affichées en centimètres** dans le panneau latéral (conversion : `pts × 2.54 / 72`)
+4. **Validation par page** : `Map<pageNumber, placement>` — chaque page peut avoir son propre emplacement validé indépendamment
+5. **Mode hybride** : pages sans validation → centrage auto au backend
+6. **Redimensionnement** via poignée d'angle avec conservation du ratio
+7. **Support tactile** (mobile/tablette)
 
 ---
 
@@ -57,19 +75,10 @@ Le tableau `fichiers` doit contenir **exactement 2 UUIDs** dans cet ordre :
     "f7c2a11b-3d8e-4901-bb5f-89c123de4567"
   ],
   "options": {
-    "position": "bas-droite",
-    "largeur": 100,
-    "pages": "1"
+    "placements": [
+      { "page": 1, "x": 200, "y": 650, "largeur": 150, "hauteur": 75 }
+    ]
   }
-}
-```
-
-## Réponse de résultat (`GET /api/jobs/:id`)
-
-```json
-{
-  "statut": "done",
-  "resultat_url": "/api/files/download/uuid-du-resultat"
 }
 ```
 
@@ -77,17 +86,17 @@ Le tableau `fichiers` doit contenir **exactement 2 UUIDs** dans cet ordre :
 
 ## Codes d'erreur
 
-| Code                   | Cause                                                               |
-|------------------------|---------------------------------------------------------------------|
-| `FICHIER_INTROUVABLE`  | L'un des deux UUIDs ne correspond à aucun fichier.                  |
-| `FORMAT_IMAGE_INVALIDE`| L'image n'est ni PNG ni JPG.                                        |
-| `PAGES_INVALIDES`      | La syntaxe de sélection est incorrecte.                             |
-| `ECHEC_AJOUT_IMAGE`    | Erreur lors de l'écriture dans le PDF (fichier corrompu, etc.).     |
+| Code | Cause |
+|------|-------|
+| `FICHIER_INTROUVABLE` | L'un des deux UUIDs est inconnu |
+| `FORMAT_IMAGE_INVALIDE` | L'image n'est ni PNG ni JPG |
+| `PAGES_INVALIDES` | Syntaxe de sélection incorrecte |
+| `ECHEC_AJOUT_IMAGE` | PDF corrompu ou erreur d'écriture |
 
 ---
 
 ## Notes techniques
 
-- La librairie utilisée est **`pdf-lib`** (déjà présente pour les autres opérations), ce qui garantit une intégration sans dépendance externe.
-- Les images sont redimensionnées **proportionnellement** si une seule dimension est fournie, préservant ainsi le ratio original.
-- Les coordonnées dans `pdf-lib` ont leur **origine en bas-gauche** de la page (système de coordonnées PDF standard).
+- Implémenté avec **`pdf-lib`** (aucune dépendance binaire externe).
+- Le système de coordonnées PDF a son **origine en bas-gauche** — la conversion cm↔pts est effectuée côté frontend avant envoi.
+- Les images sont intégrées telles quelles si les dimensions correspondent, sinon redimensionnées proportionnellement.
