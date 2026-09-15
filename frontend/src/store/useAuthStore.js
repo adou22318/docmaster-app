@@ -213,6 +213,17 @@ export const useAuthStore = create((set, get) => ({
   },
 
   /**
+   * Met à jour les informations de l'utilisateur connecté dans le store.
+   * Utilisé après une modification de profil (nom, email).
+   * Ne touche pas aux tokens.
+   */
+  setUser: (userData) => {
+    set((state) => ({
+      user: { ...state.user, ...userData },
+    }));
+  },
+
+  /**
    * Utilisé par l'intercepteur Axios lorsque le refresh échoue.
    */
   setAccessToken: (accessToken) => {

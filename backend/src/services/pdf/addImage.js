@@ -56,7 +56,8 @@ export const addImageService = async (cheminPdf, cheminImage, options = {}, motD
     x,
     y,
     largeur,
-    hauteur
+    hauteur,
+    placements,          // Nouveau : [{page, x, y, largeur, hauteur}, ...]
   } = options;
 
   if (!fs.existsSync(cheminPdf)) {
@@ -100,12 +101,11 @@ export const addImageService = async (cheminPdf, cheminImage, options = {}, motD
     throw new Error(`INTEGRATION_IMAGE_ECHOUEE:${err.message}`);
   }
 
-  // 4. Calculer les dimensions finales de l'image
+  // 4. Calculer les dimensions finales de l'image (mode classique)
   const origDims = pdfImage.scale(1);
   let finalWidth = origDims.width;
   let finalHeight = origDims.height;
 
-  // Redimensionnement proportionnel si un seul axe est fourni
   const wNum = parseFloat(largeur);
   const hNum = parseFloat(hauteur);
 
@@ -120,17 +120,60 @@ export const addImageService = async (cheminPdf, cheminImage, options = {}, motD
     finalWidth = (hNum * origDims.width) / origDims.height;
   }
 
-  // 5. Appliquer l'image sur chaque page cible
-  const calculPosition = POSITIONS[position] || POSITIONS['centre'];
+  // 5. Appliquer l'image
   const toutesLesPages = pdfDoc.getPages();
+
+  // ── Mode placements (par page, coordonnées indépendantes) ──────────────────
+  if (Array.isArray(placements) && placements.length > 0) {
+    for (const placement of placements) {
+      const pageIndex = (parseInt(placement.page, 10) || 1) - 1; // 1-indexed → 0-indexed
+      if (pageIndex < 0 || pageIndex >= toutesLesPages.length) continue;
+
+      const page = toutesLesPages[pageIndex];
+      const pw = page.getSize().width;
+      const ph = page.getSize().height;
+
+      // Dimensions spécifiques au placement
+      const pw_ = parseFloat(placement.largeur);
+      const ph_ = parseFloat(placement.hauteur);
+      let fw = !isNaN(pw_) ? pw_ : finalWidth;
+      let fh = !isNaN(ph_) ? ph_ : finalHeight;
+
+      // Coordonnées : x/y explicites ou position nommée
+      let px, py;
+      if (placement.x !== undefined && placement.y !== undefined) {
+        px = parseFloat(placement.x);
+        py = parseFloat(placement.y);
+      } else {
+        const calcPos = POSITIONS[placement.position || 'centre'] || POSITIONS['centre'];
+        const computed = calcPos(pw, ph, fw, fh);
+        px = computed.x;
+        py = computed.y;
+      }
+
+      page.drawImage(pdfImage, { x: px, y: py, width: fw, height: fh });
+    }
+
+    const bytesResultat = await pdfDoc.save();
+    const nomResultat = `${uuidv4()}.pdf`;
+    const cheminResultat = path.join(OUTPUT_DIR, nomResultat);
+    fs.writeFileSync(cheminResultat, bytesResultat);
+    return {
+      nomStockage: nomResultat,
+      chemin: cheminResultat,
+      tailleOctets: bytesResultat.length,
+      pagesModifiees: placements.length,
+    };
+  }
+
+  // ── Mode classique (x/y unique + sélection de pages) ──────────────────────
+  const calculPosition = POSITIONS[position] || POSITIONS['centre'];
 
   for (const index of indicesCibles) {
     const page = toutesLesPages[index];
     const { width: pw, height: ph } = page.getSize();
 
-    // Priorité aux coordonnées X/Y explicites, sinon position calculée
     let finalX, finalY;
-
     if (x !== undefined && y !== undefined) {
       finalX = parseFloat(x);
       finalY = parseFloat(y);

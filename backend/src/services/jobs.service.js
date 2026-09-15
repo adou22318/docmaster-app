@@ -49,15 +49,28 @@ export const createJobService = async (userId, typeOperation, fichiers, options 
     }
   }
 
-  // Étape 4 — Ajouter dans Bull Queue
-  // On passe les données nécessaires au Worker
+  // Étape 4 — Ajouter dans Bull Queue avec priorité selon le plan
+  // Pro : priority 1 (traité en premier), Free/Essai : priority 10
+  let priorite = 10;
+  try {
+    const userResult = await pool.query(
+      'SELECT plan FROM users WHERE id_users = $1',
+      [userId]
+    );
+    if (userResult.rows[0]?.plan === 'pro') {
+      priorite = 1;
+    }
+  } catch (err) {
+    console.warn('Impossible de récupérer le plan utilisateur:', err.message);
+  }
+
   await pdfQueue.add({
     jobId: job.id_jobs,
     type_operation: typeOperation,
     fichiers,
     options,
     userId
-  });
+  }, { priority: priorite });
 
   return job;
 };

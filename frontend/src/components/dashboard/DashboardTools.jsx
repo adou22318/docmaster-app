@@ -49,7 +49,8 @@ export const DashboardTools = () => {
         to={tool.route}
         className={`rounded-2xl p-8 flex gap-6 hover:-translate-y-1 transition-transform cursor-pointer group h-full ${
           isPrimary
-            ? 'bg-primary text-on-primary shadow-md hover:shadow-lg'
+            // Carte primaire : fond sombre uni, texte blanc — même apparence clair/sombre
+            ? 'bg-[#111213] text-white shadow-md hover:shadow-xl hover:bg-[#1a1c1e] border border-white/5'
             : isAccent
             ? 'bg-surface-container-lowest border-2 border-secondary-fixed-dim shadow-sm'
             : 'bg-surface-container-lowest border border-outline-variant hover:border-secondary shadow-sm'
@@ -57,24 +58,28 @@ export const DashboardTools = () => {
       >
         <div
           className={`w-12 h-12 rounded-lg flex items-center justify-center shrink-0 ${
-            isPrimary ? 'bg-on-primary-fixed-variant/20' : 'bg-secondary-container'
+            isPrimary ? 'bg-secondary-container/20' : 'bg-secondary-container'
           }`}
         >
           <span
             className={`material-symbols-outlined ${
-              isPrimary ? 'text-on-primary' : 'text-on-secondary-container'
+              isPrimary ? 'text-secondary-container' : 'text-on-secondary-container'
             }`}
           >
             {tool.icone}
           </span>
         </div>
         <div>
-          <h4 className="font-headline-md text-body-lg mb-1 group-hover:text-secondary transition-colors">
+          <h4 className={`font-headline-md text-body-lg mb-1 transition-colors ${
+            isPrimary
+              ? 'text-white group-hover:text-secondary-container'
+              : 'group-hover:text-secondary'
+          }`}>
             {tool.nom}
           </h4>
           <p
             className={`text-label-sm ${
-              isPrimary ? 'opacity-70' : 'text-on-surface-variant'
+              isPrimary ? 'text-white/60' : 'text-on-surface-variant'
             }`}
           >
             {tool.description}

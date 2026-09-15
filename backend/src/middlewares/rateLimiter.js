@@ -19,6 +19,15 @@ export const limiterUpload = rateLimit({
   max: 20,
   message: {
     success: false,
-    message: 'Limite d\'upload atteinte. Maximum 20 fichiers par minute.'
+    message: "Limite d'upload atteinte. Maximum 20 fichiers par minute."
+  }
+});
+
+export const paymentLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,  // 15 minutes
+  max: 10,                    // 10 tentatives de paiement / 15 min par IP
+  message: {
+    success: false,
+    message: 'Trop de tentatives de paiement. Attendez 15 minutes.'
   }
 });

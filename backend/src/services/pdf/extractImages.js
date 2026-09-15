@@ -103,7 +103,41 @@ export const extractImagesService = async (chemin, options = {}, motDePasse = nu
     throw new Error('FICHIER_INTROUVABLE');
   }
 
-  const { pages: selectionPages } = options;
+  const { pages: selectionPages, largeur, hauteur, conserverRatio = true, format } = options;
+
+  // Dimensions cibles (si fournies)
+  const targetW = largeur ? parseInt(largeur, 10) : null;
+  const targetH = hauteur ? parseInt(hauteur, 10) : null;
+  const needsResize = (targetW !== null && targetW > 0) || (targetH !== null && targetH > 0);
+  const fitMode = conserverRatio ? 'inside' : 'fill';
+
+  // Helper : applique le redimensionnement et/ou la conversion de format via sharp
+  const processImage = async (inputBuffer, naturalWidth, naturalHeight, channels, preferredExt) => {
+    // Format de sortie : forcé ou déduit
+    const outExt = format === 'png' ? 'png'
+                 : format === 'jpg' ? 'jpg'
+                 : preferredExt;
+
+    let pipeline = sharp(inputBuffer, channels ? { raw: { width: naturalWidth, height: naturalHeight, channels } } : undefined);
+
+    if (needsResize) {
+      pipeline = pipeline.resize({
+        width: targetW || undefined,
+        height: targetH || undefined,
+        fit: fitMode,
+        withoutEnlargement: false,  // autorise l'agrandissement si demandé
+      });
+    }
+
+    if (outExt === 'jpg') {
+      pipeline = pipeline.jpeg({ quality: 92 });
+    } else {
+      pipeline = pipeline.png();
+    }
+
+    const outBuffer = await pipeline.toBuffer();
+    return { buffer: outBuffer, ext: outExt };
+  };
 
   // Dossier temporaire pour stocker les images extraites
   const tempId = uuidv4();
@@ -179,17 +213,26 @@ export const extractImagesService = async (chemin, options = {}, motDePasse = nu
 
         try {
           if (filterName === 'DCTDecode') {
-            // ── JPEG : les données brutes SONT le fichier JPEG ────
-            outputName = `page_${pageNum}_img_${indexImageGlobal}.jpg`;
-            outputPath = path.join(tempDir, outputName);
-            fs.writeFileSync(outputPath, rawData);
+            // ── JPEG nat ──
+            const preferredExt = 'jpg';
+            const needsProcessing = needsResize || (format && format !== 'jpg');
+
+            if (needsProcessing) {
+              // Passer par sharp pour redimensionner / convertir
+              const { buffer, ext } = await processImage(Buffer.from(rawData), width, height, null, preferredExt);
+              outputName = `page_${pageNum}_img_${indexImageGlobal}.${ext}`;
+              outputPath = path.join(tempDir, outputName);
+              fs.writeFileSync(outputPath, buffer);
+            } else {
+              // Écriture directe (taille naturelle, format conservé)
+              outputName = `page_${pageNum}_img_${indexImageGlobal}.jpg`;
+              outputPath = path.join(tempDir, outputName);
+              fs.writeFileSync(outputPath, rawData);
+            }
             saved = true;
 
           } else if (filterName === 'FlateDecode' || !filterName) {
-            // ── Pixels bruts (possiblement compressés par zlib) ───
-            outputName = `page_${pageNum}_img_${indexImageGlobal}.png`;
-            outputPath = path.join(tempDir, outputName);
-
+            // ── Pixels bruts (zlib ou non compressés) ─────────────
             let pixelData;
             if (filterName === 'FlateDecode') {
               pixelData = zlib.inflateSync(Buffer.from(rawData));
@@ -199,27 +242,27 @@ export const extractImagesService = async (chemin, options = {}, motDePasse = nu
 
             const channels = getChannels(dict, context);
 
-            // Vérification de cohérence : taille attendue vs taille réelle
+            // Vérification de cohérence
             const expectedSize = width * height * channels;
             if (pixelData.length < expectedSize) {
               console.warn(`Image page ${pageNum}: taille pixels incohérente (${pixelData.length} vs ${expectedSize}), ignorée`);
               continue;
             }
 
-            await sharp(pixelData, {
-              raw: { width, height, channels }
-            }).toFile(outputPath);
+            const { buffer, ext } = await processImage(pixelData, width, height, channels, 'png');
+            outputName = `page_${pageNum}_img_${indexImageGlobal}.${ext}`;
+            outputPath = path.join(tempDir, outputName);
+            fs.writeFileSync(outputPath, buffer);
             saved = true;
 
           } else if (filterName === 'JPXDecode') {
-            // ── JPEG 2000 : sauvegarder en brut ──────────────────
+            // ── JPEG 2000 : écriture brute (sharp ne supporte pas JPEG2000) ──
             outputName = `page_${pageNum}_img_${indexImageGlobal}.jp2`;
             outputPath = path.join(tempDir, outputName);
             fs.writeFileSync(outputPath, rawData);
             saved = true;
 
           } else {
-            // Filtre non supporté (JBIG2, CCITTFax...) → ignorer
             console.warn(`Image page ${pageNum}: filtre ${filterName} non supporté, ignorée`);
             continue;
           }

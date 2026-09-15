@@ -41,7 +41,7 @@ export const ErrorBanner = ({ message, onDismiss, autoDismissTime = 8000 }) => {
           <span className="material-symbols-outlined shrink-0 mt-0.5">error</span>
           <div className="flex-grow">
             <h4 className="font-label-bold text-label-lg mb-1">Erreur</h4>
-            <p className="text-body-sm opacity-90">{message}</p>
+            <p className="text-body-sm opacity-90 whitespace-pre-wrap">{message}</p>
           </div>
           <button 
             onClick={(e) => {

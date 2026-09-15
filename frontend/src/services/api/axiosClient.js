@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:5001/api';
+const API_BASE_URL = `${import.meta.env.VITE_API_URL || 'http://localhost:5001'}/api`;
 
 // Instance Axios centralisée
 const axiosClient = axios.create({
@@ -56,6 +56,22 @@ axiosClient.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
+
+    // ─── Gestion du 402 : abonnement requis ──────────────────
+    if (error.response?.status === 402) {
+      const code = error.response.data?.code;
+      const message = error.response.data?.message ||
+        'Un abonnement est requis pour utiliser cette fonctionnalité.';
+
+      // Stocker le message pour affichage sur la page /pricing
+      sessionStorage.setItem('pricing_alert', JSON.stringify({ code, message }));
+
+      // Rediriger vers la page pricing
+      if (!window.location.pathname.includes('/pricing')) {
+        window.location.href = '/pricing';
+      }
+      return Promise.reject(error);
+    }
 
     // Ne pas tenter de refresh si :
     // - Ce n'est pas un 401

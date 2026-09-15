@@ -2,6 +2,58 @@ import { createFileService, checkQuotaService, deleteFileService } from '../serv
 import pool from '../config/db.js';
 import fs from 'fs'
 
+export const deleteAllUserFiles = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    // Récupérer tous les fichiers de l'utilisateur
+    const result = await pool.query(
+      'SELECT id_files, chemin, taille_octets FROM files WHERE owner_id = $1',
+      [userId]
+    );
+
+    const files = result.rows;
+
+    // Supprimer physiquement chaque fichier du disque
+    for (const file of files) {
+      if (file.chemin && fs.existsSync(file.chemin)) {
+        fs.unlinkSync(file.chemin);
+      }
+    }
+
+    // Supprimer toutes les références jobs_files
+    if (files.length > 0) {
+      const fileIds = files.map(f => f.id_files);
+      await pool.query(
+        'DELETE FROM jobs_files WHERE files_id = ANY($1::uuid[])',
+        [fileIds]
+      );
+    }
+
+    // Supprimer tous les fichiers en BDD
+    await pool.query('DELETE FROM files WHERE owner_id = $1', [userId]);
+
+    // Remettre le quota à 0
+    await pool.query(
+      'UPDATE users SET stockage_utilise = 0 WHERE id_users = $1',
+      [userId]
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: `${files.length} fichier(s) supprimé(s) avec succès.`,
+      data: { count: files.length }
+    });
+
+  } catch (error) {
+    console.error('Erreur deleteAllUserFiles:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Erreur lors de la suppression des fichiers.'
+    });
+  }
+};
+
 export const uploadFile = async (req, res) => {
   try {
     // req.file est fourni par Multer si l'upload a réussi

@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 
 export const ConfirmDialog = ({ 
   isOpen, 
@@ -12,7 +13,7 @@ export const ConfirmDialog = ({
 }) => {
   if (!isOpen) return null;
 
-  return (
+  const modalContent = (
     <>
       <div 
         className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[9998]"
@@ -55,4 +56,6 @@ export const ConfirmDialog = ({
       </div>
     </>
   );
+
+  return createPortal(modalContent, document.body);
 };

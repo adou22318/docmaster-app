@@ -19,7 +19,7 @@ export const AppFooter = () => {
           {currentYear} PDF DocMaster (Projet ENI-ABT).
         </p>
         <div className="flex flex-wrap justify-center gap-x-6 gap-y-2">
-          <Link to="/free" className={getLinkClass('/free')}>Accès Libre</Link>
+          <Link to="/pricing" className={getLinkClass('/pricing')}>Tarifs</Link>
           <Link to="/help" className={getLinkClass('/help')}>Aide</Link>
           <Link to="/terms" className={getLinkClass('/terms')}>Conditions</Link>
           <Link to="/privacy" className={getLinkClass('/privacy')}>Confidentialité</Link>

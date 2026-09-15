@@ -1,6 +1,7 @@
 node_modules/
 .env
 .env.local
+.env.production
 tmp/
 uploads/
 dist/
@@ -21,3 +22,17 @@ walkthrough*.md
 test*.js
 test*.mjs
 *test*.js
+
+# Scripts SQL ponctuels (migrations appliquées manuellement)
+*.sql
+backend/apply_sql.js
+
+# Documents de soutenance / contexte IA (ne pas exposer sur le dépôt)
+docs/bilan-technique-s5.md
+docs/bilan-technique-s5.html
+docs/contexte-memoire.md
+Documentation_Technique_Soutenance.md
+
+# Configurations déploiement non finalisées
+render.yaml
+frontend/vercel.json

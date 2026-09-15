@@ -57,7 +57,20 @@ export const registerService = async(email, mot_de_passe, nom_complet) => {
              RETURNING id_users, email, nom_complet, plan, created_at`,
              [email, mot_de_passe_hash, nom_complet]
         );
-        return result.rows[0];
+        
+        const user = result.rows[0];
+        
+        try {
+            await pool.query(
+                `INSERT INTO abonnements (user_id, statut, plan, date_debut_essai, date_fin_essai)
+                 VALUES ($1, 'essai', 'free', NOW(), NOW() + INTERVAL '7 days')`,
+                [user.id_users]
+            );
+        } catch (err) {
+            console.error("Erreur lors de la création de l'abonnement d'essai :", err);
+        }
+        
+        return user;
     } catch (err) {
         if (err.code === '23505') {
             throw new Error("Email_Already_Exists");

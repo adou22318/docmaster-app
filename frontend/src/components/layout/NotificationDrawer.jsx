@@ -1,166 +1,154 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
+import { createPortal } from 'react-dom';
 import axiosClient from '../../services/api/axiosClient';
+import { useNotificationStore } from '../../store/useNotificationStore';
 import { useToast } from '../../context/ToastContext';
 
+/**
+ * Drawer de notifications branché sur useNotificationStore (Zustand in-memory).
+ * Les notifications sont alimentées par JobTracker quand un job se termine.
+ */
 export const NotificationDrawer = ({ isOpen, onClose }) => {
-  const [notifications, setNotifications] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [downloadingId, setDownloadingId] = useState(null);
+  const notifications = useNotificationStore((s) => s.notifications);
+  const supprimerNotification = useNotificationStore((s) => s.supprimerNotification);
+  const toutEffacer = useNotificationStore((s) => s.toutEffacer);
   const toast = useToast();
 
-  useEffect(() => {
-    if (isOpen) {
-      fetchNotifications();
-      // Enregistrer le moment de l'ouverture pour réinitialiser le badge
-      localStorage.setItem('lastNotificationReadTime', new Date().toISOString());
-    }
-  }, [isOpen]);
-
-  const fetchNotifications = async () => {
+  const handleDownload = async (notification) => {
+    if (!notification.resultatUrl) return;
     try {
-      setLoading(true);
-      const response = await axiosClient.get('/jobs');
-      if (response.data.success) {
-        // Garder uniquement done et error des dernières 24h
-        const now = new Date();
-        const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-        
-        const filtered = response.data.data.filter(job => {
-          const completedAt = job.completed_at ? new Date(job.completed_at) : new Date(job.created_at);
-          return (job.status === 'done' || job.status === 'error') && completedAt >= yesterday;
-        });
-        
-        setNotifications(filtered);
-      }
-    } catch (error) {
-      console.error('Erreur chargement notifications:', error);
-    } finally {
-      setLoading(false);
+      // resultatUrl est un chemin relatif comme "/api/files/download/uuid"
+      const response = await axiosClient.get(notification.resultatUrl, { responseType: 'blob' });
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `resultat_${notification.jobId || 'fichier'}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch {
+      toast.error('Téléchargement impossible. Le fichier est peut-être expiré.');
     }
   };
 
-  const getTypeLabel = (type) => {
-    const labels = {
-      'compress': 'Compression',
-      'merge': 'Fusion',
-      'split': 'Division',
-      'protect': 'Protection',
-      'sign': 'Signature',
-      'pdf_to_images': 'Conversion en Images',
-      'clean_metadata': 'Nettoyage métadonnées'
-    };
-    return labels[type] || type;
+  const formatTemps = (timestamp) => {
+    const diff = Date.now() - timestamp;
+    const s = Math.floor(diff / 1000);
+    const m = Math.floor(s / 60);
+    const h = Math.floor(m / 60);
+    if (h > 0) return `Il y a ${h}h`;
+    if (m > 0) return `Il y a ${m} min`;
+    return "À l'instant";
   };
 
-  const handleDownload = async (resultatUrl, jobId) => {
-    if (!resultatUrl) return;
-    try {
-      setDownloadingId(jobId);
-      toast.info('Téléchargement en cours...');
-      // resultatUrl est sous la forme /api/files/download/<uuid>
-      // on récupère l'UUID à la fin
-      const fileIdMatch = resultatUrl.match(/\/download\/([a-f0-9-]+)$/i);
-      const fileId = fileIdMatch ? fileIdMatch[1] : null;
-
-      if (!fileId) throw new Error("ID de fichier introuvable dans l'URL");
-
-      const response = await axiosClient.get(`/files/download/${fileId}`, { responseType: 'blob' });
-      
-      const blobUrl = URL.createObjectURL(response.data);
-      const a = document.createElement('a');
-      a.href = blobUrl;
-      a.download = 'resultat.zip'; // Nom par défaut, le navigateur prendra l'extension correcte si disponible
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      
-      setTimeout(() => URL.revokeObjectURL(blobUrl), 5000);
-    } catch (err) {
-      console.error('Erreur téléchargement:', err);
-      toast.error('Impossible de télécharger le fichier. Le lien a peut-être expiré.');
-    } finally {
-      setDownloadingId(null);
-    }
-  };
-
-  if (!isOpen) return null;
-
-  return (
+  const drawerContent = (
     <>
-      <div 
-        className="fixed inset-0 bg-black/20 z-40" 
+      {/* Overlay */}
+      <div
+        className={`fixed inset-0 bg-black/30 z-[9998] transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
         onClick={onClose}
       />
-      <div className="fixed top-0 right-0 h-full w-full sm:w-96 bg-surface shadow-2xl z-50 transform transition-transform border-l border-outline-variant flex flex-col">
-        
-        <div className="p-6 border-b border-outline-variant flex justify-between items-center bg-surface-container-lowest">
-          <h2 className="font-display-xl text-headline-sm text-primary flex items-center gap-2">
-            <span className="material-symbols-outlined text-secondary-container">notifications</span>
-            Notifications
-          </h2>
-          <button onClick={onClose} className="p-2 text-on-surface-variant hover:text-primary hover:bg-surface-container rounded-full transition-colors">
-            <span className="material-symbols-outlined">close</span>
-          </button>
+
+      {/* Panneau */}
+      <div
+        className={`fixed top-0 right-0 h-full w-full max-w-sm bg-surface border-l border-outline-variant shadow-2xl z-[9999] flex flex-col transition-transform duration-300 ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}
+      >
+        {/* En-tête */}
+        <div className="flex items-center justify-between px-5 py-4 border-b border-outline-variant">
+          <div className="flex items-center gap-2">
+            <span className="material-symbols-outlined text-primary text-[22px]">notifications</span>
+            <h2 className="font-display-xl text-title-md text-on-surface">Notifications</h2>
+            {notifications.length > 0 && (
+              <span className="px-2 py-0.5 rounded-full bg-surface-container text-label-xs text-on-surface-variant">
+                {notifications.length}
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            {notifications.length > 0 && (
+              <button
+                onClick={toutEffacer}
+                className="text-label-sm text-on-surface-variant hover:text-error transition-colors px-2 py-1 rounded-lg hover:bg-error-container"
+                title="Tout effacer"
+              >
+                Tout effacer
+              </button>
+            )}
+            <button
+              onClick={onClose}
+              className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-surface-container transition-colors"
+            >
+              <span className="material-symbols-outlined text-[20px] text-on-surface-variant">close</span>
+            </button>
+          </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-surface">
-          {loading ? (
-            <div className="flex justify-center p-8">
-              <span className="w-6 h-6 rounded-full border-2 border-primary border-t-transparent animate-spin" />
-            </div>
-          ) : notifications.length === 0 ? (
-            <div className="text-center p-12">
-              <span className="material-symbols-outlined text-[48px] text-on-surface-variant/30 mb-4">notifications_paused</span>
-              <p className="font-label-bold text-primary">Aucune notification</p>
-              <p className="text-body-sm text-on-surface-variant mt-2">Vous n'avez effectué aucun traitement récemment.</p>
+        {/* Corps */}
+        <div className="flex-1 overflow-y-auto custom-scrollbar">
+          {notifications.length === 0 ? (
+            /* État vide */
+            <div className="flex flex-col items-center justify-center h-full gap-4 py-16 px-6 text-center">
+              <div className="w-16 h-16 rounded-full bg-surface-container flex items-center justify-center">
+                <span className="material-symbols-outlined text-[32px] text-outline">notifications_off</span>
+              </div>
+              <div>
+                <p className="font-display-xl text-title-sm text-on-surface mb-1">Aucune notification</p>
+                <p className="text-body-sm text-on-surface-variant">
+                  Vos traitements terminés apparaîtront ici.
+                </p>
+              </div>
             </div>
           ) : (
-            notifications.map((notif) => (
-              <div 
-                key={notif.id_jobs} 
-                className={`p-4 rounded-xl border ${notif.status === 'error' ? 'bg-error-container border-error/20' : 'bg-surface-container border-outline-variant'}`}
-              >
-                <div className="flex justify-between items-start mb-2">
-                  <span className={`font-label-bold text-label-md ${notif.status === 'error' ? 'text-error' : 'text-primary'}`}>
-                    {getTypeLabel(notif.type_operation)}
-                  </span>
-                  <span className="text-[10px] font-label-bold text-on-surface-variant uppercase">
-                    {new Date(notif.completed_at || notif.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
-                  </span>
-                </div>
-                
-                <p className="text-body-sm text-on-surface-variant">
-                  {notif.status === 'done' 
-                    ? 'Le traitement s\'est terminé avec succès.' 
-                    : 'Une erreur est survenue lors du traitement du fichier.'}
-                </p>
-                
-                {notif.status === 'done' && (
-                  <div className="mt-3 flex items-center justify-between">
-                    <p className="text-[11px] text-secondary">
-                      Le résultat sera supprimé d'ici 24h.
-                    </p>
-                    {notif.resultat_url && (
-                      <button
-                        onClick={() => handleDownload(notif.resultat_url, notif.id_jobs)}
-                        disabled={downloadingId === notif.id_jobs}
-                        className="text-primary hover:text-primary/80 font-label-bold text-label-sm flex items-center gap-1 transition-colors"
-                      >
-                        {downloadingId === notif.id_jobs ? (
-                          <span className="material-symbols-outlined text-[16px] animate-spin">progress_activity</span>
-                        ) : (
-                          <span className="material-symbols-outlined text-[16px]">download</span>
+            <ul className="divide-y divide-outline-variant/30">
+              {notifications.map((notif) => (
+                <li key={notif.id} className={`px-5 py-4 transition-colors hover:bg-surface-container/50 ${notif.lu ? '' : 'bg-primary/3'}`}>
+                  <div className="flex items-start gap-3">
+                    {/* Icône statut */}
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${
+                      notif.type === 'success' ? 'bg-green-100 text-green-700' :
+                      notif.type === 'error' ? 'bg-error-container text-error' :
+                      'bg-surface-container text-on-surface-variant'
+                    }`}>
+                      <span className="material-symbols-outlined text-[16px]" style={{ fontVariationSettings: "'FILL' 1" }}>
+                        {notif.type === 'success' ? 'check_circle' : notif.type === 'error' ? 'error' : 'info'}
+                      </span>
+                    </div>
+
+                    {/* Contenu */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="text-label-md font-label-bold text-on-surface truncate">{notif.titre}</p>
+                        <button
+                          onClick={() => supprimerNotification(notif.id)}
+                          className="w-6 h-6 flex items-center justify-center rounded hover:bg-surface-container flex-shrink-0 transition-colors"
+                        >
+                          <span className="material-symbols-outlined text-[14px] text-on-surface-variant">close</span>
+                        </button>
+                      </div>
+                      <p className="text-body-sm text-on-surface-variant mt-0.5">{notif.message}</p>
+                      <div className="flex items-center gap-3 mt-2">
+                        <span className="text-[11px] text-on-surface-variant">{formatTemps(notif.createdAt)}</span>
+                        {notif.type === 'success' && notif.resultatUrl && (
+                          <button
+                            onClick={() => handleDownload(notif)}
+                            className="flex items-center gap-1 text-[11px] font-bold text-primary hover:text-primary/80 transition-colors"
+                          >
+                            <span className="material-symbols-outlined text-[13px]">download</span>
+                            Télécharger
+                          </button>
                         )}
-                        Télécharger
-                      </button>
-                    )}
+                      </div>
+                    </div>
                   </div>
-                )}
-              </div>
-            ))
+                </li>
+              ))}
+            </ul>
           )}
         </div>
       </div>
     </>
   );
+
+  return createPortal(drawerContent, document.body);
 };

@@ -1,8 +1,9 @@
 import React from 'react';
 import { Outlet } from 'react-router-dom';
 import { TopAppBar } from './TopAppBar';
-import { AppFooter } from './AppFooter';
+import { UnifiedFooter } from './UnifiedFooter';
 
+// Le bandeau d'essai est intégré dans TopAppBar
 export const AppLayout = () => {
   return (
     <div className="bg-background text-on-surface font-body-md custom-scrollbar overflow-x-hidden min-h-screen flex flex-col">
@@ -10,7 +11,7 @@ export const AppLayout = () => {
       <main className="flex-grow">
         <Outlet />
       </main>
-      <AppFooter />
+      <UnifiedFooter />
     </div>
   );
 };

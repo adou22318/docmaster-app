@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import axiosClient from '../services/api/axiosClient';
 import { formatSize } from '../utils/formatters';
 import { useToast } from '../context/ToastContext';
+import { useFileStore } from '../store/useFileStore';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 export const FilesPage = () => {
   const [files, setFiles] = useState([]);
@@ -12,6 +13,9 @@ export const FilesPage = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const navigate = useNavigate();
   const toast = useToast();
+  const currentFile    = useFileStore((s) => s.currentFile);
+  const clearCurrentFile = useFileStore((s) => s.clearCurrentFile);
+  const refreshFiles   = useFileStore((s) => s.refreshFiles);
 
   const fetchFiles = async () => {
     try {
@@ -34,11 +38,17 @@ export const FilesPage = () => {
   const handleDelete = async () => {
     if (!fileToDelete) return;
     const id = fileToDelete.id_files || fileToDelete.id;
+    const nom = fileToDelete.nom_original || 'le fichier';
     try {
       setIsDeleting(true);
       await axiosClient.delete(`/files/${id}`);
+      // Si le fichier supprimé est dans la DropZone, on la vide
+      if (currentFile?.fileId === id) {
+        clearCurrentFile();
+      }
       setFiles(prev => prev.filter(f => f.id_files !== id && f.id !== id));
-      toast.success('Fichier supprimé avec succès.');
+      refreshFiles(); // sync RecentFiles
+      toast.success(`« ${nom} » supprimé avec succès.`);
     } catch (err) {
       toast.error('Erreur lors de la suppression. Réessayez.');
     } finally {

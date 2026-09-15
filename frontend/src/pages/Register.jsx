@@ -60,44 +60,58 @@ export const Register = () => {
 
   return (
     <main className="grid asymmetric-layout min-h-screen">
-      {/* Left Side: Visual/Branding Section (Editorial Aesthetic) */}
-      <section className="hidden lg:flex flex-col justify-between p-16 bg-primary text-on-primary relative overflow-hidden">
-        {/* Background Texture Layer */}
-        <div className="absolute inset-0 opacity-10 pointer-events-none">
-          <div className="absolute top-0 right-0 w-full h-full bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-secondary-container/20 via-transparent to-transparent"></div>
-        </div>
-        
-        {/* Header Identity */}
+      {/* Left Side — Brand Panel (toujours sombre, indépendant du thème) */}
+      <section
+        className="hidden lg:flex flex-col justify-between p-16 relative overflow-hidden"
+        style={{ backgroundColor: '#0a0a0b' }}
+      >
+        {/* Texture */}
+        <div className="absolute inset-0 z-0 pointer-events-none" style={{
+          backgroundImage: `
+            radial-gradient(ellipse at 15% 85%, rgba(253,188,19,0.07) 0%, transparent 55%),
+            radial-gradient(ellipse at 85% 15%, rgba(255,255,255,0.02) 0%, transparent 50%)
+          `
+        }} />
+        <div className="absolute inset-0 z-0 opacity-15 pointer-events-none" style={{
+          backgroundImage: 'radial-gradient(rgba(255,255,255,0.12) 1px, transparent 1px)',
+          backgroundSize: '24px 24px',
+        }} />
+
+        {/* Logo */}
         <div className="z-10">
-          <Link to="/" className="font-display-xl text-headline-md text-secondary-fixed-dim leading-none">DocMaster</Link>
-          <p className="font-label-bold text-label-bold mt-2 uppercase tracking-widest opacity-70">Édition Technique</p>
+          <Link to="/" className="font-display-xl text-headline-md leading-none" style={{ color: '#fdbc13' }}>DocMaster</Link>
+          <p className="font-label-bold text-label-bold mt-2 uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.4)' }}>Édition Technique</p>
         </div>
-        
-        {/* Content Area */}
+
+        {/* Accroche + Bento cards */}
         <div className="z-10 space-y-8">
           <div className="max-w-md">
-            <h2 className="font-headline-lg text-headline-lg leading-tight">L'art du document technique, réinventé.</h2>
-            <p className="font-body-lg text-body-lg mt-6 opacity-80 leading-relaxed">
-              Rejoignez l'atelier digital où la précision rencontre le design. Gérez, transformez et sécurisez vos fichiers avec une autorité bienveillante.
+            <h2 className="font-headline-lg text-headline-lg leading-tight" style={{ color: '#ffffff' }}>
+              L'art du document technique, <span style={{ color: '#fdbc13' }}>réinventé.</span>
+            </h2>
+            <p className="font-body-lg text-body-lg mt-6 leading-relaxed" style={{ color: '#a8a8b3' }}>
+              Rejoignez l'atelier digital où la précision rencontre le design. Gérez, transformez et sécurisez vos fichiers avec élégance.
             </p>
           </div>
-          
-          {/* Decorative Bento Elements */}
+
+          {/* Bento */}
           <div className="grid grid-cols-2 gap-4 mt-12">
-            <div className="bg-primary-container p-6 rounded-xl editoral-shadow border border-on-primary-container/10">
-              <span className="material-symbols-outlined text-secondary-fixed-dim mb-4" style={{ fontVariationSettings: "'FILL' 1" }}>sync_alt</span>
-              <h4 className="font-label-bold text-label-bold">Conversion</h4>
+            <div className="p-6 rounded-xl border" style={{ backgroundColor: 'rgba(255,255,255,0.04)', borderColor: 'rgba(255,255,255,0.08)' }}>
+              <span className="material-symbols-outlined mb-4 block" style={{ color: '#fdbc13', fontVariationSettings: "'FILL' 1" }}>sync_alt</span>
+              <h4 className="font-label-bold text-label-bold" style={{ color: '#e0e0e6' }}>Conversion</h4>
+              <p className="text-xs mt-1" style={{ color: '#666' }}>PDF ↔ Images, Office</p>
             </div>
-            <div className="bg-primary-container p-6 rounded-xl editoral-shadow translate-y-8 border border-on-primary-container/10">
-              <span className="material-symbols-outlined text-secondary-fixed-dim mb-4" style={{ fontVariationSettings: "'FILL' 1" }}>lock</span>
-              <h4 className="font-label-bold text-label-bold">Protection</h4>
+            <div className="p-6 rounded-xl border translate-y-8" style={{ backgroundColor: 'rgba(255,255,255,0.04)', borderColor: 'rgba(255,255,255,0.08)' }}>
+              <span className="material-symbols-outlined mb-4 block" style={{ color: '#fdbc13', fontVariationSettings: "'FILL' 1" }}>lock</span>
+              <h4 className="font-label-bold text-label-bold" style={{ color: '#e0e0e6' }}>Protection</h4>
+              <p className="text-xs mt-1" style={{ color: '#666' }}>AES-256 GCM</p>
             </div>
           </div>
         </div>
-        
-        {/* Footer Branding */}
+
+        {/* Footer */}
         <div className="z-10">
-          <p className="font-label-sm text-label-sm opacity-50">© {currentYear} PDF DocMaster. Tous droits réservés.</p>
+          <p className="font-label-sm text-label-sm" style={{ color: 'rgba(255,255,255,0.3)' }}>© {currentYear} PDF DocMaster. Tous droits réservés.</p>
         </div>
       </section>
 
@@ -180,7 +194,7 @@ export const Register = () => {
               </div>
 
               <a 
-                href="http://localhost:5001/api/auth/google"
+                href={`${import.meta.env.VITE_API_URL || 'http://localhost:5001'}/api/auth/google`}
                 className="w-full bg-surface-container-low text-primary border border-outline-variant font-label-bold text-body-md py-5 rounded-none hover:bg-surface-container-high transition-all duration-300 active:scale-[0.98] flex items-center justify-center gap-3"
               >
                 <svg viewBox="0 0 24 24" className="w-5 h-5">

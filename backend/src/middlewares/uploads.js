@@ -52,24 +52,45 @@ const MIME_TYPES_AUTORISES = [
   'application/vnd.openxmlformats-officedocument.presentationml.presentation',
 ];
 
+const MIMES_PDF = ['application/pdf'];
+const MIMES_IMAGES = ['image/jpeg', 'image/png', 'image/bmp', 'image/gif', 'image/tiff'];
+const MIMES_OFFICE = [
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'application/vnd.ms-powerpoint',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+];
+
 const fileFilter = (req, file, cb) => {
   // Détecter le vrai MIME type depuis l'extension du fichier
-  // Plus fiable que le MIME envoyé par le client
+  // req.body N'EST PAS disponible ici (Multer n'a pas encore parsé le body).
+  // On lit le toolId depuis les query params : POST /api/files/upload?tool=compress
   const extensionMime = mime.lookup(file.originalname);
-
-  console.log('MIME client:', file.mimetype);
-  console.log('MIME extension:', extensionMime);
-
-  // On utilise le MIME détecté depuis l'extension
-  // Si l'extension est inconnue on tombe sur false
   const mimeAVerifier = extensionMime || file.mimetype;
+  const toolId = req.query.tool; // ex: 'compress', 'convert_to_pdf', 'convert_images_to_pdf'
 
-  if (mimeAVerifier && MIME_TYPES_AUTORISES.includes(mimeAVerifier)) {
-    // Corriger le mimetype pour que req.file.mimetype soit correct
+  let isValid = false;
+
+  if (toolId === 'convert_to_pdf') {
+    isValid = MIMES_OFFICE.includes(mimeAVerifier);
+  } else if (toolId === 'convert_images_to_pdf') {
+    isValid = MIMES_IMAGES.includes(mimeAVerifier);
+  } else if (toolId) {
+    // Tous les autres outils : PDF uniquement
+    isValid = MIMES_PDF.includes(mimeAVerifier);
+  } else {
+    // Pas de toolId : validation globale (dashboard, etc.)
+    isValid = mimeAVerifier && MIME_TYPES_AUTORISES.includes(mimeAVerifier);
+  }
+
+  if (isValid) {
     file.mimetype = mimeAVerifier;
     cb(null, true);
   } else {
-    cb(new Error(`FORMAT_NON_SUPPORTE:${mimeAVerifier}`), false);
+    // On encode le toolId dans l'erreur pour un message client plus précis
+    cb(new Error(`FORMAT_NON_SUPPORTE:${mimeAVerifier}:${toolId || ''}`), false);
   }
 };
 

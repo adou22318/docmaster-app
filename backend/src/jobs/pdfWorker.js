@@ -17,6 +17,7 @@ import { convertToPdfService } from '../services/pdf/convertToPdf.js';
 import { pdfToTxtService } from '../services/pdf/pdfToTxt.js';
 import { signService } from '../services/pdf/sign.js';
 import { cleanMetadataService } from '../services/pdf/cleanMetadata.js';
+import { imagesToPdfService } from '../services/pdf/imagesToPdf.js';
 import { dechiffrerAvecQpdf, nettoyerFichierTemp } from '../services/pdf/dechiffrer.js';
 
 pdfQueue.process(async (job) => {
@@ -221,6 +222,15 @@ pdfQueue.process(async (job) => {
         );
         break;
 
+      case 'convert_images_to_pdf':
+        // Toutes les images sont dans cheminsFichiers, dans l'ordre
+        // choisi par l'utilisateur (réorganisable via D&D dans MultiFileSelection).
+        resultat = await imagesToPdfService(
+          cheminsFichiers,
+          options
+        );
+        break;
+
       default:
         throw new Error(`TYPE_OPERATION_INCONNU:${type_operation}`);
     }
@@ -272,11 +282,40 @@ pdfQueue.process(async (job) => {
     return resultPayload;
 
   } catch (error) {
+    // Transformer les erreurs techniques en messages lisibles pour l'utilisateur
+    let messageErreurUtilisateur = error.message;
+
+    if (messageErreurUtilisateur.includes('No PDF header found') || 
+        messageErreurUtilisateur.includes('Failed to parse PDF')) {
+      messageErreurUtilisateur = "Le fichier fourni n'est pas un PDF valide. Assurez-vous que le fichier n'est pas corrompu et réessayez.";
+    } else if (messageErreurUtilisateur.includes('COMPRESSION_ECHOUEE') || 
+               messageErreurUtilisateur.includes('Command failed') ||
+               messageErreurUtilisateur.includes('Ghostscript') ||
+               messageErreurUtilisateur.includes('gswin64c') ||
+               messageErreurUtilisateur.includes('gs: command not found')) {
+      messageErreurUtilisateur = "Le traitement de ce fichier a échoué. Cela peut arriver avec des PDF protégés ou corrompu. Si votre PDF est protégé par un mot de passe, retirez la protection d'abord.";
+    } else if (messageErreurUtilisateur.includes('FICHIER_INTROUVABLE')) {
+      messageErreurUtilisateur = "Le fichier source est introuvable. Il a peut-être été supprimé automatiquement. Veuillez réimporter votre fichier.";
+    } else if (messageErreurUtilisateur.includes('qpdf') || 
+               messageErreurUtilisateur.includes('QPDF')) {
+      messageErreurUtilisateur = "Erreur lors du déchiffrement du PDF. Vérifiez que le mot de passe est correct.";
+    } else if (messageErreurUtilisateur.includes('soffice') || 
+               messageErreurUtilisateur.includes('LibreOffice')) {
+      messageErreurUtilisateur = "La conversion du document Office a échoué. Assurez-vous que le fichier n'est pas corrompu ou protégé par un mot de passe.";
+    } else if (messageErreurUtilisateur.includes('ENOENT') || 
+               messageErreurUtilisateur.includes('no such file')) {
+      messageErreurUtilisateur = "Fichier temporaire manquant. Le traitement a été interrompu. Veuillez réessayer.";
+    } else if (messageErreurUtilisateur.includes('SELECTION_INVALIDE') || 
+               messageErreurUtilisateur.includes('Plage de pages')) {
+      messageErreurUtilisateur = "La sélection de pages est invalide. Vérifiez que les numéros de pages existent dans votre document.";
+    }
+
     await pool.query(
       `UPDATE jobs SET statut = 'error', erreur_message = $1, completed_at = NOW()
        WHERE id_jobs = $2`,
-      [error.message, jobId]
+      [messageErreurUtilisateur, jobId]
     );
+    console.error(`❌ Job ${jobId} échoué:`, error.message);
     throw error;
   } finally {
     // Nettoyage des fichiers temporaires de déchiffrement

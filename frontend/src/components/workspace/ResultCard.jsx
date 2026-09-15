@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { formatSize } from '../../utils/formatters';
 import axiosClient from '../../services/api/axiosClient';
+import { getSuccessMessage } from '../../utils/operationMessages';
 
 // Correspondance extension ↔ icône/libellé
 const getFileInfo = (contentDisposition, fallbackUrl) => {
@@ -44,70 +45,21 @@ export const ResultCard = ({ tool, result, originalFile, onNewFile }) => {
   // Affichage avant/après uniquement pour la compression
   const showCompressionStats = tool.id === 'compress' && (reductionPercent != null || (originalFile?.tailleOctets && tailleResult));
 
-  // Message naturel et informatif généré dynamiquement
+  // Message de succès dynamique
   const getDynamicSuccessMessage = () => {
-    let baseMessage = 'Le traitement de votre fichier est terminé avec succès.';
-    
-    if (tool.id === 'compress') {
+    // Compression : message avec stats
+    if (tool.id === 'compress' || tool.typeOperation === 'compress') {
       if (reductionPercent > 0 && originalFile?.tailleOctets && tailleResult) {
         return `Excellente nouvelle ! Votre fichier a été allégé de ${reductionPercent}%. Sa taille est passée de ${formatSize(originalFile.tailleOctets)} à ${formatSize(tailleResult)}.`;
       } else if (tailleResult) {
         return `Votre fichier a été compressé avec succès. Sa nouvelle taille est de ${formatSize(tailleResult)}.`;
-      } else {
-        return 'Votre fichier a été compressé avec succès !';
       }
+      return 'Votre fichier a été compressé avec succès !';
     }
-    
-    if (tool.id === 'protect') {
-      return 'Sécurité renforcée ! Votre document est désormais chiffré et protégé par mot de passe.';
-    }
-    
-    if (tool.id === 'unprotect') {
-      return 'Liberté retrouvée ! La protection par mot de passe a été retirée de votre document.';
-    }
-    
-    if (tool.id === 'convert_to_pdf') {
-      return 'Conversion réussie ! Votre document Office est maintenant un PDF parfait.';
-    }
-    
-    if (tool.id === 'pdf_to_txt') {
-      return 'Extraction terminée ! Tout le texte de votre PDF a été récupéré dans un fichier brut.';
-    }
-    
-    if (tool.id === 'merge') {
-      return 'Fusion réussie ! Votre nouveau document PDF consolidé est prêt.';
-    }
-    
-    if (tool.id === 'convert_images_to_pdf') {
-      return 'Conversion réussie ! Vos images ont été transformées en un PDF unique.';
-    }
-
-    if (tool.id === 'split') {
-      return 'Découpage réussi ! Vos pages ont été extraites avec succès.';
-    }
-
-    if (tool.id === 'remove_pages') {
-      return 'Nettoyage terminé ! Les pages indésirables ont été supprimées de votre document.';
-    }
-
-    if (tool.id === 'rotate') {
-      return 'Rotation effectuée ! Les pages de votre document ont été réorientées.';
-    }
-
-    if (tool.id === 'add_blank_pages') {
-      return 'Insertion réussie ! Les pages vierges ont été ajoutées à votre document.';
-    }
-
-    if (tool.id === 'pdf_to_images') {
-      return 'Conversion terminée ! Vos pages PDF ont été exportées en images.';
-    }
-
-    if (tool.id === 'extract_images') {
-      return 'Extraction réussie ! Les images contenues dans votre PDF ont été récupérées.';
-    }
-    
-    // Fallback pour les autres outils (split, watermark, etc.)
-    return 'Opération réussie !';
+    // Tous les autres outils : source unique operationMessages.js
+    const opId = tool.typeOperation || tool.id;
+    const { message } = getSuccessMessage(opId);
+    return message;
   };
 
 

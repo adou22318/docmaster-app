@@ -1,14 +1,25 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axiosClient from '../../services/api/axiosClient';
+import { useNotificationStore } from '../../store/useNotificationStore';
+import { getSuccessMessage, getEchecTitre } from '../../utils/operationMessages';
 
 const MESSAGES_ERREUR = {
-  FICHIER_INTROUVABLE: "Le fichier source n'est plus disponible. Veuillez le ré-importer.",
-  COMPRESSION_ECHOUEE: 'La compression a échoué. Essayez avec un niveau moins élevé.',
-  MOT_DE_PASSE_INCORRECT: 'Le mot de passe saisi est incorrect pour déverrouiller le fichier.',
+  FICHIER_INTROUVABLE: "Le fichier source n'est plus disponible. Veuillez le ré-importer et réessayer.",
+  COMPRESSION_ECHOUEE: "La compression a échoué. Si votre PDF est protégé par un mot de passe, retirez d'abord la protection via l'outil \u00ab Retirer protection \u00bb.",
+  MOT_DE_PASSE_INCORRECT: 'Le mot de passe saisi est incorrect pour déverrouiller le fichier. Vérifiez-le et réessayez.',
   MOT_DE_PASSE_TROP_COURT: 'Le mot de passe fourni est trop court (4 caractères minimum requis).',
-  PLAGE_INVALIDE: 'La sélection de pages est invalide. Vérifiez les numéros saisis.',
-  PDF_CHIFFRE: "Ce PDF est protégé par un mot de passe. Utilisez l'outil 'Supprimer la protection' pour le déverrouiller avant de le traiter.",
-  TYPE_OPERATION_INCONNU: 'Opération non reconnue. Contactez le support.',
+  PLAGE_INVALIDE: 'La sélection de pages est invalide. Vérifiez que les numéros de pages existent dans votre document.',
+  PDF_CHIFFRE: "Ce PDF est protégé par un mot de passe. Retirez d'abord la protection avec l'outil \u00ab Retirer protection \u00bb, puis réessayez.",
+  TYPE_OPERATION_INCONNU: 'Opération non reconnue. Veuillez recharger la page et réessayer.',
+  AUCUNE_IMAGE_EMBARQUEE_TROUVEE: 'Aucune image embarquée n\'a été trouvée dans les pages sélectionnées. Essayez d\'autres pages ou vérifiez que votre PDF contient bien des images incorporées.',
+  ECHEC_EXTRACTION_IMAGES: 'L\'extraction des images a échoué. Assurez-vous que votre PDF n\'est pas protégé ou corrompu.',
+  INTEGRATION_IMAGE_ECHOUEE: 'L\'intégration de l\'image a échoué. Vérifiez le format de l\'image (PNG ou JPG uniquement).',
+  // Paiement / Abonnement
+  ESSAI_EXPIRE: "Votre période d'essai de 7 jours est terminée. Rendez-vous sur la page Tarifs pour choisir un plan.",
+  ABONNEMENT_EXPIRE: "Votre abonnement Pro a expiré. Renouvelez-le sur la page Tarifs pour continuer.",
+  ABONNEMENT_REQUIS: "Cette fonctionnalité nécessite un abonnement actif. Consultez la page Tarifs.",
+  ABONNEMENT_DEJA_ACTIF: "Vous avez déjà un abonnement Pro actif.",
+  PAYDUNYA_ERREUR: "Une erreur est survenue lors de l'initiation du paiement. Réessayez dans quelques instants.",
 };
 
 const getProgressMessage = (pct) => {
@@ -19,6 +30,7 @@ const getProgressMessage = (pct) => {
 };
 
 export const JobTracker = ({ tool, jobId, onComplete, onError }) => {
+  // tool = tool.id (identifiant backend, ex: 'merge', 'compress', 'pdf_to_txt'…)
   const [progression, setProgression] = useState(0);
   const [error, setError] = useState(null);
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
@@ -28,6 +40,8 @@ export const JobTracker = ({ tool, jobId, onComplete, onError }) => {
   const onErrorRef = useRef(onError);
   useEffect(() => { onCompleteRef.current = onComplete; }, [onComplete]);
   useEffect(() => { onErrorRef.current = onError; }, [onError]);
+
+  const ajouterNotification = useNotificationStore((s) => s.ajouterNotification);
 
   // Connexion réseau
   useEffect(() => {
@@ -58,11 +72,30 @@ export const JobTracker = ({ tool, jobId, onComplete, onError }) => {
 
         if (job.statut === 'done') {
           active = false;
+          const { titre, message } = getSuccessMessage(tool);
+          ajouterNotification({
+            type: 'success',
+            titre,
+            message,
+            jobId: jobId,
+            resultatUrl: job.resultat_url ? `/files/download/${job.resultat_url.split('/').pop()}` : null,
+          });
           onCompleteRef.current(job);
         } else if (job.statut === 'error') {
           active = false;
           const raw = job.erreur_message || '';
-          setError(MESSAGES_ERREUR[raw] || raw || 'Une erreur inattendue est survenue. Réessayez dans quelques instants.');
+          const codeMatch = Object.keys(MESSAGES_ERREUR).find(code => raw.startsWith(code));
+          const msgFinal = codeMatch
+            ? MESSAGES_ERREUR[codeMatch]
+            : (raw || 'Une erreur inattendue est survenue. Veuillez réessayer dans quelques instants.');
+          ajouterNotification({
+            type: 'error',
+            titre: getEchecTitre(tool),
+            message: msgFinal,
+            jobId: jobId,
+          });
+          setError(msgFinal);
+          onErrorRef.current(msgFinal);
         }
       } catch (err) {
         if (err.response?.status === 404) {
@@ -94,13 +127,13 @@ export const JobTracker = ({ tool, jobId, onComplete, onError }) => {
   // ── État d'erreur ──────────────────────────────────────────────────
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 text-center space-y-6 animate-scale visible">
+      <div className="flex flex-col items-center justify-center py-20 text-center space-y-6 animate-scale visible w-96">
         <div className="w-20 h-20 rounded-full bg-error/10 flex items-center justify-center text-error">
           <span className="material-symbols-outlined text-[40px]">error</span>
         </div>
         <div className="space-y-2 max-w-md">
           <h2 className="font-display-xl text-title-lg text-on-surface">Erreur de traitement</h2>
-          <p className="text-body-md text-on-surface-variant">{error}</p>
+          <p className="text-body-md text-on-surface-variant whitespace-pre-wrap break-words">{error}</p>
         </div>
         <div className="flex gap-3">
           <button

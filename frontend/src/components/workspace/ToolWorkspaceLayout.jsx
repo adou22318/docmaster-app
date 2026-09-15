@@ -29,6 +29,7 @@ import { ImagesToPdfOptions } from './options/ImagesToPdfOptions';
 
 import { PdfThumbnailViewer } from './viewer/PdfThumbnailViewer';
 import { PdfSignatureViewer } from './viewer/PdfSignatureViewer';
+import { PdfImageViewer } from './viewer/PdfImageViewer';
 import { SignatureDisclaimer, isDisclaimerAccepted } from './SignatureDisclaimer';
 
 const OPTIONS_MAP = {
@@ -76,7 +77,7 @@ const ErrorBanner = ({ error, onUnlock }) => {
     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-error/10 border border-error/30 rounded-xl">
       <div className="flex items-start gap-3">
         <span className="material-symbols-outlined text-[18px] text-error mt-0.5">error</span>
-        <p className="text-body-sm text-error">{error}</p>
+        <p className="text-body-sm text-error whitespace-pre-wrap">{error}</p>
       </div>
       {isEncrypted && (
         <button
@@ -117,6 +118,19 @@ export const ToolWorkspaceLayout = ({ tool, step, setStep, onReset, onBack }) =>
   const [addDate, setAddDate] = useState(false);
   const [signatureValidee, setSignatureValidee] = useState(null);
   const [signatureDisclaimerAccepted, setSignatureDisclaimerAccepted] = useState(() => isDisclaimerAccepted());
+
+  // État local pour l'outil add_image (partagé entre viewer et options)
+  const [imagePreview, setImagePreview] = useState(null);
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePage, setImagePage] = useState(1);
+  const [imagePosition, setImagePosition] = useState({ x: 50, y: 50 });
+  const [imageSize, setImageSize] = useState({ width: 200, height: 100 });
+  const [imageLargeur, setImageLargeur] = useState(200);
+  const [imageHauteur, setImageHauteur] = useState(200);
+  const [imageKeepRatio, setImageKeepRatio] = useState(true);
+  const [imageNaturalRatio, setImageNaturalRatio] = useState(1);
+  // Map<pageNumber, { x, y, largeur, hauteur }> — placements par page
+  const [imagePlacements, setImagePlacements] = useState(new Map());
   
   // État local pour le statut "non protégé" (BUG-01)
   const [pdfNonProtege, setPdfNonProtege] = useState(false);
@@ -175,6 +189,15 @@ export const ToolWorkspaceLayout = ({ tool, step, setStep, onReset, onBack }) =>
   const handleComplete = useCallback((result) => {
     setJobResult(result);
     setStep('resultat');
+    // Réinitialisation états add_image après traitement réussi
+    setImagePreview(null);
+    setImageFile(null);
+    setImagePage(1);
+    setImagePosition({ x: 50, y: 50 });
+    setImageSize({ width: 200, height: 100 });
+    setImageLargeur(200);
+    setImageHauteur(200);
+    setImagePlacements(new Map());
     toast.success(`${tool.nom} terminé avec succès ! Téléchargez votre fichier ci-dessous.`);
   }, [setStep, tool.nom]);
 
@@ -202,6 +225,15 @@ export const ToolWorkspaceLayout = ({ tool, step, setStep, onReset, onBack }) =>
     setActiveJobId(null);
     setJobResult(null);
     setStartError(null);
+    // Réinitialisation états add_image
+    setImagePreview(null);
+    setImageFile(null);
+    setImagePage(1);
+    setImagePosition({ x: 50, y: 50 });
+    setImageSize({ width: 200, height: 100 });
+    setImageLargeur(200);
+    setImageHauteur(200);
+    setImagePlacements(new Map());
     setStep('selection');
     onReset?.();
   };
@@ -224,7 +256,10 @@ export const ToolWorkspaceLayout = ({ tool, step, setStep, onReset, onBack }) =>
     <div className="min-h-[calc(100vh-80px)] bg-background flex flex-col">
       {/* BUG-04 : Afficher le disclaimer dès l'entrée de l'outil (quel que soit l'étape) */}
       {tool.id === 'sign' && !signatureDisclaimerAccepted && (
-        <SignatureDisclaimer onAccept={() => setSignatureDisclaimerAccepted(true)} />
+        <SignatureDisclaimer
+          onAccept={() => setSignatureDisclaimerAccepted(true)}
+          onClose={handleBackClick}
+        />
       )}
 
       {/* ── Barre de contexte de l'outil ─────────────────────────────── */}
@@ -318,6 +353,7 @@ export const ToolWorkspaceLayout = ({ tool, step, setStep, onReset, onBack }) =>
                     onStart={tool.sansOptions ? handleStart : undefined}
                     onContinue={tool.sansOptions ? undefined : () => setStep('configuration')}
                     isProcessing={isProcessing}
+                    onChangeFile={handleReset}
                   />
                 ) : currentFile ? (
                   /* Fichier déjà sélectionné */
@@ -350,7 +386,63 @@ export const ToolWorkspaceLayout = ({ tool, step, setStep, onReset, onBack }) =>
 
             {/* ÉTAPE : configuration (uniquement pour les outils avec options) */}
             {step === 'configuration' && (
-              tool.utiliseVisualiseurSignature ? (
+              tool.accepteMultiple ? (
+                /* Outils multi-fichiers avec options (ex: Images → PDF) :
+                   affichage récapitulatif des images en zone principale,
+                   panneau latéral ImagesToPdfOptions gère le lancement */
+                <div className="space-y-6">
+                  <div>
+                    <h1 className="font-display-xl text-headline-md text-on-surface mb-1">{tool.nom}</h1>
+                    <p className="text-body-md text-on-surface-variant">{tool.description}</p>
+                  </div>
+                  <button onClick={() => setStep('selection')} className="flex items-center gap-2 text-label-sm text-on-surface-variant hover:text-primary transition-colors">
+                    <span className="material-symbols-outlined text-[16px]">arrow_back</span>
+                    Modifier la sélection ({multiFiles.length} image{multiFiles.length > 1 ? 's' : ''})
+                  </button>
+                  <ErrorBanner error={startError} onUnlock={handleUnlockRedirect} />
+                  <div className="bg-surface border border-outline-variant rounded-2xl p-4 shadow-sm space-y-2">
+                    {multiFiles.map((f, i) => (
+                      <div key={f.fileId} className="flex items-center gap-3 p-2 rounded-xl border border-outline-variant bg-surface-container/50">
+                        <span className="w-6 h-6 rounded-full bg-secondary-container flex items-center justify-center text-label-sm font-label-bold text-on-secondary-container shrink-0">{i + 1}</span>
+                        <span className="material-symbols-outlined text-secondary text-[18px] shrink-0">image</span>
+                        <span className="text-label-md text-on-surface truncate flex-1">{f.nomOriginal}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-body-sm text-on-surface-variant text-center">
+                    Configurez la mise en page dans le panneau de droite, puis cliquez sur <strong>Créer le PDF</strong>.
+                  </p>
+                </div>
+              ) : tool.utiliseVisualiseurImage ? (
+
+                <div className="space-y-6">
+                  <div>
+                    <h1 className="font-display-xl text-headline-md text-on-surface mb-1">{tool.nom}</h1>
+                    <p className="text-body-md text-on-surface-variant">{tool.description}</p>
+                  </div>
+                  <button onClick={handleReset} className="flex items-center gap-2 text-label-sm text-on-surface-variant hover:text-error transition-colors">
+                    <span className="material-symbols-outlined text-[16px]">swap_horiz</span>
+                    Changer de fichier
+                  </button>
+                  <ErrorBanner error={startError} onUnlock={handleUnlockRedirect} />
+                  <PdfImageViewer
+                    fileId={currentFile?.fileId}
+                    motDePassePdf={currentFile?.motDePassePdf}
+                    imagePreview={imagePreview}
+                    currentPage={imagePage}
+                    setCurrentPage={setImagePage}
+                    onLoadSuccess={setTotalPages}
+                    imagePosition={imagePosition}
+                    setImagePosition={setImagePosition}
+                    imageSize={imageSize}
+                    setImageSize={setImageSize}
+                    onPdfCoordsChange={setPdfCoords}
+                    imagePlacements={imagePlacements}
+                    setImagePlacements={setImagePlacements}
+                    onChangeFile={handleReset}
+                  />
+                </div>
+              ) : tool.utiliseVisualiseurSignature ? (
                 <div className="space-y-6">
                   <div>
                     <h1 className="font-display-xl text-headline-md text-on-surface mb-1">{tool.nom}</h1>
@@ -373,6 +465,7 @@ export const ToolWorkspaceLayout = ({ tool, step, setStep, onReset, onBack }) =>
                     signatureSize={signatureSize}
                     setSignatureSize={setSignatureSize}
                     onPdfCoordsChange={setPdfCoords}
+                    onChangeFile={handleReset}
                   />
                 </div>
               ) : tool.utiliseVisualiseur ? (
@@ -395,23 +488,30 @@ export const ToolWorkspaceLayout = ({ tool, step, setStep, onReset, onBack }) =>
                       onSelectionChange={setSelection}
                       selectionStyle={tool.selectionStyle || 'blue'}
                       onLoadSuccess={setTotalPages}
+                      onChangeFile={handleReset}
                     />
                   </div>
                 </div>
               ) : (
-                <FileConfirmation
-                  file={currentFile}
-                  tool={tool}
-                  onChangeFile={handleReset}
-                  startError={startError}
-                />
+                <div className="space-y-6">
+                  <div>
+                    <h1 className="font-display-xl text-headline-md text-on-surface mb-1">{tool.nom}</h1>
+                    <p className="text-body-md text-on-surface-variant">{tool.description}</p>
+                  </div>
+                  <FileConfirmation
+                    file={currentFile}
+                    tool={tool}
+                    onChangeFile={handleReset}
+                    startError={startError}
+                  />
+                </div>
               )
             )}
 
             {/* ÉTAPE : traitement */}
             {step === 'traitement' && (
               <JobTracker
-                tool={tool}
+                tool={tool?.typeOperation || tool?.id || 'traitement'}
                 jobId={activeJobId}
                 onComplete={handleComplete}
                 onError={handleError}
@@ -447,7 +547,24 @@ export const ToolWorkspaceLayout = ({ tool, step, setStep, onReset, onBack }) =>
               fichierCharge={currentFile}
               selection={selection}
               totalPages={totalPages}
-              // Props specifiques à SignOptions
+              // Props partagées avec PdfImageViewer (add_image)
+              imagePreview={imagePreview}
+              setImagePreview={setImagePreview}
+              imageFile={imageFile}
+              setImageFile={setImageFile}
+              imagePage={imagePage}
+              largeur={imageLargeur}
+              setLargeur={setImageLargeur}
+              hauteur={imageHauteur}
+              setHauteur={setImageHauteur}
+              keepRatio={imageKeepRatio}
+              setKeepRatio={setImageKeepRatio}
+              naturalRatio={imageNaturalRatio}
+              setNaturalRatio={setImageNaturalRatio}
+              pdfCoords={pdfCoords}
+              imagePlacements={imagePlacements}
+              setImagePlacements={setImagePlacements}
+              // Props spécifiques à SignOptions
               signaturePreview={signaturePreview}
               setSignaturePreview={setSignaturePreview}
               signaturePage={signaturePage}

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
+import { useToast } from '../context/ToastContext';
 
 export const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -8,6 +9,7 @@ export const Login = () => {
   const [validationError, setValidationError] = useState(null);
   const { loginUser, error, clearError } = useAuthStore();
   const navigate = useNavigate();
+  const toast = useToast();
 
   // Nettoyer l'erreur quand le composant est monté
   useEffect(() => {
@@ -41,42 +43,71 @@ export const Login = () => {
     setIsSubmitting(false);
 
     if (result.success) {
+      toast.success('Connexion réussie !');
       navigate('/dashboard');
     }
   };
 
   return (
     <main className="asymmetric-layout">
-      {/* Left Side: Visual Anchor (Illustration) */}
-      <section className="hidden md:flex flex-col justify-between p-margin-desktop bg-primary relative overflow-hidden">
-        {/* Animated Background / Image */}
-        <div className="absolute inset-0 z-0 opacity-40 mix-blend-soft-light" style={{ backgroundImage: "url('https://lh3.googleusercontent.com/aida/AP1WRLt02XjLs9nFPw4ExnpP4mrgQDb2s6oUgvjjKJlsL6mcKP3QXulXoHYB5v-jeup0I9D95KLhQh3VSwwWi7k0w7adcp4ItzXe5l3I0GF9EgdIQkwr6HgdV4MacHBUnjTd7RuUgv-KtHeJMfIvu5XTsWmraz3yiRNb8kUQq2hdSIj2Oh93-ZxvQz5gZLERoOJIC-bPzsc-y_s3Bu8hxABrfrwHF6yo8hcDBp72iNJp7V25LBLUuLHtoRczvh7a')", backgroundSize: 'cover', backgroundPosition: 'center' }}></div>
-        
+      {/* Left Side — Brand Panel (toujours sombre, indépendant du thème) */}
+      <section
+        className="hidden md:flex flex-col justify-between p-margin-desktop relative overflow-hidden"
+        style={{ backgroundColor: '#0a0a0b' }}
+      >
+        {/* Texture subtile en arrière-plan */}
+        <div
+          className="absolute inset-0 z-0"
+          style={{
+            backgroundImage: `
+              radial-gradient(ellipse at 20% 80%, rgba(253,188,19,0.08) 0%, transparent 60%),
+              radial-gradient(ellipse at 80% 20%, rgba(255,255,255,0.03) 0%, transparent 50%)
+            `,
+          }}
+        />
+        {/* Grille de points discrète */}
+        <div
+          className="absolute inset-0 z-0 opacity-20"
+          style={{
+            backgroundImage: 'radial-gradient(rgba(255,255,255,0.15) 1px, transparent 1px)',
+            backgroundSize: '24px 24px',
+          }}
+        />
+
+        {/* Logo */}
         <div className="relative z-10">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-secondary-container flex items-center justify-center rounded-lg">
-              <span className="material-symbols-outlined text-primary text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>description</span>
+            <div className="w-12 h-12 flex items-center justify-center rounded-xl" style={{ backgroundColor: 'rgba(253,188,19,0.15)', border: '1px solid rgba(253,188,19,0.25)' }}>
+              <span className="material-symbols-outlined text-2xl" style={{ color: '#fdbc13', fontVariationSettings: "'FILL' 1" }}>description</span>
             </div>
-            <Link to="/" className="font-display-xl text-headline-md text-secondary-fixed-dim tracking-tight">DocMaster</Link>
+            <Link to="/" className="font-display-xl text-headline-md tracking-tight" style={{ color: '#ffffff' }}>DocMaster</Link>
           </div>
+
+          {/* Accroche */}
           <div className="mt-24 max-w-md">
-            <h2 className="font-headline-lg text-headline-lg text-on-primary leading-tight">
-              L'art du document technique, <br/><span className="text-secondary-fixed-dim italic font-serif">parfaitement structuré.</span>
+            <h2 className="font-headline-lg text-headline-lg leading-tight" style={{ color: '#ffffff' }}>
+              L'art du document technique,{' '}
+              <span className="italic font-serif" style={{ color: '#fdbc13' }}>parfaitement structuré.</span>
             </h2>
-            <p className="mt-8 text-on-primary-container font-body-md leading-relaxed">
+            <p className="mt-6 font-body-md leading-relaxed" style={{ color: '#a8a8b3' }}>
               Accédez à votre atelier de manipulation PDF. Protection, conversion et édition avec la précision de l'artisanat numérique.
             </p>
           </div>
         </div>
-        
-        <div className="relative z-10 flex gap-12 items-center">
-          <div className="text-on-primary-container">
-            <p className="font-label-bold text-label-bold uppercase tracking-widest text-secondary-fixed-dim mb-2">Standard</p>
-            <p className="font-body-md text-body-md">ISO 32000-2</p>
+
+        {/* Badges techniques en bas */}
+        <div className="relative z-10 flex gap-10 items-center">
+          <div>
+            <p className="font-label-bold uppercase tracking-widest text-xs mb-1.5" style={{ color: '#fdbc13' }}>Standard</p>
+            <p className="font-body-md text-sm" style={{ color: '#e0e0e6' }}>ISO 32000-2</p>
           </div>
-          <div className="text-on-primary-container">
-            <p className="font-label-bold text-label-bold uppercase tracking-widest text-secondary-fixed-dim mb-2">Sécurité</p>
-            <p className="font-body-md text-body-md">AES-256 GCM</p>
+          <div>
+            <p className="font-label-bold uppercase tracking-widest text-xs mb-1.5" style={{ color: '#fdbc13' }}>Sécurité</p>
+            <p className="font-body-md text-sm" style={{ color: '#e0e0e6' }}>AES-256 GCM</p>
+          </div>
+          <div>
+            <p className="font-label-bold uppercase tracking-widest text-xs mb-1.5" style={{ color: '#fdbc13' }}>Format</p>
+            <p className="font-body-md text-sm" style={{ color: '#e0e0e6' }}>PDF 2.0</p>
           </div>
         </div>
       </section>
@@ -91,7 +122,7 @@ export const Login = () => {
           </div>
           
           <div className="mb-12">
-            <h3 className="font-headline-lg text-headline-lg text-primary">Content de vous revoir.</h3>
+            <h3 className="font-headline-lg text-[32px] leading-tight text-primary">Content de vous revoir.</h3>
             <p className="mt-3 text-on-surface-variant font-body-md">Entrez vos accès pour gérer vos fichiers techniques.</p>
             <p className="mt-2 text-label-sm font-label-bold text-error/80 uppercase tracking-wide">
               * Champs obligatoires
@@ -184,7 +215,7 @@ export const Login = () => {
               </div>
 
               <a 
-                href="http://localhost:5001/api/auth/google"
+                href={`${import.meta.env.VITE_API_URL || 'http://localhost:5001'}/api/auth/google`}
                 className="w-full bg-surface-container-low text-primary border border-outline-variant font-label-bold text-body-md py-5 rounded-none hover:bg-surface-container-high transition-all duration-300 active:scale-[0.98] flex items-center justify-center gap-3"
               >
                 {/* Icône Google basique */}
@@ -209,9 +240,9 @@ export const Login = () => {
             </p>
           </div>
           <div className="mt-12 flex justify-center md:justify-start gap-6">
-            <Link className="text-label-sm font-label-bold text-on-surface-variant hover:text-primary transition-colors" to="/privacy">POLITIQUE</Link>
-            <Link className="text-label-sm font-label-bold text-on-surface-variant hover:text-primary transition-colors" to="/support">SUPPORT</Link>
-            <Link className="text-label-sm font-label-bold text-on-surface-variant hover:text-primary transition-colors" to="/api-docs">API</Link>
+            <Link className="text-label-sm font-label-bold text-on-surface-variant hover:text-primary transition-colors" to="/privacy">CONFIDENTIALITÉ</Link>
+            <Link className="text-label-sm font-label-bold text-on-surface-variant hover:text-primary transition-colors" to="/terms">CONDITIONS</Link>
+            <Link className="text-label-sm font-label-bold text-on-surface-variant hover:text-primary transition-colors" to="/help">AIDE</Link>
           </div>
         </div>
       </section>

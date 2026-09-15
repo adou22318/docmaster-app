@@ -382,8 +382,8 @@ export const SignOptions = ({
               <label className="flex flex-col items-center gap-3 p-8 border-2 border-dashed border-outline-variant rounded-xl cursor-pointer hover:border-primary/50 hover:bg-primary/5 transition-all">
                 <span className="material-symbols-outlined text-[40px] text-on-surface-variant">upload_file</span>
                 <p className="text-body-sm text-on-surface-variant text-center">
-                  Importez votre signature<br />
-                  <span className="text-label-sm">PNG (fond transparent recommandé) ou JPG</span>
+                  Importez votre signature ou glissez-la ici
+                  <span className="text-label-sm block">PNG transparent recommandé ou JPG</span>
                 </p>
                 <input type="file" accept="image/png,image/jpeg" onChange={handleImageImport} className="hidden" />
               </label>
@@ -432,27 +432,50 @@ export const SignOptions = ({
           <div className="space-y-2">
             <label className="text-label-md font-label-bold text-on-surface">Page de signature</label>
             <div className="flex items-center gap-2">
-              <div className="flex flex-col gap-1">
+              {/* Bouton précédente */}
+              <button
+                type="button"
+                onClick={() => {
+                  const next = Math.max(1, parseInt(signaturePage, 10) - 1);
+                  setSignaturePage(next);
+                  setPageError('');
+                }}
+                disabled={parseInt(signaturePage, 10) <= 1}
+                className="p-2 rounded-lg border border-outline-variant hover:bg-surface-container text-on-surface-variant disabled:opacity-30 transition-all"
+                title="Page précédente"
+              >
+                <span className="material-symbols-outlined text-[18px]">chevron_left</span>
+              </button>
+
+              {/* Input centré */}
+              <div className="flex flex-col gap-1 flex-1">
                 <input
                   type="number"
                   min="1"
                   max={totalPages || 1}
                   value={signaturePage}
                   onChange={(e) => {
-                    setSignaturePage(e.target.value);
-                    setPageError('');
+                    const raw = e.target.value;
+                    // Permettre la saisie libre mais ne propager que des entiers valides
+                    const p = parseInt(raw, 10);
+                    if (!isNaN(p) && p >= 1 && (!totalPages || p <= totalPages)) {
+                      setSignaturePage(p);
+                      setPageError('');
+                    } else {
+                      // Garder la valeur affichée pour UX mais signaler l'erreur
+                      setPageError(`Entre 1 et ${totalPages || '?'}`);
+                    }
                   }}
                   onBlur={(e) => {
                     const p = parseInt(e.target.value, 10);
                     if (isNaN(p) || p < 1 || (totalPages && p > totalPages)) {
-                      setPageError(`Entre 1 et ${totalPages || '?'}`);
-                    } else {
+                      setSignaturePage(1);
                       setPageError('');
                     }
                   }}
                   className={`w-full px-3 py-2 border rounded-lg bg-surface text-on-surface focus:outline-none focus:ring-2 text-center ${
-                    pageError 
-                      ? 'border-error focus:ring-error/20' 
+                    pageError
+                      ? 'border-error focus:ring-error/20'
                       : 'border-outline-variant focus:ring-primary'
                   }`}
                 />
@@ -460,7 +483,23 @@ export const SignOptions = ({
                   <span className="text-error text-label-sm">{pageError}</span>
                 )}
               </div>
-              <span className="text-body-sm text-on-surface-variant">/ {totalPages || '?'}</span>
+
+              {/* Bouton suivante */}
+              <button
+                type="button"
+                onClick={() => {
+                  const next = Math.min(totalPages || Infinity, parseInt(signaturePage, 10) + 1);
+                  setSignaturePage(next);
+                  setPageError('');
+                }}
+                disabled={!!totalPages && parseInt(signaturePage, 10) >= totalPages}
+                className="p-2 rounded-lg border border-outline-variant hover:bg-surface-container text-on-surface-variant disabled:opacity-30 transition-all"
+                title="Page suivante"
+              >
+                <span className="material-symbols-outlined text-[18px]">chevron_right</span>
+              </button>
+
+              <span className="text-body-sm text-on-surface-variant whitespace-nowrap">/ {totalPages || '?'}</span>
             </div>
           </div>
 

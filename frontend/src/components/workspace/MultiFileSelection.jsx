@@ -4,6 +4,7 @@ import axiosClient from '../../services/api/axiosClient';
 import { ErrorBanner } from '../layout/ErrorBanner';
 import { formatSize } from '../../utils/formatters';
 import { ConfirmDialog } from '../ui/ConfirmDialog';
+import { FileFormatError } from './FileFormatError';
 
 const ALLOWED_EXTENSIONS = {
   merge: ['.pdf'],
@@ -12,7 +13,7 @@ const ALLOWED_EXTENSIONS = {
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50 Mo
 const MAX_FILES = 20;
 
-export const MultiFileSelection = ({ tool, multiFiles, setMultiFiles, onStart, onContinue, isProcessing }) => {
+export const MultiFileSelection = ({ tool, multiFiles, setMultiFiles, onStart, onContinue, isProcessing, onChangeFile }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [uploadError, setUploadError] = useState(null);
   const [uploadingFiles, setUploadingFiles] = useState([]); // Array de { id, name, progress }
@@ -37,6 +38,12 @@ export const MultiFileSelection = ({ tool, multiFiles, setMultiFiles, onStart, o
     
     return true;
   };
+
+  // Vérifier s'il y a des fichiers pré-chargés incompatibles
+  const invalidExistingFiles = multiFiles.some(f => {
+    const fileExt = '.' + (f.nomOriginal || 'doc.pdf').split('.').pop().toLowerCase();
+    return !allowedExts.includes(fileExt);
+  });
 
   const processFiles = async (files) => {
     const validFiles = Array.from(files).filter(validateFile);
@@ -138,11 +145,17 @@ export const MultiFileSelection = ({ tool, multiFiles, setMultiFiles, onStart, o
   return (
     <div className="w-full max-w-2xl flex flex-col items-center gap-6">
       
-      {uploadError && (
-        <ErrorBanner 
-          message={uploadError} 
-          onClose={() => setUploadError(null)} 
-        />
+      {(uploadError || invalidExistingFiles) && (
+        <div className="w-full">
+          <FileFormatError 
+            message={uploadError || 'Certains fichiers sélectionnés ne sont pas compatibles avec cet outil. Veuillez les retirer pour continuer.'} 
+            onChangeFile={() => {
+              setMultiFiles([]);
+              if (onChangeFile) onChangeFile();
+            }}
+            showConvert={tool?.id !== 'convert_to_pdf' && tool?.id !== 'convert_images_to_pdf'}
+          />
+        </div>
       )}
 
       {/* Zone de dépôt (visible si on a la place) */}
@@ -250,6 +263,9 @@ export const MultiFileSelection = ({ tool, multiFiles, setMultiFiles, onStart, o
                             <p className="text-label-sm text-on-surface-variant">
                               {formatSize(file.tailleOctets)}
                             </p>
+                            {!allowedExts.includes('.' + (file.nomOriginal || 'doc.pdf').split('.').pop().toLowerCase()) && (
+                              <p className="text-label-sm text-error mt-0.5">Format non supporté ({allowedExts.join(', ')})</p>
+                            )}
                           </div>
                           
                           <button
@@ -298,8 +314,8 @@ export const MultiFileSelection = ({ tool, multiFiles, setMultiFiles, onStart, o
         // Lancer directement le traitement
         <button
           onClick={() => onStart({})}
-          disabled={multiFiles.length < 2 || uploadingFiles.length > 0 || isProcessing}
-          className="w-full max-w-sm flex items-center justify-center gap-2 py-4 mt-4 bg-primary text-on-primary rounded-2xl font-label-bold text-label-lg hover:bg-primary/90 disabled:opacity-50 transition-all shadow-sm"
+          disabled={multiFiles.length < 2 || uploadingFiles.length > 0 || isProcessing || invalidExistingFiles}
+          className="w-full max-w-sm flex items-center justify-center gap-2 py-4 mt-4 bg-primary text-on-primary rounded-2xl font-label-bold text-label-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
         >
           {isProcessing ? (
             <>
@@ -317,8 +333,8 @@ export const MultiFileSelection = ({ tool, multiFiles, setMultiFiles, onStart, o
         // Passer à la configuration
         <button
           onClick={onContinue}
-          disabled={multiFiles.length < 2 || uploadingFiles.length > 0 || isProcessing}
-          className="w-full max-w-sm flex items-center justify-center gap-2 py-4 mt-4 bg-primary text-on-primary rounded-2xl font-label-bold text-label-lg hover:bg-primary/90 disabled:opacity-50 transition-all shadow-sm"
+          disabled={multiFiles.length < 2 || uploadingFiles.length > 0 || isProcessing || invalidExistingFiles}
+          className="w-full max-w-sm flex items-center justify-center gap-2 py-4 mt-4 bg-primary text-on-primary rounded-2xl font-label-bold text-label-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
         >
           <span>Passer à la configuration</span>
           <span className="material-symbols-outlined text-[20px]">arrow_forward</span>

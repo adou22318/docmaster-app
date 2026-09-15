@@ -3,6 +3,7 @@ import { Document, Page, pdfjs } from 'react-pdf';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
 import axiosClient from '../../../services/api/axiosClient';
+import { FileFormatError } from '../FileFormatError';
 
 // Utiliser le worker CDN basé sur la version exacte de react-pdf
 pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.mjs`;
@@ -30,6 +31,7 @@ export const PdfSignatureViewer = ({
   signatureSize,          // { width, height } en pixels DOM
   setSignatureSize,
   onPdfCoordsChange,      // Callback({x, y, largeur, hauteur})
+  onChangeFile
 }) => {
   const [pdfData, setPdfData] = useState(null);
   const [numPages, setNumPages] = useState(null);
@@ -72,6 +74,18 @@ export const PdfSignatureViewer = ({
     setNumPages(n);
     onLoadSuccess?.(n);
   }, [onLoadSuccess]);
+
+  const onDocumentLoadError = useCallback((error) => {
+    const msg = error?.message || '';
+    if (msg.includes('PasswordException') || error?.name === 'PasswordException') {
+      setLoadError('Ce PDF est protégé par un mot de passe. Retirez d\'abord la protection avec l\'outil « Retirer protection ».');
+    } else {
+      setLoadError(
+        'Ce fichier ne peut pas être prévisualisé car il n\'est pas un PDF valide.\n\n' +
+        'Si votre document est au format Word, Excel ou PowerPoint, convertissez-le d\'abord en PDF via l\'outil « Office vers PDF ».'
+      );
+    }
+  }, []);
 
   const onPageLoadSuccess = useCallback((page) => {
     // page.width et page.height sont les dimensions affichées (scalées)
@@ -215,11 +229,12 @@ export const PdfSignatureViewer = ({
 
   if (loadError) {
     return (
-      <div className="flex flex-col items-center gap-4 py-16 text-center">
-        <div className="w-20 h-20 rounded-full bg-error/10 flex items-center justify-center">
-          <span className="material-symbols-outlined text-[42px] text-error">error</span>
-        </div>
-        <p className="text-body-md text-error max-w-md">{loadError}</p>
+      <div className="py-12 max-w-lg mx-auto">
+        <FileFormatError 
+          message={loadError}
+          onChangeFile={onChangeFile}
+          showConvert={!loadError.includes('mot de passe')} // N'afficher le bouton convertir que si ce n'est pas une erreur de MDP
+        />
       </div>
     );
   }
@@ -237,6 +252,7 @@ export const PdfSignatureViewer = ({
         <Document
           file={pdfData}
           onLoadSuccess={onDocumentLoadSuccess}
+          onLoadError={onDocumentLoadError}
           onPassword={(callback) => {
             if (motDePassePdf) {
               callback(motDePassePdf);

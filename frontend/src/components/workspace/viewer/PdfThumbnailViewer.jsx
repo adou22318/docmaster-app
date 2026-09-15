@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import axiosClient from '../../../services/api/axiosClient';
+import { FileFormatError } from '../FileFormatError';
 
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
@@ -31,6 +32,7 @@ const PageThumbnail = ({
   onClick,
   onDoubleClick,
   isVisible,
+  onRenderSuccess, // callback appelé quand la page est rendue → incrémente renderedCount
 }) => {
   const overlayClass =
     selectionStyle === 'red'
@@ -55,6 +57,7 @@ const PageThumbnail = ({
             renderTextLayer={false}
             renderAnnotationLayer={false}
             loading={<ThumbnailSkeleton width={thumbWidth} />}
+            onRenderSuccess={onRenderSuccess}
           />
         ) : (
           <div style={{ width: thumbWidth, height: thumbWidth * 1.41 }} className="bg-surface-container" />
@@ -105,33 +108,71 @@ const ViewerToolbar = ({
   setModeSelection
 }) => {
   const MODES = [
-    { id: 'plage', label: 'Plage', description: 'Sélectionnez un début et une fin', icone: 'data_array' },
-    { id: 'individuel', label: 'Individuel', description: 'Cliquez sur chaque page souhaitée', icone: 'check_box' },
-    { id: 'mixte', label: 'Mixte', description: 'Simple-clic = isolée · Double-clic = début/fin', icone: 'shuffle' }
+    {
+      id: 'plage',
+      label: 'Plage',
+      labelLong: 'Plage contiguë',
+      description: '1er clic = début · 2e clic = fin. Toutes les pages entre les deux sont sélectionnées.',
+      icone: 'linear_scale',
+      fillIcon: true
+    },
+    {
+      id: 'individuel',
+      label: 'Individuel',
+      labelLong: 'Pages isolées',
+      description: 'Cliquez sur chaque page à sélectionner indépendamment. Idéal pour une liste non contiguë.',
+      icone: 'touch_app',
+      fillIcon: false
+    },
+    {
+      id: 'mixte',
+      label: 'Mixte',
+      labelLong: 'Sélection mixte',
+      description: 'Clic = page isolée · Double-clic = bornes de plage.',
+      icone: 'rule',
+      fillIcon: false
+    }
   ];
 
   return (
     <div className="flex flex-col gap-3 mb-6">
       {/* Sélecteur de mode */}
       <div className="flex flex-wrap items-center gap-2">
-        {MODES.map(mode => (
-          <button
-            key={mode.id}
-            onClick={() => setModeSelection(mode.id)}
-            className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm border transition-all ${
-              modeSelection === mode.id
-                ? 'bg-blue-600 text-white border-blue-600'
-                : 'bg-white text-gray-600 border-gray-200 hover:border-blue-300'
-            }`}
-          >
-            <span className="material-symbols-outlined text-[18px]">{mode.icone}</span>
-            <span>{mode.label}</span>
-          </button>
-        ))}
+        {MODES.map(mode => {
+          const isActive = modeSelection === mode.id;
+          return (
+            <button
+              key={mode.id}
+              onClick={() => setModeSelection(mode.id)}
+              className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm border transition-all font-medium ${
+                isActive
+                  ? 'bg-primary text-on-primary border-primary shadow-sm'
+                  : 'bg-surface text-on-surface-variant border-outline-variant hover:border-primary/40 hover:text-primary hover:bg-surface-container'
+              }`}
+              title={mode.labelLong}
+            >
+              <span
+                className="material-symbols-outlined text-[18px]"
+                style={{ fontVariationSettings: mode.fillIcon && isActive ? "'FILL' 1" : "'FILL' 0" }}
+              >
+                {mode.icone}
+              </span>
+              <span>{mode.label}</span>
+            </button>
+          );
+        })}
       </div>
-      <p className="text-xs text-gray-500 italic">
-        {MODES.find(m => m.id === modeSelection)?.description}
-      </p>
+      {/* Description du mode actif */}
+      <div className="flex items-start gap-2 px-3 py-2 bg-surface-container rounded-xl">
+        <span className="material-symbols-outlined text-[15px] text-primary flex-shrink-0 mt-0.5"
+          style={{ fontVariationSettings: "'FILL' 1" }}>info</span>
+        <p className="text-xs text-on-surface-variant leading-relaxed">
+          <strong className="text-on-surface mr-1">
+            {MODES.find(m => m.id === modeSelection)?.labelLong} :
+          </strong>
+          {MODES.find(m => m.id === modeSelection)?.description}
+        </p>
+      </div>
 
       {/* Barre d'outils (compteur, boutons...) */}
       <div className="flex flex-wrap items-center justify-between gap-3 p-3 bg-surface-container rounded-2xl">
@@ -259,6 +300,7 @@ export const PdfThumbnailViewer = ({
   selectionStyle = 'blue',
   selectionLabel,
   onLoadSuccess,
+  onChangeFile,
 }) => {
   const [numPages, setNumPages] = useState(null);
   // On conserve le MDP dans un state ET une ref pour éviter les closures stales
@@ -359,19 +401,24 @@ export const PdfThumbnailViewer = ({
     setNumPages(n);
     setNeedsPassword(false);
     setLoadError(null);
-    setRenderedCount(0);
+    setRenderedCount(0); // Reset à chaque nouveau document
     if (onLoadSuccess) onLoadSuccess(n);
   }, [onLoadSuccess]);
 
   const onDocumentLoadError = useCallback((error) => {
-    console.error('Erreur chargement PDF:', error);
-    if (error?.message?.includes('PasswordException') || error?.name === 'PasswordException') {
+    const msg = error?.message || '';
+    if (msg.includes('PasswordException') || error?.name === 'PasswordException') {
       setNeedsPassword(true);
     } else {
-      setLoadError(error?.message || 'Impossible de charger ce document.');
+      setLoadError(
+        'Ce fichier ne peut pas être prévisualisé car il n\'est pas un PDF valide.\n\n' +
+        'Si votre document est au format Word, Excel ou PowerPoint, convertissez-le d\'abord en PDF via l\'outil « Office vers PDF ».' +
+        '\n\nSi votre fichier est bien un PDF mais qu\'il s\'affiche pas, il est peut-être corrompu ou protégé par un mot de passe.'
+      );
     }
   }, []);
 
+  // Callback passé à chaque <Page> — incrémente renderedCount à chaque rendu réussi
   const onPageRenderSuccess = useCallback(() => {
     setRenderedCount((c) => c + 1);
   }, []);
@@ -475,11 +522,12 @@ export const PdfThumbnailViewer = ({
 
   if (loadError) {
     return (
-      <div className="flex flex-col items-center gap-4 py-16 text-center">
-        <div className="w-20 h-20 rounded-full bg-error/10 flex items-center justify-center">
-          <span className="material-symbols-outlined text-[42px] text-error">error</span>
-        </div>
-        <p className="text-body-md text-error max-w-md">{loadError}</p>
+      <div className="py-12 max-w-lg mx-auto">
+        <FileFormatError 
+          message={loadError}
+          onChangeFile={onChangeFile}
+          showConvert={!loadError.includes('mot de passe')} // N'afficher le bouton convertir que si ce n'est pas une erreur de MDP
+        />
       </div>
     );
   }

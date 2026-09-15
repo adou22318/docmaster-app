@@ -11,6 +11,7 @@ import filesRoutes from './routes/files.routes.js';
 import jobsRoutes from './routes/jobs.routes.js';
 import { nettoyerFichiersExpires } from './jobs/cronCleanup.js';
 import { limiterGeneral, limiterUpload } from './middlewares/rateLimiter.js';
+import paymentRoutes from './routes/payment.routes.js';
 
 // Lancer le nettoyage toutes les heures
 // 3600000 ms = 1 heure
@@ -26,11 +27,25 @@ const port = process.env.PORT || 3001;
 app.use(express.json());
 app.use(cors({
   origin: function (origin, callback) {
-    if (!origin || /^https?:\/\/localhost(:\d+)?$/.test(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
+    // Autoriser les requêtes sans origin (Postman, curl, etc.)
+    if (!origin) return callback(null, true);
+
+    // En développement : localhost toujours autorisé
+    if (/^https?:\/\/localhost(:\d+)?$/.test(origin)) {
+      return callback(null, true);
     }
+
+    // En production : lire la liste depuis ALLOWED_ORIGINS
+    const allowedOrigins = (process.env.ALLOWED_ORIGINS || '')
+      .split(',')
+      .map(o => o.trim())
+      .filter(Boolean);
+
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+
+    callback(new Error(`Origine non autorisée par CORS : ${origin}`));
   },
   credentials: true,
   allowedHeaders: ['Content-Type', 'Authorization']
@@ -42,6 +57,7 @@ app.use(passport.initialize());
 app.use("/api/auth", authRoutes);
 app.use('/api/files', filesRoutes);
 app.use('/api/jobs', jobsRoutes);
+app.use('/api/payments', paymentRoutes);
 app.use(limiterGeneral);
 app.use('/api/files', limiterUpload);
 app.use('/api/jobs', limiterUpload);

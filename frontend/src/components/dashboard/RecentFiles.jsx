@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axiosClient from '../../services/api/axiosClient';
 import { useFileStore } from '../../store/useFileStore';
+import { useToast } from '../../context/ToastContext';
 import { ErrorBanner } from '../layout/ErrorBanner';
 import { useScrollAnimation } from '../../hooks/useScrollAnimation';
 import { formatSize } from '../../utils/formatters';
@@ -97,13 +98,30 @@ export const RecentFiles = () => {
   const [files, setFiles] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [vue, setVue] = useState(() => localStorage.getItem('docmaster_files_view') || 'liste');
+  const [gridAnimKey, setGridAnimKey] = useState(0); // incrémenté à chaque activation grille
   
   const [fileToDelete, setFileToDelete] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [downloadingId, setDownloadingId] = useState(null);
 
   const { ref: sectionRef, inView: sectionInView } = useScrollAnimation(0.1);
+  const toast = useToast();
+
+  // Store : écouter filesVersion pour rafraîchir, et avoir accès à currentFile pour sync DropZone
   const filesVersion = useFileStore((state) => state.filesVersion);
+  const currentFile  = useFileStore((state) => state.currentFile);
+  const clearCurrentFile = useFileStore((state) => state.clearCurrentFile);
+  const refreshFiles = useFileStore((state) => state.refreshFiles);
+
+  const handleVueChange = (nouvelleVue) => {
+    setVue(nouvelleVue);
+    localStorage.setItem('docmaster_files_view', nouvelleVue);
+    // Forcer le re-mount de la grille pour déclencher les animations
+    if (nouvelleVue === 'grille') {
+      setGridAnimKey(k => k + 1);
+    }
+  };
 
   useEffect(() => {
     fetchFiles();
@@ -147,16 +165,27 @@ export const RecentFiles = () => {
 
   const confirmDelete = async () => {
     if (!fileToDelete) return;
-    
+
     try {
       setIsDeleting(true);
       const response = await axiosClient.delete(`/files/${fileToDelete.id}`);
       if (response.data.success) {
-        setFiles(files.filter(f => f.id !== fileToDelete.id));
+        // 1. Si le fichier supprimé est celui chargé dans la DropZone → on la vide
+        if (currentFile?.fileId === fileToDelete.id) {
+          clearCurrentFile();
+        }
+        // 2. Toast de confirmation
+        toast.success(`« ${fileToDelete.nom_original} » a été supprimé avec succès.`);
+        // 3. Retirer le fichier de la liste locale ET forcer un refresh store
+        setFiles(prev => prev.filter(f => f.id !== fileToDelete.id));
+        refreshFiles();
+        setFileToDelete(null);
+      } else {
+        toast.error(response.data.message || 'La suppression a échoué.');
         setFileToDelete(null);
       }
     } catch (err) {
-      setError(err.response?.data?.message || "La suppression a échoué.");
+      toast.error(err.response?.data?.message || 'La suppression a échoué.');
       setFileToDelete(null);
     } finally {
       setIsDeleting(false);
@@ -167,14 +196,22 @@ export const RecentFiles = () => {
     <section ref={sectionRef} className="space-y-6">
       <ErrorBanner message={error} onDismiss={() => setError(null)} />
       
-      {/* Titre : animate-fade */}
+      {/* Titre + toggle vue */}
       <div className={`flex justify-between items-center animate-fade ${sectionInView ? 'visible' : ''}`}>
         <h4 className="font-display-xl text-headline-md">Fichiers Récents</h4>
         <div className="flex gap-2">
-          <button className="p-2 border border-outline-variant rounded-lg hover:bg-surface-container transition-colors">
+          <button
+            onClick={() => handleVueChange('grille')}
+            title="Vue grille"
+            className={`p-2 rounded-lg transition-colors ${vue === 'grille' ? 'bg-primary text-on-primary shadow-sm' : 'border border-outline-variant hover:bg-surface-container'}`}
+          >
             <span className="material-symbols-outlined">grid_view</span>
           </button>
-          <button className="p-2 bg-primary text-on-primary rounded-lg shadow-sm">
+          <button
+            onClick={() => handleVueChange('liste')}
+            title="Vue liste"
+            className={`p-2 rounded-lg transition-colors ${vue === 'liste' ? 'bg-primary text-on-primary shadow-sm' : 'border border-outline-variant hover:bg-surface-container'}`}
+          >
             <span className="material-symbols-outlined">list</span>
           </button>
         </div>
@@ -205,8 +242,8 @@ export const RecentFiles = () => {
           </div>
         )}
 
-        {/* DATA TABLE */}
-        {!isLoading && files.length > 0 && (
+        {/* VUE LISTE (tableau) */}
+        {!isLoading && files.length > 0 && vue === 'liste' && (
           <div className="overflow-x-auto custom-scrollbar">
             <table className="w-full text-left border-collapse min-w-[600px]">
               <thead className="bg-surface-container-low border-b border-outline-variant">
@@ -230,6 +267,57 @@ export const RecentFiles = () => {
                 ))}
               </tbody>
             </table>
+          </div>
+        )}
+
+        {/* VUE GRILLE (cards) */}
+        {!isLoading && files.length > 0 && vue === 'grille' && (
+          <div
+            key={gridAnimKey}
+            className="p-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3"
+          >
+            {files.map((file, index) => {
+              const { icon, color } = getFileIcon(file.nom_original);
+              const isDownloading = downloadingId === file.id;
+              return (
+                <div
+                  key={file.id}
+                  className={`animate-fade-up delay-${Math.min(index, 6)} ${sectionInView ? 'visible' : ''}
+                    group relative flex flex-col items-center gap-2 p-3 rounded-2xl border
+                    border-outline-variant bg-surface-container
+                    hover:border-primary/40 hover:bg-primary/5
+                    hover:shadow-md hover:-translate-y-0.5
+                    transition-all cursor-default`}
+                >
+                  <span className={`material-symbols-outlined text-[40px] ${color}`} style={{ fontVariationSettings: "'FILL' 1" }}>{icon}</span>
+                  <p className="text-label-sm font-label-bold text-on-surface text-center truncate w-full" title={file.nom_original}>
+                    {file.nom_original}
+                  </p>
+                  <p className="text-[10px] text-on-surface-variant">{formatSize(file.taille_octets)}</p>
+                  {/* Actions au survol */}
+                  <div className="absolute inset-0 rounded-2xl bg-surface/90 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                    <button
+                      onClick={() => handleDownload(file.id, file.nom_original)}
+                      disabled={isDownloading}
+                      className="p-2 rounded-xl bg-primary text-on-primary hover:bg-primary/90 transition-colors"
+                      title="Télécharger"
+                    >
+                      {isDownloading
+                        ? <span className="material-symbols-outlined text-[18px] animate-spin">progress_activity</span>
+                        : <span className="material-symbols-outlined text-[18px]">download</span>
+                      }
+                    </button>
+                    <button
+                      onClick={() => setFileToDelete(file)}
+                      className="p-2 rounded-xl bg-error-container text-error hover:bg-error/20 transition-colors"
+                      title="Supprimer"
+                    >
+                      <span className="material-symbols-outlined text-[18px]">delete</span>
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>

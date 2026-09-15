@@ -10,8 +10,7 @@ export const Hero = () => {
         
         {/* Titre franc, sans dégradé */}
         <h1 className="text-[56px] leading-[1.1] font-bold text-main mb-6 tracking-tight">
-          Tous vos documents PDF,<br />
-          simplifiés en un seul outil.
+          Tous vos documents PDF, simplifiés en un seul outil.
         </h1>
         
         <p className="text-xl text-muted max-w-2xl mx-auto mb-12">

@@ -1,8 +1,11 @@
-import React, { createContext, useContext, useState, useCallback, useRef } from 'react';
+import React, { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react';
 
 const ToastContext = createContext(null);
 
 let toastIdCounter = 0;
+
+// ── Durées par type ──────────────────────────────────────────────────────────
+const DURATIONS = { success: 5000, error: 8000, warning: 6000, info: 4000 };
 
 export const ToastProvider = ({ children }) => {
   const [toasts, setToasts] = useState([]);
@@ -16,12 +19,12 @@ export const ToastProvider = ({ children }) => {
 
   const addToast = useCallback(({ type = 'info', message, duration }) => {
     const id = ++toastIdCounter;
-    const durations = { success: 4000, error: 6000, warning: 5000, info: 3000 };
-    const d = duration ?? durations[type] ?? 4000;
+    const d = duration ?? DURATIONS[type] ?? 4000;
 
     setToasts(prev => {
-      const next = [...prev, { id, type, message }];
-      return next.length > 4 ? next.slice(next.length - 4) : next;
+      // Max 5 toasts simultanés — retire les plus anciens
+      const next = [...prev, { id, type, message, duration: d, createdAt: Date.now() }];
+      return next.length > 5 ? next.slice(next.length - 5) : next;
     });
 
     timersRef.current[id] = setTimeout(() => removeToast(id), d);
@@ -49,41 +52,51 @@ export const useToast = () => {
   return ctx;
 };
 
-// ── Composant de rendu ──────────────────────────────────────────────
-const TOAST_STYLES = {
+// ── Config visuelle par type ─────────────────────────────────────────────────
+const TOAST_CONFIG = {
   success: {
-    bg: 'bg-[#1a3c2e] border-[#2d6a4f]',
     icon: 'check_circle',
-    iconColor: 'text-[#52b788]',
-    bar: 'bg-[#52b788]',
+    iconClass: 'text-emerald-400',
+    barClass: 'bg-emerald-400',
+    borderClass: 'border-emerald-500/30',
+    labelClass: 'text-emerald-300',
+    label: 'Succès',
   },
   error: {
-    bg: 'bg-[#3c1a1a] border-[#6a2d2d]',
     icon: 'error',
-    iconColor: 'text-[#f87171]',
-    bar: 'bg-[#f87171]',
+    iconClass: 'text-red-400',
+    barClass: 'bg-red-400',
+    borderClass: 'border-red-500/30',
+    labelClass: 'text-red-300',
+    label: 'Erreur',
   },
   warning: {
-    bg: 'bg-[#3c2e1a] border-[#6a4f2d]',
     icon: 'warning',
-    iconColor: 'text-[#fbbf24]',
-    bar: 'bg-[#fbbf24]',
+    iconClass: 'text-amber-400',
+    barClass: 'bg-amber-400',
+    borderClass: 'border-amber-500/30',
+    labelClass: 'text-amber-300',
+    label: 'Attention',
   },
   info: {
-    bg: 'bg-[#1a2a3c] border-[#2d4a6a]',
     icon: 'info',
-    iconColor: 'text-[#60a5fa]',
-    bar: 'bg-[#60a5fa]',
+    iconClass: 'text-sky-400',
+    barClass: 'bg-sky-400',
+    borderClass: 'border-sky-500/30',
+    labelClass: 'text-sky-300',
+    label: 'Info',
   },
 };
 
+// ── Conteneur ────────────────────────────────────────────────────────────────
 const ToastContainer = ({ toasts, onRemove }) => {
   if (toasts.length === 0) return null;
   return (
     <div
-      className="fixed bottom-6 right-6 z-[9999] flex flex-col gap-3 pointer-events-none"
+      className="fixed bottom-6 right-6 z-[9999] flex flex-col-reverse gap-3 pointer-events-none"
+      role="region"
+      aria-label="Notifications"
       aria-live="polite"
-      aria-atomic="false"
     >
       {toasts.map(t => (
         <Toast key={t.id} toast={t} onRemove={onRemove} />
@@ -92,29 +105,85 @@ const ToastContainer = ({ toasts, onRemove }) => {
   );
 };
 
+// ── Toast individuel ─────────────────────────────────────────────────────────
 const Toast = ({ toast, onRemove }) => {
-  const s = TOAST_STYLES[toast.type] || TOAST_STYLES.info;
+  const cfg = TOAST_CONFIG[toast.type] || TOAST_CONFIG.info;
+  const [exiting, setExiting] = useState(false);
+  const [progress, setProgress] = useState(100);
+
+  // Barre de progression animée
+  useEffect(() => {
+    const start = Date.now();
+    const total = toast.duration || 4000;
+    const raf = { id: null };
+
+    const tick = () => {
+      const elapsed = Date.now() - start;
+      const pct = Math.max(0, 100 - (elapsed / total) * 100);
+      setProgress(pct);
+      if (pct > 0) raf.id = requestAnimationFrame(tick);
+    };
+    raf.id = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf.id);
+  }, [toast.duration]);
+
+  const handleClose = () => {
+    setExiting(true);
+    setTimeout(() => onRemove(toast.id), 200);
+  };
+
   return (
     <div
-      className={`pointer-events-auto w-80 max-w-[90vw] rounded-2xl border ${s.bg} shadow-2xl overflow-hidden
-        animate-[slideInRight_0.3s_ease-out]`}
       role="alert"
+      aria-atomic="true"
+      className={`pointer-events-auto w-[360px] max-w-[calc(100vw-48px)] rounded-2xl border
+        bg-[#1e2023] ${cfg.borderClass} shadow-2xl overflow-hidden
+        transition-all duration-200
+        ${exiting
+          ? 'opacity-0 translate-x-4 scale-95'
+          : 'opacity-100 translate-x-0 scale-100 animate-[toastIn_0.25s_cubic-bezier(0.175,0.885,0.32,1.275)]'
+        }`}
     >
-      <div className="flex items-start gap-3 px-4 py-3">
-        <span className={`material-symbols-outlined text-[22px] mt-0.5 flex-shrink-0 ${s.iconColor}`}
-          style={{ fontVariationSettings: "'FILL' 1" }}>
-          {s.icon}
-        </span>
-        <p className="flex-1 text-white text-body-sm leading-snug">{toast.message}</p>
-        <button
-          onClick={() => onRemove(toast.id)}
-          className="flex-shrink-0 text-white/50 hover:text-white transition-colors"
-          aria-label="Fermer"
+      {/* Corps du toast */}
+      <div className="flex items-start gap-3 px-4 pt-3 pb-3">
+        {/* Icône */}
+        <span
+          className={`material-symbols-outlined text-[22px] mt-0.5 flex-shrink-0 ${cfg.iconClass}`}
+          style={{ fontVariationSettings: "'FILL' 1" }}
         >
-          <span className="material-symbols-outlined text-[18px]">close</span>
+          {cfg.icon}
+        </span>
+
+        {/* Texte */}
+        <div className="flex-1 min-w-0">
+          {/* Label de type */}
+          <p className={`text-xs font-semibold uppercase tracking-wide mb-0.5 ${cfg.labelClass}`}>
+            {cfg.label}
+          </p>
+          {/* Message — word-break pour les longs mots/URLs */}
+          <p className="text-sm text-white/90 leading-snug break-words whitespace-pre-wrap">
+            {toast.message}
+          </p>
+        </div>
+
+        {/* Bouton fermer */}
+        <button
+          onClick={handleClose}
+          className="flex-shrink-0 text-white/30 hover:text-white/70 transition-colors p-0.5
+            rounded-full hover:bg-white/10 -mt-0.5 -mr-1"
+          aria-label="Fermer la notification"
+        >
+          <span className="material-symbols-outlined text-[16px]">close</span>
         </button>
       </div>
-      <div className={`h-0.5 ${s.bar} w-full opacity-60`} />
+
+      {/* Barre de progression */}
+      <div className="h-0.5 bg-white/5">
+        <div
+          className={`h-full ${cfg.barClass} transition-none`}
+          style={{ width: `${progress}%` }}
+        />
+      </div>
     </div>
   );
 };

@@ -3,15 +3,17 @@ import { useAuthStore } from '../store/useAuthStore';
 import axiosClient from '../services/api/axiosClient';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '../context/ToastContext';
+import { LogoutConfirmModal } from '../components/ui/LogoutConfirmModal';
 
 export const SettingsPage = () => {
-  const { user, loginUser, logoutUser } = useAuthStore();
+  const { user, setUser, logoutUser } = useAuthStore();
   const navigate = useNavigate();
   const toast = useToast();
   const [isDeleting, setIsDeleting] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   
   const [formData, setFormData] = useState({
     nom_complet: user?.nom_complet || '',
@@ -31,7 +33,7 @@ export const SettingsPage = () => {
       if (response.data.success) {
         toast.success(response.data.message);
         // Mettre à jour l'utilisateur dans le store
-        loginUser({ ...user, ...response.data.data }, null); // Le token ne change pas
+        setUser(response.data.data); // Mettre à jour le store sans toucher aux tokens
         setIsEditing(false);
         setFormData({ ...formData, newPassword: '' });
       }
@@ -52,6 +54,13 @@ export const SettingsPage = () => {
       toast.error('Erreur lors de la suppression du compte. Réessayez.');
       setIsDeleting(false);
     }
+  };
+
+  const handleConfirmLogout = async () => {
+    setIsLogoutModalOpen(false);
+    await logoutUser();
+    toast.info('Déconnexion réussie. À bientôt !');
+    navigate('/login');
   };
 
   return (
@@ -178,6 +187,24 @@ export const SettingsPage = () => {
           </form>
         </section>
 
+        {/* Section Déconnexion */}
+        <section className="bg-surface-container rounded-3xl p-6 md:p-8 border border-outline-variant">
+          <h2 className="font-label-bold text-label-lg text-on-surface mb-2 flex items-center gap-2">
+            <span className="material-symbols-outlined text-[20px]">logout</span>
+            Déconnexion
+          </h2>
+          <p className="text-on-surface-variant text-body-sm mb-6 max-w-xl">
+            Pour protéger votre confidentialité, tous vos fichiers seront supprimés de nos serveurs lors de votre déconnexion. Assurez-vous de les avoir téléchargés avant de continuer.
+          </p>
+          <button
+            onClick={() => setIsLogoutModalOpen(true)}
+            className="flex items-center gap-2 px-6 py-3 border border-outline-variant text-on-surface rounded-xl font-label-bold hover:bg-surface-container transition-colors"
+          >
+            <span className="material-symbols-outlined text-[18px]">logout</span>
+            Se déconnecter
+          </button>
+        </section>
+
         {/* Section Zone Dangereuse */}
         <section className="bg-error/5 rounded-3xl p-6 md:p-8 border border-error/20 mt-12">
           <h2 className="font-label-bold text-label-lg text-error mb-2 flex items-center gap-2">
@@ -218,6 +245,12 @@ export const SettingsPage = () => {
           )}
         </section>
       </main>
+
+      <LogoutConfirmModal
+        isOpen={isLogoutModalOpen}
+        onCancel={() => setIsLogoutModalOpen(false)}
+        onConfirm={handleConfirmLogout}
+      />
     </div>
   );
 };

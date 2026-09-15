@@ -7,6 +7,11 @@ export const tools = [
     couleur: "default",
     categorie: "conversion",
     typeOperation: "pdf_to_images",
+    typesAcceptes: {
+    mimes: ['application/pdf'],
+    extensions: ['.pdf'],
+    label: 'PDF uniquement'
+  },
     populaire: false,
     route: "/dashboard/tools/pdf_to_images",
     accepteMultiple: false,
@@ -30,6 +35,18 @@ export const tools = [
     couleur: "default",
     categorie: "conversion",
     typeOperation: "convert_to_pdf",
+    typesAcceptes: {
+    mimes: [
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/vnd.ms-excel',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'application/vnd.ms-powerpoint',
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+    ],
+    extensions: ['.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx'],
+    label: 'Fichiers Office (Word, Excel, PowerPoint)'
+  },
     populaire: false,
     route: "/dashboard/tools/convert_to_pdf",
     accepteMultiple: false,
@@ -51,6 +68,11 @@ export const tools = [
     couleur: "accent",
     categorie: "conversion",
     typeOperation: "pdf_to_txt",
+    typesAcceptes: {
+    mimes: ['application/pdf'],
+    extensions: ['.pdf'],
+    label: 'PDF uniquement'
+  },
     populaire: false,
     route: "/dashboard/tools/pdf_to_txt",
     accepteMultiple: false,
@@ -72,6 +94,11 @@ export const tools = [
     couleur: "primary",
     categorie: "organisation",
     typeOperation: "merge",
+    typesAcceptes: {
+    mimes: ['application/pdf'],
+    extensions: ['.pdf'],
+    label: 'PDF uniquement'
+  },
     populaire: true,
     route: "/dashboard/tools/merge",
     accepteMultiple: true,
@@ -102,6 +129,11 @@ export const tools = [
     couleur: "default",
     categorie: "organisation",
     typeOperation: "split",
+    typesAcceptes: {
+    mimes: ['application/pdf'],
+    extensions: ['.pdf'],
+    label: 'PDF uniquement'
+  },
     populaire: true,
     route: "/dashboard/tools/split",
     accepteMultiple: false,
@@ -138,6 +170,11 @@ export const tools = [
     couleur: "default",
     categorie: "organisation",
     typeOperation: "rotate",
+    typesAcceptes: {
+    mimes: ['application/pdf'],
+    extensions: ['.pdf'],
+    label: 'PDF uniquement'
+  },
     populaire: false,
     route: "/dashboard/tools/rotate",
     accepteMultiple: false,
@@ -161,6 +198,11 @@ export const tools = [
     couleur: "default",
     categorie: "organisation",
     typeOperation: "remove_pages",
+    typesAcceptes: {
+    mimes: ['application/pdf'],
+    extensions: ['.pdf'],
+    label: 'PDF uniquement'
+  },
     populaire: false,
     route: "/dashboard/tools/remove_pages",
     accepteMultiple: false,
@@ -184,6 +226,11 @@ export const tools = [
     couleur: "default",
     categorie: "organisation",
     typeOperation: "add_blank_pages",
+    typesAcceptes: {
+    mimes: ['application/pdf'],
+    extensions: ['.pdf'],
+    label: 'PDF uniquement'
+  },
     populaire: false,
     route: "/dashboard/tools/add_blank_pages",
     accepteMultiple: false,
@@ -205,6 +252,11 @@ export const tools = [
     couleur: "default",
     categorie: "edition",
     typeOperation: "watermark",
+    typesAcceptes: {
+    mimes: ['application/pdf'],
+    extensions: ['.pdf'],
+    label: 'PDF uniquement'
+  },
     populaire: false,
     route: "/dashboard/tools/watermark",
     accepteMultiple: false,
@@ -229,32 +281,39 @@ export const tools = [
     couleur: "default",
     categorie: "edition",
     typeOperation: "add_image",
+    typesAcceptes: {
+    mimes: ['application/pdf'],
+    extensions: ['.pdf'],
+    label: 'PDF uniquement'
+  },
     populaire: false,
     route: "/dashboard/tools/add_image",
     accepteMultiple: false,
-    utiliseVisualiseur: true,
-    selectionMode: "multiple",
-    selectionStyle: "blue",
+    utiliseVisualiseurImage: true,
     howItWorks: {
       etapes: [
         {
           titre: "Importez votre PDF",
-          description: "Chargez le document sur lequel vous souhaitez ajouter une image."
+          description: "Chargez le document PDF sur lequel vous souhaitez incruster une image."
         },
         {
           titre: "Importez votre image",
-          description: "Ajoutez l'image à insérer (logo, tampon, illustration). PNG recommandé pour la transparence."
+          description: "Dans le panneau de droite, sélectionnez l'image PNG ou JPG à incruster (logo, tampon, illustration). PNG recommandé pour la transparence."
         },
         {
-          titre: "Configurez le placement",
-          description: "Choisissez la position (9 emplacements disponibles), les dimensions, et les pages concernées."
+          titre: "Positionnez l'image sur la page",
+          description: "L'image apparaît directement sur la page PDF. Glissez-la là où vous le souhaitez et ajustez sa taille via la poignée bleue."
         },
         {
-          titre: "Téléchargez le résultat",
-          description: "Votre PDF avec l'image intégrée sera prêt en quelques secondes."
+          titre: "Validez la position (si besoin)",
+          description: "Pour un positionnement différent selon les pages, cliquez \u00ab\u202fValider la position\u202f\u00bb sur chaque page visitée. Les autres pages recevront l'image centrée."
+        },
+        {
+          titre: "Choisissez les pages cibles et lancez",
+          description: "Sélectionnez la page courante, tout le document ou des pages spécifiques, puis cliquez sur \u00ab\u202fIncruster l'image\u202f\u00bb."
         }
       ],
-      conseil: "Utilisez un PNG avec fond transparent pour que votre image ne masque pas le contenu existant du document."
+      conseil: "Pour que l'image ne masque pas le contenu existant, utilisez un PNG avec fond transparent. Naviguez de page en page et validez la position pour un placement personnalisé sur chaque page."
     }
   },
   {
@@ -265,6 +324,11 @@ export const tools = [
     couleur: "default",
     categorie: "edition",
     typeOperation: "extract_images",
+    typesAcceptes: {
+    mimes: ['application/pdf'],
+    extensions: ['.pdf'],
+    label: 'PDF uniquement'
+  },
     populaire: true,
     route: "/dashboard/tools/extract_images",
     accepteMultiple: false,
@@ -273,11 +337,28 @@ export const tools = [
     selectionStyle: "blue",
     howItWorks: {
       etapes: [
-        { titre: "Importez votre PDF", description: "Sélectionnez le fichier dont vous voulez extraire les images intégrées." },
-        { titre: "Sélectionnez les pages (optionnel)", description: "Si vous le souhaitez, limitez l'extraction à certaines pages spécifiques." },
-        { titre: "Téléchargez les images", description: "L'outil récupérera toutes les photos et graphiques sous forme d'archive ZIP." }
+        {
+          titre: "Importez votre PDF",
+          description: "Sélectionnez le fichier dont vous souhaitez récupérer les images embarquées."
+        },
+        {
+          titre: "Définissez le périmètre",
+          description: "Extrayez les images de tout le document ou cliquez sur les pages dans le visualiseur pour limiter l'extraction à certaines pages uniquement."
+        },
+        {
+          titre: "Personnalisez les dimensions (optionnel)",
+          description: "Par défaut, les images sont extraites à leur taille originale. Vous pouvez saisir des dimensions cibles en pixels ou utiliser un préréglage (HD, Full HD, 4K, A4)."
+        },
+        {
+          titre: "Choisissez le format de sortie (optionnel)",
+          description: "Conservez le format d'origine de chaque image, ou convertissez-les toutes en PNG (sans perte) ou JPG (compact)."
+        },
+        {
+          titre: "Téléchargez les images",
+          description: "Si une seule image est trouvée, elle est téléchargée directement. Si plusieurs images sont extraites, un fichier ZIP regroupant toutes les images est généré automatiquement."
+        }
       ],
-      conseil: "Seules les véritables images intégrées seront extraites, les graphiques vectoriels ou textes stylisés ne le seront pas."
+      conseil: "Seules les images embarquées nativement dans le PDF sont extraites. Les graphiques vectoriels (SVG), textes stylés et éléments de mise en page ne seront pas inclus. Les images inférieures à 10 px sont ignorées (spacers, masques)."
     }
   },
   {
@@ -288,6 +369,11 @@ export const tools = [
     couleur: "primary",
     categorie: "edition",
     typeOperation: "sign",
+    typesAcceptes: {
+    mimes: ['application/pdf'],
+    extensions: ['.pdf'],
+    label: 'PDF uniquement'
+  },
     populaire: true,
     route: "/dashboard/tools/sign",
     accepteMultiple: false,
@@ -318,6 +404,11 @@ export const tools = [
     couleur: "default",
     categorie: "securite",
     typeOperation: "protect",
+    typesAcceptes: {
+    mimes: ['application/pdf'],
+    extensions: ['.pdf'],
+    label: 'PDF uniquement'
+  },
     populaire: true,
     route: "/dashboard/tools/protect",
     accepteMultiple: false,
@@ -338,6 +429,11 @@ export const tools = [
     couleur: "default",
     categorie: "securite",
     typeOperation: "unprotect",
+    typesAcceptes: {
+    mimes: ['application/pdf'],
+    extensions: ['.pdf'],
+    label: 'PDF uniquement'
+  },
     populaire: false,
     route: "/dashboard/tools/unprotect",
     accepteMultiple: false,
@@ -358,6 +454,11 @@ export const tools = [
     couleur: "default",
     categorie: "securite",
     typeOperation: "compress",
+    typesAcceptes: {
+    mimes: ['application/pdf'],
+    extensions: ['.pdf'],
+    label: 'PDF uniquement'
+  },
     populaire: true,
     route: "/dashboard/tools/compress",
     accepteMultiple: false,
@@ -387,17 +488,22 @@ export const tools = [
     couleur: "default",
     categorie: "conversion",
     typeOperation: "convert_images_to_pdf",
+    typesAcceptes: {
+    mimes: ['image/jpeg', 'image/png', 'image/bmp', 'image/gif', 'image/tiff'],
+    extensions: ['.jpg', '.jpeg', '.png', '.bmp', '.gif', '.tiff'],
+    label: 'Images (JPG, PNG, BMP, GIF, TIFF)'
+  },
     populaire: false,
     route: "/dashboard/tools/convert_images_to_pdf",
     accepteMultiple: true,
     howItWorks: {
       etapes: [
-        { titre: "Importez vos images", description: "Ajoutez vos fichiers JPG, PNG ou TIFF. Vous pouvez en importer jusqu'à 20 en une fois." },
-        { titre: "Réorganisez l'ordre", description: "Faites glisser les images pour définir l'ordre d'apparition dans le PDF final." },
-        { titre: "Configurez la mise en page", description: "Choisissez l'orientation (portrait/paysage), le format de page et les marges." },
-        { titre: "Téléchargez le PDF", description: "Votre document PDF regroupant toutes les images sera généré automatiquement." }
+        { titre: "Importez vos images", description: "Ajoutez vos fichiers JPG, PNG ou TIFF. Vous pouvez en importer jusqu'à 20 en une fois, par glisser-déposer ou via le sélecteur de fichiers." },
+        { titre: "Réorganisez l'ordre", description: "Faites glisser les lignes de la liste (icône ⠿) pour définir l'ordre d'apparition de chaque image dans le PDF final. Cliquez sur × pour retirer une image." },
+        { titre: "Choisissez la mise en page", description: "Sélectionnez le format (A4 ou US Letter), l'orientation (auto, portrait ou paysage) et les marges dans le panneau de configuration." },
+        { titre: "Téléchargez le PDF", description: "Cliquez sur « Créer le PDF » — toutes vos images seront assemblées en un seul document, chaque image occupant une page." }
       ],
-      conseil: "Utilisez des images PNG pour une meilleure qualité ; les JPEG sont recommandés si la taille du fichier final est importante."
+      conseil: "L'orientation « Auto » adapte automatiquement chaque page à l'image : paysage pour une photo horizontale, portrait pour une verticale."
     }
   },
   {
@@ -408,6 +514,11 @@ export const tools = [
     couleur: "default",
     categorie: "securite",
     typeOperation: "clean_metadata",
+    typesAcceptes: {
+    mimes: ['application/pdf'],
+    extensions: ['.pdf'],
+    label: 'PDF uniquement'
+  },
     populaire: false,
     route: "/dashboard/tools/clean_metadata",
     accepteMultiple: false,

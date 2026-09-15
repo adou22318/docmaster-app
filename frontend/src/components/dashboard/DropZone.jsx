@@ -2,7 +2,9 @@ import React, { useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import axiosClient from '../../services/api/axiosClient';
 import { useFileStore } from '../../store/useFileStore';
+import { useToast } from '../../context/ToastContext';
 import { ErrorBanner } from '../layout/ErrorBanner';
+import { FileFormatError } from '../workspace/FileFormatError';
 import { tools } from '../../data/tools';
 import { useScrollAnimation } from '../../hooks/useScrollAnimation';
 import { formatSize } from '../../utils/formatters';
@@ -19,6 +21,8 @@ export const DropZone = ({ toolId, onPdfNonProtege }) => {
   const [isCancelling, setIsCancelling] = useState(false);
   const [modalePdfProtege, setModalePdfProtege] = useState(false);
   const [fichierEnAttente, setFichierEnAttente] = useState(null);
+  // Erreur de format spécifique à la validation locale (avant upload)
+  const [formatError, setFormatError] = useState(null);
   const fileInputRef = useRef(null);
   const { ref: scrollRef, inView } = useScrollAnimation(0.1);
   const navigate = useNavigate();
@@ -45,11 +49,19 @@ export const DropZone = ({ toolId, onPdfNonProtege }) => {
     cancelCurrentFile
   } = useFileStore();
 
+  const toast = useToast();
+
   const handleCancelImport = async () => {
     setIsCancelling(true);
+    const nomFichier = currentFile?.nomOriginal || 'le fichier';
     try {
       const result = await cancelCurrentFile();
       if (result.success) {
+        setShowCancelConfirm(false);
+        toast.info(`Import de « ${nomFichier} » annulé.`);
+      } else {
+        // Erreur serveur mais on vide quand même l'UI pour ne pas bloquer l'utilisateur
+        toast.error(result.error || "L'annulation a échoué côté serveur, mais le fichier a été retiré localement.");
         setShowCancelConfirm(false);
       }
     } finally {
@@ -69,24 +81,50 @@ export const DropZone = ({ toolId, onPdfNonProtege }) => {
     setIsDragging(false);
   };
 
+  const currentTool = tools.find(t => t.id === toolId);
+
   const validateFile = (file) => {
     if (!file) return false;
-    
+
+    // L'extension est le critre principal car file.type peut tre vide sur Windows
     const fileExt = '.' + file.name.split('.').pop().toLowerCase();
-    if (!ALLOWED_EXTENSIONS.includes(fileExt)) {
-      setUploadError('Format non supporté. Formats acceptés : PDF, JPG, PNG, DOCX, XLSX, PPTX, TIFF.');
-      return false;
+
+    if (currentTool && currentTool.typesAcceptes) {
+      const { extensions, label } = currentTool.typesAcceptes;
+      if (!extensions.includes(fileExt)) {
+        // Message contextuel selon le type d'outil
+        let message;
+        if (currentTool.id === 'convert_to_pdf') {
+          message = `Le fichier "${file.name}" ne peut pas être converti ici.\n\nSeuls les formats Office sont acceptés : Word (.docx), Excel (.xlsx) et PowerPoint (.pptx).`;
+        } else if (currentTool.id === 'convert_images_to_pdf') {
+          message = `Le fichier "${file.name}" n'est pas une image.\n\nFormats acceptés : JPG, PNG, BMP, GIF, TIFF.`;
+        } else {
+          // Tous les autres outils attendent un PDF
+          message = `Le fichier "${file.name}" n'est pas accepté par cet outil.\n\nFormat requis : PDF uniquement.\n\nSi votre document est au format Word, Excel ou PowerPoint, convertissez-le d'abord en PDF.`;
+        }
+        // Erreur de FORMAT : utiliser le state local dédié (affiché via FileFormatError)
+        setFormatError(message);
+        return false;
+      }
+    } else {
+      // Outil sans typesAcceptes défini : validation sur la liste globale
+      if (!ALLOWED_EXTENSIONS.includes(fileExt)) {
+        setFormatError(`Le fichier "${file.name}" n'est pas dans un format supporté.\n\nFormats acceptés : PDF, JPG, PNG, DOCX, XLSX, PPTX, TIFF.`);
+        return false;
+      }
     }
-    
+
     if (file.size > MAX_FILE_SIZE) {
-      setUploadError('Fichier trop volumineux. Maximum 50 Mo.');
+      setUploadError('Fichier trop volumineux. La taille maximale autorise est de 50 Mo.');
       return false;
     }
-    
+
     return true;
   };
 
   const processFile = async (file, motDePasse = null) => {
+    // Réinitialiser les erreurs précédentes
+    setFormatError(null);
     if (!validateFile(file)) return;
 
     if (file.type === 'application/pdf' && !motDePasse) {
@@ -116,8 +154,12 @@ export const DropZone = ({ toolId, onPdfNonProtege }) => {
     const formData = new FormData();
     formData.append('file', file);
 
+    // Construire l'URL avec toolId en query param — le fileFilter de Multer
+    // lit req.query.tool car req.body n'est pas dispo au moment du fileFilter
+    const uploadUrl = toolId ? `/files/upload?tool=${encodeURIComponent(toolId)}` : '/files/upload';
+
     try {
-      const response = await axiosClient.post('/files/upload', formData, {
+      const response = await axiosClient.post(uploadUrl, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -149,7 +191,12 @@ export const DropZone = ({ toolId, onPdfNonProtege }) => {
         });
       }
     } catch (error) {
-      setUploadError(error.response?.data?.message || "Erreur réseau lors de l'upload.");
+      const serverMsg = error.response?.data?.message;
+      if (serverMsg) {
+        setUploadError(serverMsg);
+      } else {
+        setUploadError("Erreur réseau lors de l'upload. Vérifiez votre connexion et réessayez.");
+      }
     }
   };
 
@@ -200,8 +247,19 @@ export const DropZone = ({ toolId, onPdfNonProtege }) => {
 
   return (
     <section ref={scrollRef} className={`relative group animate-fade-up ${inView ? 'visible' : ''}`}>
-      {/* Affichage des erreurs avec ErrorBanner */}
-      {uploadError && uploadError !== "Ce PDF n'est pas protégé. Aucun déverrouillage n'est nécessaire." && (
+      {/* Erreur de FORMAT : bannière inline identique au PDF protégé */}
+      {formatError && uploadStatus !== 'uploading' && uploadStatus !== 'done' && (
+        <div className="mb-4">
+          <FileFormatError
+            message={formatError}
+            onChangeFile={() => setFormatError(null)}
+            showConvert={toolId !== 'convert_to_pdf' && toolId !== 'convert_images_to_pdf'}
+          />
+        </div>
+      )}
+
+      {/* Erreurs non-format (réseau, taille, etc.) */}
+      {uploadError && uploadStatus === 'error' && uploadError !== "Ce PDF n'est pas protégé. Aucun déverrouillage n'est nécessaire." && (
         <ErrorBanner 
           message={uploadError} 
           onDismiss={() => setUploadError(null)} 
@@ -229,7 +287,9 @@ export const DropZone = ({ toolId, onPdfNonProtege }) => {
               <span className="material-symbols-outlined text-6xl" style={{ fontVariationSettings: "'wght' 200" }}>cloud_upload</span>
             </div>
             <h3 className="font-display-xl text-headline-md text-primary mb-4">Glissez vos plans et dossiers techniques</h3>
-            <p className="text-body-md text-on-surface-variant max-w-md mb-8">Format PDF, JPG, PNG, DOCX, XLSX, PPTX, TIFF. Jusqu'à 50 Mo par fichier.</p>
+            <p className="text-body-md text-on-surface-variant max-w-md mb-8">
+              {currentTool?.typesAcceptes ? `Formats acceptés : ${currentTool.typesAcceptes.label}.` : "Format PDF, JPG, PNG, DOCX, XLSX, PPTX, TIFF."} Jusqu'à 50 Mo par fichier.
+            </p>
             <div className="flex gap-4 pointer-events-auto">
               <button 
                 className="px-8 py-4 bg-primary text-on-primary font-label-bold rounded-lg hover:bg-secondary hover:text-primary transition-all shadow-lg active:scale-95"
@@ -251,7 +311,9 @@ export const DropZone = ({ toolId, onPdfNonProtege }) => {
               <span className="material-symbols-outlined text-6xl" style={{ fontVariationSettings: "'wght' 200" }}>cloud_upload</span>
             </div>
             <h3 className="font-display-xl text-headline-md text-primary mb-4">Glissez vos plans et dossiers techniques</h3>
-            <p className="text-body-md text-on-surface-variant max-w-md mb-8">Format PDF, JPG, PNG, DOCX, XLSX, PPTX, TIFF. Jusqu'à 50 Mo par fichier.</p>
+            <p className="text-body-md text-on-surface-variant max-w-md mb-8">
+              {currentTool?.typesAcceptes ? `Formats acceptés : ${currentTool.typesAcceptes.label}.` : "Format PDF, JPG, PNG, DOCX, XLSX, PPTX, TIFF."} Jusqu'à 50 Mo par fichier.
+            </p>
             <div className="flex gap-4 pointer-events-auto">
               <button 
                 className="px-8 py-4 bg-primary text-on-primary font-label-bold rounded-lg hover:bg-secondary hover:text-primary transition-all shadow-lg active:scale-95"
@@ -349,7 +411,7 @@ export const DropZone = ({ toolId, onPdfNonProtege }) => {
           ref={fileInputRef}
           onChange={handleChange}
           className="hidden"
-          accept=".pdf,.jpg,.jpeg,.png,.docx,.xlsx,.pptx,.tiff,.tif"
+          accept={currentTool?.typesAcceptes ? currentTool.typesAcceptes.extensions.join(',') : ".pdf,.jpg,.jpeg,.png,.docx,.xlsx,.pptx,.tiff,.tif"}
         />
       </div>
 

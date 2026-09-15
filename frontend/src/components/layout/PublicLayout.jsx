@@ -1,7 +1,7 @@
 import React from 'react';
 import { Outlet } from 'react-router-dom';
 import { PublicHeader } from './PublicHeader';
-import { PublicFooter } from './PublicFooter';
+import { UnifiedFooter } from './UnifiedFooter';
 
 export const PublicLayout = () => {
   return (
@@ -10,7 +10,7 @@ export const PublicLayout = () => {
       <main className="flex-grow">
         <Outlet />
       </main>
-      <PublicFooter />
+      <UnifiedFooter />
     </div>
   );
 };

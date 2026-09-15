@@ -180,9 +180,9 @@ export const Home = () => {
               Développé avec passion à MALI DEVELOPPEUR SARL, DocMaster respecte les normes les plus strictes en matière de souveraineté des données. Aucun de vos documents ne transite par des serveurs tiers sans votre consentement explicite.
           </p>
           <div className="flex flex-wrap justify-center gap-12 grayscale opacity-40">
-            <span className="font-headline-md">ISO 27001</span>
+            <span className="font-headline-md">ISO 32000-2</span>
             <span className="font-headline-md">RGPD Compliant</span>
-            <span className="font-headline-md">eIDAS Certified</span>
+            <span className="font-headline-md">AES-256 GCM</span>
           </div>
         </div>
       </section>

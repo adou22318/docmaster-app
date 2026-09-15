@@ -27,11 +27,11 @@ export const PublicFooter = () => {
           © {currentYear} PDF DocMaster — Projet ENI-ABT G.I.T.
         </p>
         <p className="text-on-surface-variant/70 font-label-sm max-w-xs text-center md:text-left text-[11px]">
-          Traitement local · Suppression 24h · Open source
+          Traitement local · Suppression 24h · Projet ENI-ABT
         </p>
       </div>
       <nav className="flex flex-wrap justify-center gap-8">
-        <Link className={getLinkClass('/free', location.pathname)} to="/free">Accès Libre</Link>
+        <Link className={getLinkClass('/pricing', location.pathname)} to="/pricing">Tarifs</Link>
         <Link className={getLinkClass('/help', location.pathname)} to="/help">Aide</Link>
         <Link className={getLinkClass('/terms', location.pathname)} to="/terms">Conditions</Link>
         <Link className={getLinkClass('/privacy', location.pathname)} to="/privacy">Confidentialité</Link>
