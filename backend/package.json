@@ -14,7 +14,7 @@
   "description": "",
   "dependencies": {
     "archiver": "^8.0.0",
-    "bcrypt": "^6.0.0",
+    "bcryptjs": "^3.0.3",
     "bull": "^4.16.5",
     "canvas": "^3.2.3",
     "cors": "^2.8.6",
@@ -29,8 +29,6 @@
     "multer": "^2.1.1",
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
-    "pdf-export-images": "^1.2.0",
-    "pdf-image-extractor": "^2.0.8",
     "pdf-lib": "^1.17.1",
     "pdf-parse": "^2.4.5",
     "pdfjs-dist": "^6.1.200",
