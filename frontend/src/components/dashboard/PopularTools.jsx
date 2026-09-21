@@ -29,58 +29,36 @@ export const PopularTools = () => {
             >
               <Link
                 to={tool.route}
-                className={`rounded-2xl p-8 flex flex-col justify-between group hover:-translate-y-1 transition-all min-h-[200px] h-full ${
-                  isPrimary
-                    ? 'bg-primary text-on-primary shadow-md hover:shadow-lg'
-                    : 'bg-secondary-container/10 border-2 border-secondary/30 hover:border-secondary hover:bg-secondary-container/20 shadow-sm'
-                }`}
+                className="rounded-2xl p-8 flex flex-col justify-between group hover:-translate-y-1 transition-all min-h-[200px] h-full bg-surface border border-outline-variant hover:border-secondary shadow-sm"
               >
                 <div>
                   <div className="flex items-center justify-between mb-6">
-                    <div
-                      className={`w-12 h-12 rounded-lg flex items-center justify-center ${
-                        isPrimary ? 'bg-on-primary-fixed-variant/20' : 'bg-secondary-container'
-                      }`}
-                    >
+                    <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-secondary-container">
                       <span
                         className={`material-symbols-outlined text-2xl ${
-                          isPrimary ? 'text-on-primary' : 'text-on-secondary-container'
+                          isPrimary ? 'text-secondary' : 'text-on-secondary-container'
                         }`}
                       >
                         {tool.icone}
                       </span>
                     </div>
                     <span
-                      className={`material-symbols-outlined text-sm ${
-                        isPrimary ? 'text-on-primary/50' : 'text-secondary'
-                      }`}
+                      className="material-symbols-outlined text-sm text-secondary"
                       style={{ fontVariationSettings: "'FILL' 1" }}
                     >
                       star
                     </span>
                   </div>
-                  <h4 className={`font-headline-md text-body-lg mb-2 ${
-                    isPrimary ? '' : 'text-on-surface'
-                  }`}>{tool.nom}</h4>
-                  <p
-                    className={`text-label-sm line-clamp-2 ${
-                      isPrimary ? 'opacity-70' : 'text-on-surface-variant'
-                    }`}
-                  >
+                  <h4 className="font-headline-md text-body-lg mb-2 text-on-surface">{tool.nom}</h4>
+                  <p className="text-label-sm line-clamp-2 text-on-surface-variant">
                     {tool.description}
                   </p>
                 </div>
-                <div className={`flex justify-between items-center pt-6 mt-4 border-t ${
-                  isPrimary ? 'border-on-primary/10' : 'border-secondary/20'
-                }`}>
-                  <span className={`font-label-bold uppercase text-[10px] tracking-wider ${
-                    isPrimary ? 'text-on-primary/60' : 'text-secondary'
-                  }`}>
+                <div className="flex justify-between items-center pt-6 mt-4 border-t border-outline-variant/30">
+                  <span className="font-label-bold uppercase text-[10px] tracking-wider text-secondary">
                     Populaire
                   </span>
-                  <span className={`material-symbols-outlined group-hover:translate-x-2 transition-transform ${
-                    isPrimary ? 'text-on-primary/60' : 'text-secondary'
-                  }`}>east</span>
+                  <span className="material-symbols-outlined group-hover:translate-x-2 transition-transform text-secondary">east</span>
                 </div>
               </Link>
             </div>
