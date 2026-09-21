@@ -269,6 +269,10 @@ pdfQueue.process(async (job) => {
     if (resultat.disclaimer) {
       resultPayload.disclaimer = resultat.disclaimer;
     }
+    // Ajout d'un avertissement informatif (ex: compression inefficace)
+    if (resultat.avertissement) {
+      resultPayload.avertissement = resultat.avertissement;
+    }
 
     await pool.query(
       `UPDATE jobs SET statut = 'done', progression = 100, resultat_url = $1, completed_at = NOW()

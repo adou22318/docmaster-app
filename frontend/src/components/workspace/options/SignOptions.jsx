@@ -237,6 +237,14 @@ export const SignOptions = ({
           </p>
         </div>
 
+        {/* Mention légale eIDAS — obligatoire (cf. AGENTS.md) */}
+        <div className="flex items-start gap-2 px-3 py-2 rounded-lg bg-amber-500/10 border border-amber-500/20">
+          <span className="material-symbols-outlined text-[14px] text-amber-600 dark:text-amber-400 mt-0.5 shrink-0">info</span>
+          <p className="text-label-xs text-amber-700 dark:text-amber-400">
+            Signature électronique simple — non certifiée eIDAS. Elle n'a pas de valeur légale probante sans accord contractuel préalable.
+          </p>
+        </div>
+
         {/* Onglets */}
         <div className="flex rounded-xl bg-surface-container p-1 gap-1">
           {tabs.map(tab => (
@@ -519,23 +527,23 @@ export const SignOptions = ({
         </div>
 
         {uploadWarning && (
-          <div className="flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 rounded-xl">
-            <span className="material-symbols-outlined text-[16px] text-amber-600 mt-0.5">warning</span>
-            <p className="text-body-sm text-amber-800">{uploadWarning}</p>
+          <div className="flex items-start gap-2 p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl">
+            <span className="material-symbols-outlined text-[16px] text-amber-600 dark:text-amber-400 mt-0.5">warning</span>
+            <p className="text-body-sm text-amber-700 dark:text-amber-400">{uploadWarning}</p>
           </div>
         )}
 
         {whiteBackgroundWarning && (
-          <div className="flex flex-col gap-3 p-4 bg-amber-50 border border-amber-200 rounded-xl">
+          <div className="flex flex-col gap-3 p-4 bg-amber-500/10 border border-amber-500/30 rounded-xl">
             <div className="flex items-start gap-2">
-              <span className="material-symbols-outlined text-[18px] text-amber-600 mt-0.5">warning</span>
+              <span className="material-symbols-outlined text-[18px] text-amber-600 dark:text-amber-400 mt-0.5">warning</span>
               <div>
-                <p className="text-label-md font-label-bold text-amber-800">Fond blanc détecté</p>
-                <p className="text-body-sm text-amber-800 mt-1">
+                <p className="text-label-md font-label-bold text-amber-700 dark:text-amber-400">Fond blanc détecté</p>
+                <p className="text-body-sm text-amber-700 dark:text-amber-400 mt-1">
                   Votre signature masquera le contenu du document à son emplacement.
                 </p>
-                <p className="text-body-sm text-amber-800 mt-2 font-label-bold">Pour un meilleur rendu :</p>
-                <ul className="list-disc pl-4 text-body-sm text-amber-800 mt-1 space-y-1">
+                <p className="text-body-sm text-amber-700 dark:text-amber-400 mt-2 font-label-bold">Pour un meilleur rendu :</p>
+                <ul className="list-disc pl-4 text-body-sm text-amber-700 dark:text-amber-400 mt-1 space-y-1">
                   <li>Utilisez l'onglet "Dessiner" pour créer une signature avec fond transparent automatique.</li>
                   <li>Ou convertissez votre image en PNG transparent avec un outil gratuit comme remove.bg.</li>
                 </ul>
@@ -544,7 +552,7 @@ export const SignOptions = ({
             <div className="flex gap-2 justify-end mt-2">
               <button
                 onClick={() => setWhiteBackgroundWarning(false)}
-                className="px-3 py-1.5 text-label-sm font-label-bold text-amber-800 hover:bg-amber-100 rounded-lg transition-colors"
+                className="px-3 py-1.5 text-label-sm font-label-bold text-amber-700 dark:text-amber-400 hover:bg-amber-500/10 rounded-lg transition-colors"
               >
                 Continuer quand même
               </button>

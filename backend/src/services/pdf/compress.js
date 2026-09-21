@@ -63,14 +63,23 @@ export const compressService = async (chemin, niveau = 'moyenne') => {
 
   if (tailleApres >= tailleAvant) {
     try { fs.unlinkSync(cheminResultat); } catch (e) {}
-    
+
+    // Compression inefficace : copier le fichier source sous un nouveau nom UUID
+    // pour que le worker puisse l'insérer en BDD sans violer la contrainte d'unicité
+    // (le fichier source est déjà en BDD avec son propre nom_stockage)
+    const nomCopie = `${uuidv4()}.pdf`;
+    const cheminCopie = path.join(OUTPUT_DIR, nomCopie);
+    fs.copyFileSync(chemin, cheminCopie);
+
     return {
-      nomStockage: path.basename(chemin),
-      chemin: chemin,
+      nomStockage: nomCopie,
+      chemin: cheminCopie,
       tailleOctets: tailleAvant,
       tailleAvant,
       tailleApres: tailleAvant,
-      pourcentageReduction: 0
+      pourcentageReduction: 0,
+      typeMime: 'application/pdf',
+      avertissement: 'COMPRESSION_INEFFICACE'
     };
   }
 
@@ -82,6 +91,7 @@ export const compressService = async (chemin, niveau = 'moyenne') => {
     tailleOctets: tailleApres,
     tailleAvant,
     tailleApres,
-    pourcentageReduction: parseFloat(pourcentageReduction)
+    pourcentageReduction: parseFloat(pourcentageReduction),
+    typeMime: 'application/pdf'
   };
 };
