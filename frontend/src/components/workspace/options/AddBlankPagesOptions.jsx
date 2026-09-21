@@ -11,16 +11,19 @@ export const AddBlankPagesOptions = ({ onStart, isProcessing, totalPages }) => {
   const [count, setCount] = useState(1);
   const [format, setFormat] = useState('A4'); // 'A4' | 'Letter'
 
+  const isAfterPageValid = position !== 'after' || (
+    !isNaN(parseInt(afterPage, 10)) &&
+    parseInt(afterPage, 10) >= 1 &&
+    (!totalPages || parseInt(afterPage, 10) <= totalPages)
+  );
+
   const handleLaunch = () => {
     let posBackend;
     if (position === 'start') posBackend = 'debut';
     else if (position === 'end') posBackend = 'fin';
     else if (position === 'after') {
       const p = parseInt(afterPage, 10);
-      if (isNaN(p) || p < 1 || (totalPages && p > totalPages)) {
-        setAfterPageError(`Le numéro de page doit être entre 1 et ${totalPages || '?'}.`);
-        return;
-      }
+      if (!isAfterPageValid) return; // garde double
       setAfterPageError('');
       posBackend = p;
     }
@@ -80,31 +83,39 @@ export const AddBlankPagesOptions = ({ onStart, isProcessing, totalPages }) => {
               <p className="text-label-md font-label-bold text-on-surface">Après la page n°</p>
               {position === 'after' && (
                 <div className="flex flex-col gap-1">
-                  <input
-                    type="number"
-                    min={1}
-                    max={totalPages}
-                    value={afterPage}
-                    onChange={(e) => {
-                      setAfterPage(e.target.value);
-                      setAfterPageError('');
-                    }}
-                    onBlur={(e) => {
-                      const p = parseInt(e.target.value, 10);
-                      if (isNaN(p) || p < 1 || (totalPages && p > totalPages)) {
-                        setAfterPageError(`Entre 1 et ${totalPages || '?'}`);
-                      } else {
-                        setAfterPageError('');
-                      }
-                    }}
-                    className={`w-24 px-3 py-2 border rounded-lg bg-surface text-on-surface focus:outline-none focus:ring-2 text-center ${
-                      afterPageError 
-                        ? 'border-error focus:ring-error/20' 
-                        : 'border-outline-variant focus:ring-primary'
-                    }`}
-                  />
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      min={1}
+                      max={totalPages || undefined}
+                      value={afterPage}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setAfterPage(val);
+                        const p = parseInt(val, 10);
+                        if (isNaN(p) || p < 1) {
+                          setAfterPageError('Le numéro de page doit être supérieur à 0.');
+                        } else if (totalPages && p > totalPages) {
+                          setAfterPageError(`Ce document a ${totalPages} page${totalPages > 1 ? 's' : ''}. Entrez un numéro entre 1 et ${totalPages}.`);
+                        } else {
+                          setAfterPageError('');
+                        }
+                      }}
+                      className={`w-24 px-3 py-2 border rounded-lg bg-surface text-on-surface focus:outline-none focus:ring-2 text-center ${
+                        afterPageError
+                          ? 'border-error focus:ring-error/20'
+                          : 'border-outline-variant focus:ring-primary'
+                      }`}
+                    />
+                    {totalPages && (
+                      <span className="text-label-xs text-on-surface-variant">sur {totalPages}</span>
+                    )}
+                  </div>
                   {afterPageError && (
-                    <span className="text-error text-label-sm">{afterPageError}</span>
+                    <span className="text-error text-label-sm flex items-center gap-1">
+                      <span className="material-symbols-outlined text-[14px]">error</span>
+                      {afterPageError}
+                    </span>
                   )}
                 </div>
               )}
@@ -168,7 +179,7 @@ export const AddBlankPagesOptions = ({ onStart, isProcessing, totalPages }) => {
       <div className="p-6 border-t border-outline-variant">
         <button
           onClick={handleLaunch}
-          disabled={isProcessing}
+          disabled={isProcessing || !isAfterPageValid}
           className="w-full flex items-center justify-center gap-2 py-4 bg-primary text-on-primary rounded-2xl font-label-bold text-label-lg hover:bg-primary/90 disabled:opacity-50 transition-all"
         >
           {isProcessing ? (

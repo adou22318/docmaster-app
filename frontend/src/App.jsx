@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { BrowserRouter, Routes, Route, useParams } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useParams, useLocation } from 'react-router-dom';
 import { useAuthStore } from './store/useAuthStore';
 import { useTheme } from './hooks/useTheme';
 import { PublicLayout } from './components/layout/PublicLayout';
@@ -28,6 +28,15 @@ const ToolPageWrapper = () => {
   return <ToolPage key={toolId} />;
 };
 
+// Revenir en haut de page à chaque changement de route
+const ScrollToTop = () => {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }, [pathname]);
+  return null;
+};
+
 function App() {
   const initializeAuth = useAuthStore((state) => state.initializeAuth);
   // Initialiser le thème dès le montage (applique .dark sur <html> si nécessaire)
@@ -38,6 +47,7 @@ function App() {
   }, [initializeAuth]);
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <Routes>
         {/* Routes sans Layout global (Standalone) */}
         <Route path="/login" element={<Login />} />

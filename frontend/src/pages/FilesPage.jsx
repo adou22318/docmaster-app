@@ -186,10 +186,25 @@ export const FilesPage = () => {
                         })}
                       </td>
                       <td className="py-4 px-4 text-body-sm hidden lg:table-cell">
-                        {expireDate ? (
-                          <span className={isExpiringSoon ? 'text-warning font-label-bold' : 'text-on-surface-variant'}>
-                            {expireDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
-                          </span>
+                        {expireDate ? (() => {
+                            const msLeft = expireDate - Date.now();
+                            const hoursLeft = Math.floor(msLeft / 3600000);
+                            const minsLeft  = Math.floor((msLeft % 3600000) / 60000);
+                            const relativeLabel = msLeft > 0
+                              ? (hoursLeft > 0 ? `dans ${hoursLeft}h ${minsLeft}min` : `dans ${minsLeft}min`)
+                              : 'Expiré';
+                            return (
+                              <span className={isExpiringSoon ? 'text-warning font-label-bold' : 'text-on-surface-variant'} title={relativeLabel}>
+                                {expireDate.toLocaleDateString('fr-FR', {
+                                  day: '2-digit', month: 'short',
+                                  hour: '2-digit', minute: '2-digit'
+                                })}
+                                {isExpiringSoon && (
+                                  <span className="block text-[10px] text-warning">({relativeLabel})</span>
+                                )}
+                              </span>
+                            );
+                          })()
                         ) : (
                           <span className="text-on-surface-variant">—</span>
                         )}
