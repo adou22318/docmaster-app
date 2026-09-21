@@ -234,8 +234,6 @@ export const tools = [
     populaire: false,
     route: "/dashboard/tools/add_blank_pages",
     accepteMultiple: false,
-    utiliseMiniatures: true,
-    selectionMode: 'none',
     howItWorks: {
       etapes: [
         { titre: "Importez votre PDF", description: "Chargez le document nécessitant l'ajout de pages vierges." },

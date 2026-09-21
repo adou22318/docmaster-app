@@ -49,8 +49,8 @@ export const DashboardTools = () => {
         to={tool.route}
         className={`rounded-2xl p-8 flex gap-6 hover:-translate-y-1 transition-transform cursor-pointer group h-full ${
           isPrimary
-            // Carte primaire : fond sombre uni, texte blanc — même apparence clair/sombre
-            ? 'bg-[#111213] text-white shadow-md hover:shadow-xl hover:bg-[#1a1c1e] border border-white/5'
+            // Mode clair : fond sombre uni (validé). Mode sombre : fond jaune foncé
+            ? 'bg-[#111213] text-white shadow-md hover:shadow-xl hover:bg-[#1a1c1e] border border-white/5 dark:bg-[#4a3200] dark:border-[#fdbc13]/40 dark:hover:bg-[#5c3e00]'
             : isAccent
             ? 'bg-surface-container-lowest border-2 border-secondary-fixed-dim shadow-sm'
             : 'bg-surface-container-lowest border border-outline-variant hover:border-secondary shadow-sm'
@@ -58,12 +58,12 @@ export const DashboardTools = () => {
       >
         <div
           className={`w-12 h-12 rounded-lg flex items-center justify-center shrink-0 ${
-            isPrimary ? 'bg-secondary-container/20' : 'bg-secondary-container'
+            isPrimary ? 'bg-secondary-container/20 dark:bg-[#fdbc13]/20' : 'bg-secondary-container'
           }`}
         >
           <span
             className={`material-symbols-outlined ${
-              isPrimary ? 'text-secondary-container' : 'text-on-secondary-container'
+              isPrimary ? 'text-secondary-container dark:text-[#fdbc13]' : 'text-on-secondary-container'
             }`}
           >
             {tool.icone}
@@ -72,14 +72,14 @@ export const DashboardTools = () => {
         <div>
           <h4 className={`font-headline-md text-body-lg mb-1 transition-colors ${
             isPrimary
-              ? 'text-white group-hover:text-secondary-container'
+              ? 'text-white group-hover:text-secondary-container dark:group-hover:text-[#fdbc13]'
               : 'group-hover:text-secondary'
           }`}>
             {tool.nom}
           </h4>
           <p
             className={`text-label-sm ${
-              isPrimary ? 'text-white/60' : 'text-on-surface-variant'
+              isPrimary ? 'text-white/60 dark:text-[#fdbc13]/60' : 'text-on-surface-variant'
             }`}
           >
             {tool.description}

@@ -1,15 +1,55 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { pdfjs } from 'react-pdf';
+import axiosClient from '../../../services/api/axiosClient';
+
+/**
+ * Hook interne : charge silencieusement le PDF en arrière-plan
+ * via axiosClient (JWT géré) et retourne le nombre de pages.
+ * Aucun visuel affiché — uniquement pour la validation du champ "après la page n°".
+ */
+const usePdfPageCount = (fichierCharge) => {
+  const [pageCount, setPageCount] = useState(null);
+
+  useEffect(() => {
+    const fileId = fichierCharge?.fileId;
+    if (!fileId) return;
+
+    let cancelled = false;
+
+    axiosClient
+      .get(`/files/download/${fileId}`, { responseType: 'arraybuffer' })
+      .then((res) => {
+        if (cancelled) return;
+        return pdfjs.getDocument({ data: res.data }).promise;
+      })
+      .then((pdf) => {
+        if (pdf && !cancelled) setPageCount(pdf.numPages);
+      })
+      .catch(() => {
+        // Silencieux : si la récupération échoue, la validation reste permissive
+      });
+
+    return () => { cancelled = true; };
+  }, [fichierCharge?.fileId]);
+
+  return pageCount;
+};
 
 /**
  * AddBlankPagesOptions — Formulaire simple (sans visualiseur)
  * Permet d'insérer des pages vierges à un endroit précis du PDF.
+ * Le nombre de pages est récupéré silencieusement en arrière-plan
+ * pour valider le champ "Après la page n°" sans afficher de miniatures.
  */
-export const AddBlankPagesOptions = ({ onStart, isProcessing, totalPages }) => {
+export const AddBlankPagesOptions = ({ onStart, isProcessing, fichierCharge }) => {
   const [position, setPosition] = useState('end'); // 'start' | 'end' | 'after'
   const [afterPage, setAfterPage] = useState(1);
   const [afterPageError, setAfterPageError] = useState('');
   const [count, setCount] = useState(1);
   const [format, setFormat] = useState('A4'); // 'A4' | 'Letter'
+
+  // Nombre réel de pages du PDF, chargé silencieusement
+  const totalPages = usePdfPageCount(fichierCharge);
 
   const isAfterPageValid = position !== 'after' || (
     !isNaN(parseInt(afterPage, 10)) &&
@@ -33,7 +73,7 @@ export const AddBlankPagesOptions = ({ onStart, isProcessing, totalPages }) => {
       nombre: count,
       format: format.toLowerCase(), // backend attend 'a4', 'a3', etc.
     };
-    
+
     onStart(options);
   };
 
@@ -45,6 +85,18 @@ export const AddBlankPagesOptions = ({ onStart, isProcessing, totalPages }) => {
           <p className="text-body-sm text-on-surface-variant">
             Insérez une ou plusieurs pages blanches dans votre document PDF.
           </p>
+          {/* Indicateur de chargement silencieux du nombre de pages */}
+          {!totalPages && fichierCharge && (
+            <p className="text-label-xs text-on-surface-variant mt-1 flex items-center gap-1">
+              <span className="material-symbols-outlined text-[12px] animate-spin">progress_activity</span>
+              Lecture du document…
+            </p>
+          )}
+          {totalPages && (
+            <p className="text-label-xs text-secondary mt-1">
+              Document : {totalPages} page{totalPages > 1 ? 's' : ''}
+            </p>
+          )}
         </div>
 
         {/* Position d'insertion */}
@@ -87,7 +139,7 @@ export const AddBlankPagesOptions = ({ onStart, isProcessing, totalPages }) => {
                     <input
                       type="number"
                       min={1}
-                      max={totalPages || undefined}
+                      max={totalPages || 9999}
                       value={afterPage}
                       onChange={(e) => {
                         const val = e.target.value;
@@ -100,6 +152,14 @@ export const AddBlankPagesOptions = ({ onStart, isProcessing, totalPages }) => {
                         } else {
                           setAfterPageError('');
                         }
+                      }}
+                      onBlur={(e) => {
+                        // Clamp au blur : rattrape les flèches du spinner natif
+                        let p = parseInt(e.target.value, 10);
+                        if (isNaN(p) || p < 1) p = 1;
+                        if (totalPages && p > totalPages) p = totalPages;
+                        setAfterPage(p);
+                        setAfterPageError('');
                       }}
                       className={`w-24 px-3 py-2 border rounded-lg bg-surface text-on-surface focus:outline-none focus:ring-2 text-center ${
                         afterPageError

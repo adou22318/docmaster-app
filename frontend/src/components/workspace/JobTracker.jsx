@@ -22,6 +22,19 @@ const MESSAGES_ERREUR = {
   PAYDUNYA_ERREUR: "Une erreur est survenue lors de l'initiation du paiement. Réessayez dans quelques instants.",
 };
 
+// Parseur pour les erreurs avec payload (ex: POSITION_INVALIDE:229)
+const parseRawError = (raw) => {
+  if (!raw) return null;
+  // POSITION_INVALIDE:N — la position N dépasse le nombre de pages
+  const posMatch = raw.match(/^POSITION_INVALIDE:(\d+)$/);
+  if (posMatch) {
+    const pos = posMatch[1];
+    return `La position n° ${pos} est invalide pour ce document. Vérifiez que le numéro de page que vous avez saisi ne dépasse pas le nombre total de pages du PDF, puis réessayez.`;
+  }
+  return null;
+};
+
+
 const getProgressMessage = (pct) => {
   if (pct < 20) return 'Préparation du traitement…';
   if (pct < 60) return 'Traitement en cours…';
@@ -84,10 +97,14 @@ export const JobTracker = ({ tool, jobId, onComplete, onError }) => {
         } else if (job.statut === 'error') {
           active = false;
           const raw = job.erreur_message || '';
+          // 1. Erreurs avec payload dynamique (ex: POSITION_INVALIDE:229)
+          const parsedMsg = parseRawError(raw);
+          // 2. Erreurs avec code fixe
           const codeMatch = Object.keys(MESSAGES_ERREUR).find(code => raw.startsWith(code));
-          const msgFinal = codeMatch
-            ? MESSAGES_ERREUR[codeMatch]
-            : (raw || 'Une erreur inattendue est survenue. Veuillez réessayer dans quelques instants.');
+          const msgFinal = parsedMsg
+            || (codeMatch ? MESSAGES_ERREUR[codeMatch] : null)
+            || raw
+            || 'Une erreur inattendue est survenue. Veuillez réessayer dans quelques instants.';
           ajouterNotification({
             type: 'error',
             titre: getEchecTitre(tool),
