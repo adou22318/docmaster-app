@@ -263,7 +263,7 @@ pdfQueue.process(async (job) => {
     );
 
     const resultatUrl = `/api/files/download/${resultFileId}`;
-    
+
     // Ajout du disclaimer de signature dans le résultat renvoyé à l'API si présent
     const resultPayload = { success: true, resultatUrl };
     if (resultat.disclaimer) {
@@ -274,10 +274,16 @@ pdfQueue.process(async (job) => {
       resultPayload.avertissement = resultat.avertissement;
     }
 
+    // Stocker l'avertissement dans erreur_message pour que le frontend polling puisse le lire.
+    // erreur_message n'est normalement rempli qu'en cas d'erreur, mais on le réutilise
+    // ici comme champ informatif quand statut='done' (le frontend distingue les deux cas).
+    const erreurMsgBdd = resultat.avertissement || null;
+
     await pool.query(
-      `UPDATE jobs SET statut = 'done', progression = 100, resultat_url = $1, completed_at = NOW()
+      `UPDATE jobs SET statut = 'done', progression = 100, resultat_url = $1,
+       erreur_message = $3, completed_at = NOW()
        WHERE id_jobs = $2`,
-      [resultatUrl, jobId]
+      [resultatUrl, jobId, erreurMsgBdd]
     );
 
     await job.progress(100);

@@ -165,14 +165,27 @@ export const JobTracker = ({ tool, jobId, onComplete, onError }) => {
 
         if (job.statut === 'done') {
           active = false;
-          const { titre, message } = getSuccessMessage(tool);
-          ajouterNotification({
-            type: 'success',
-            titre,
-            message,
-            jobId: jobId,
-            resultatUrl: job.resultat_url ? `/files/download/${job.resultat_url.split('/').pop()}` : null,
-          });
+
+          // Cas spécial : avertissement informatif stocké dans erreur_message
+          // (ex: COMPRESSION_INEFFICACE — le job a réussi mais sans effet réel)
+          if (job.erreur_message === 'COMPRESSION_INEFFICACE') {
+            ajouterNotification({
+              type: 'warning',
+              titre: 'PDF déjà optimisé',
+              message: 'Votre PDF est déjà bien compressé — Ghostscript n\'a pas pu réduire davantage la taille. Votre fichier original vous est retourné tel quel.',
+              jobId: jobId,
+              resultatUrl: job.resultat_url ? `/files/download/${job.resultat_url.split('/').pop()}` : null,
+            });
+          } else {
+            const { titre, message } = getSuccessMessage(tool);
+            ajouterNotification({
+              type: 'success',
+              titre,
+              message,
+              jobId: jobId,
+              resultatUrl: job.resultat_url ? `/files/download/${job.resultat_url.split('/').pop()}` : null,
+            });
+          }
           onCompleteRef.current(job);
         } else if (job.statut === 'error') {
           active = false;

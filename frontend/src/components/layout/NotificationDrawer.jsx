@@ -106,12 +106,16 @@ export const NotificationDrawer = ({ isOpen, onClose }) => {
                   <div className="flex items-start gap-3">
                     {/* Icône statut */}
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${
-                      notif.type === 'success' ? 'bg-green-100 text-green-700' :
-                      notif.type === 'error' ? 'bg-error-container text-error' :
+                      notif.type === 'success' ? 'bg-green-500/15 text-green-700' :
+                      notif.type === 'error'   ? 'bg-error-container text-error' :
+                      notif.type === 'warning' ? 'bg-amber-500/15 text-amber-600' :
                       'bg-surface-container text-on-surface-variant'
                     }`}>
                       <span className="material-symbols-outlined text-[16px]" style={{ fontVariationSettings: "'FILL' 1" }}>
-                        {notif.type === 'success' ? 'check_circle' : notif.type === 'error' ? 'error' : 'info'}
+                        {notif.type === 'success' ? 'check_circle' :
+                         notif.type === 'error'   ? 'error' :
+                         notif.type === 'warning' ? 'warning' :
+                         'info'}
                       </span>
                     </div>
 
@@ -129,7 +133,7 @@ export const NotificationDrawer = ({ isOpen, onClose }) => {
                       <p className="text-body-sm text-on-surface-variant mt-0.5">{notif.message}</p>
                       <div className="flex items-center gap-3 mt-2">
                         <span className="text-[11px] text-on-surface-variant">{formatTemps(notif.createdAt)}</span>
-                        {notif.type === 'success' && notif.resultatUrl && (
+                        {(notif.type === 'success' || notif.type === 'warning') && notif.resultatUrl && (
                           <button
                             onClick={() => handleDownload(notif)}
                             className="flex items-center gap-1 text-[11px] font-bold text-primary hover:text-primary/80 transition-colors"

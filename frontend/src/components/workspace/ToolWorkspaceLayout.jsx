@@ -198,7 +198,12 @@ export const ToolWorkspaceLayout = ({ tool, step, setStep, onReset, onBack }) =>
     setImageLargeur(200);
     setImageHauteur(200);
     setImagePlacements(new Map());
-    toast.success(`${tool.nom} terminé avec succès ! Téléchargez votre fichier ci-dessous.`);
+    // Toast adapté selon le résultat
+    if (result?.erreur_message === 'COMPRESSION_INEFFICACE') {
+      toast.warn('Votre PDF est déjà optimisé — aucune réduction supplémentaire possible. Votre fichier vous est retourné tel quel.');
+    } else {
+      toast.success(`${tool.nom} terminé avec succès ! Téléchargez votre fichier ci-dessous.`);
+    }
   }, [setStep, tool.nom]);
 
   const handleError = useCallback((errMsg) => {

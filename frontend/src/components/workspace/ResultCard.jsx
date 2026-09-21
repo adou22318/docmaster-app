@@ -42,12 +42,20 @@ export const ResultCard = ({ tool, result, originalFile, onNewFile }) => {
     const ratio = ((originalFile.tailleOctets - tailleResult) / originalFile.tailleOctets) * 100;
     reductionPercent = Math.max(0, Math.round(ratio));
   }
-  // Affichage avant/après uniquement pour la compression
-  const showCompressionStats = tool.id === 'compress' && (reductionPercent != null || (originalFile?.tailleOctets && tailleResult));
+  // Avertissement spécial : compression sans effet (stocké dans erreur_message quand statut='done')
+  const compressionInefficace = result?.erreur_message === 'COMPRESSION_INEFFICACE';
+  // Affichage avant/après uniquement pour la compression réussie (pas si inefficace)
+  const showCompressionStats = tool.id === 'compress'
+    && !compressionInefficace
+    && (reductionPercent != null || (originalFile?.tailleOctets && tailleResult));
 
   // Message de succès dynamique
   const getDynamicSuccessMessage = () => {
-    // Compression : message avec stats
+    // Compression inefficace : message spécifique
+    if (compressionInefficace) {
+      return 'Votre PDF est déjà bien optimisé';
+    }
+    // Compression réussie : message avec stats
     if (tool.id === 'compress' || tool.typeOperation === 'compress') {
       if (reductionPercent > 0 && originalFile?.tailleOctets && tailleResult) {
         return `Excellente nouvelle ! Votre fichier a été allégé de ${reductionPercent}%. Sa taille est passée de ${formatSize(originalFile.tailleOctets)} à ${formatSize(tailleResult)}.`;
@@ -105,13 +113,17 @@ export const ResultCard = ({ tool, result, originalFile, onNewFile }) => {
   return (
     <div className="flex flex-col items-center justify-center py-16 text-center space-y-8 animate-scale visible">
 
-      {/* Checkmark */}
-      <div className="w-24 h-24 rounded-full bg-green-500/10 flex items-center justify-center">
+      {/* Icône statut — verte si succès, orange si compression inefficace */}
+      <div className={`w-24 h-24 rounded-full flex items-center justify-center ${
+        compressionInefficace ? 'bg-amber-500/10' : 'bg-green-500/10'
+      }`}>
         <span
-          className="material-symbols-outlined text-[52px] text-green-500"
+          className={`material-symbols-outlined text-[52px] ${
+            compressionInefficace ? 'text-amber-500' : 'text-green-500'
+          }`}
           style={{ fontVariationSettings: "'FILL' 1" }}
         >
-          check_circle
+          {compressionInefficace ? 'warning' : 'check_circle'}
         </span>
       </div>
 
@@ -120,6 +132,13 @@ export const ResultCard = ({ tool, result, originalFile, onNewFile }) => {
         <h2 className="font-display-xl text-headline-md text-on-surface">
           {getDynamicSuccessMessage()}
         </h2>
+
+        {/* Message explicatif quand compression inefficace */}
+        {compressionInefficace && (
+          <p className="text-body-md text-on-surface-variant">
+            Ghostscript n'a pas pu réduire davantage la taille de ce PDF — il est déjà bien compressé ou optimisé. Votre fichier original vous est retourné tel quel.
+          </p>
+        )}
 
         {/* Statistiques de compression */}
         {showCompressionStats && (
