@@ -116,7 +116,7 @@ export const Register = () => {
       </section>
 
       {/* Right Side: Registration Form Section */}
-      <section className="flex items-center justify-center p-6 md:p-12 lg:p-24 bg-surface-bright relative">
+      <section className="flex items-center justify-center p-6 md:p-12 lg:p-24 bg-surface relative">
         <div className="w-full max-w-[480px]">
           {/* Mobile Branding — cohérent avec Login */}
           <div className="lg:hidden flex items-center gap-3 mb-12">
@@ -125,9 +125,9 @@ export const Register = () => {
           </div>
           
           <header className="mb-12">
-            <h2 className="font-headline-lg text-headline-lg text-primary mb-4">Créer un compte</h2>
-            <p className="font-body-md text-on-surface-variant">Prêt à transformer vos documents ? Remplissez les informations ci-dessous pour commencer.</p>
-            <p className="mt-4 text-label-sm font-label-bold text-error/80 uppercase tracking-wide">
+            <h3 className="font-headline-lg text-[32px] leading-tight text-primary">Créer un compte</h3>
+            <p className="mt-3 text-on-surface-variant font-body-md">Remplissez les informations ci-dessous pour commencer.</p>
+            <p className="mt-2 text-label-sm font-label-bold text-error/80 uppercase tracking-wide">
               * Champs obligatoires
             </p>
           </header>
@@ -141,23 +141,23 @@ export const Register = () => {
 
           <form className="space-y-10" onSubmit={handleSubmit}>
             <div className="group">
-              <label className="font-label-bold text-label-bold text-on-surface block mb-2 transition-colors group-focus-within:text-secondary-container" htmlFor="full-name">Nom complet <span className="text-error">*</span></label>
-              <input className="paper-input w-full py-3 font-body-md text-on-surface placeholder:text-outline-variant/60" id="full-name" name="full-name" placeholder="Jean Dupont" required type="text" onChange={() => { clearError(); setValidationError(null); }} />
+              <label className="block font-label-bold text-label-bold text-on-surface-variant mb-2 uppercase tracking-wide transition-colors group-focus-within:text-secondary" htmlFor="full-name">NOM COMPLET <span className="text-error">*</span></label>
+              <input className="w-full py-4 input-underline font-body-md text-primary placeholder:text-outline-variant/60" id="full-name" name="full-name" placeholder="Jean Dupont" required type="text" onChange={() => { clearError(); setValidationError(null); }} />
             </div>
             
             <div className="group">
-              <label className="font-label-bold text-label-bold text-on-surface block mb-2 transition-colors group-focus-within:text-secondary-container" htmlFor="email">Adresse email <span className="text-error">*</span></label>
-              <input className="paper-input w-full py-3 font-body-md text-on-surface placeholder:text-outline-variant/60" id="email" name="email" placeholder="nom@entreprise.com" required autoComplete="username" type="email" onChange={() => { clearError(); setValidationError(null); }} />
+              <label className="block font-label-bold text-label-bold text-on-surface-variant mb-2 uppercase tracking-wide transition-colors group-focus-within:text-secondary" htmlFor="email">ADRESSE E-MAIL <span className="text-error">*</span></label>
+              <input className="w-full py-4 input-underline font-body-md text-primary placeholder:text-outline-variant/60" id="email" name="email" placeholder="nom@entreprise.com" required autoComplete="username" type="email" onChange={() => { clearError(); setValidationError(null); }} />
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div className="group">
-                <label className="font-label-bold text-label-bold text-on-surface block mb-2 transition-colors group-focus-within:text-secondary-container" htmlFor="password">Mot de passe <span className="text-error">*</span></label>
-                <input className="paper-input w-full py-3 font-body-md text-on-surface placeholder:text-outline-variant/60" id="password" name="password" placeholder="••••••••" required autoComplete="new-password" type="password" onChange={() => { clearError(); setValidationError(null); }} />
+                <label className="block font-label-bold text-label-bold text-on-surface-variant mb-2 uppercase tracking-wide transition-colors group-focus-within:text-secondary" htmlFor="password">MOT DE PASSE <span className="text-error">*</span></label>
+                <input className="w-full py-4 input-underline font-body-md text-primary placeholder:text-outline-variant/60" id="password" name="password" placeholder="••••••••" required autoComplete="new-password" type="password" onChange={() => { clearError(); setValidationError(null); }} />
               </div>
               <div className="group">
-                <label className="font-label-bold text-label-bold text-on-surface block mb-2 transition-colors group-focus-within:text-secondary-container" htmlFor="password-confirm">Confirmation <span className="text-error">*</span></label>
-                <input className="paper-input w-full py-3 font-body-md text-on-surface placeholder:text-outline-variant/60" id="password-confirm" name="password-confirm" placeholder="••••••••" required autoComplete="new-password" type="password" onChange={() => { clearError(); setValidationError(null); }} />
+                <label className="block font-label-bold text-label-bold text-on-surface-variant mb-2 uppercase tracking-wide transition-colors group-focus-within:text-secondary" htmlFor="password-confirm">CONFIRMATION <span className="text-error">*</span></label>
+                <input className="w-full py-4 input-underline font-body-md text-primary placeholder:text-outline-variant/60" id="password-confirm" name="password-confirm" placeholder="••••••••" required autoComplete="new-password" type="password" onChange={() => { clearError(); setValidationError(null); }} />
               </div>
             </div>
             
@@ -188,7 +188,7 @@ export const Register = () => {
                 <div className="absolute inset-0 flex items-center">
                   <div className="w-full border-t border-outline-variant/30"></div>
                 </div>
-                <div className="relative bg-surface-bright px-4 text-label-sm font-label-bold text-on-surface-variant">
+                <div className="relative bg-surface px-4 text-label-sm font-label-bold text-on-surface-variant">
                   OU
                 </div>
               </div>
