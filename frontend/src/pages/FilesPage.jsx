@@ -159,7 +159,16 @@ export const FilesPage = () => {
                 {files.map((file) => {
                   const fileId = file.id_files || file.id;
                   const expireDate = file.expire_le ? new Date(file.expire_le) : null;
-                  const isExpiringSoon = expireDate && (expireDate - Date.now()) < 2 * 60 * 60 * 1000; // < 2h
+                  const isExpiringSoon = expireDate && (expireDate - Date.now()) < 2 * 60 * 60 * 1000;
+                  let expireDateLabel = null;
+                  let expireRelativeLabel = null;
+                  if (expireDate) {
+                    const msLeft = expireDate - Date.now();
+                    const h = Math.floor(msLeft / 3600000);
+                    const m = Math.floor((msLeft % 3600000) / 60000);
+                    expireDateLabel = expireDate.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+                    expireRelativeLabel = msLeft > 0 ? (h > 0 ? 'dans ' + h + 'h ' + m + 'min' : 'dans ' + m + 'min') : 'Expire';
+                  }
                   return (
                     <tr key={fileId} className="border-b border-outline-variant/50 hover:bg-surface-container-low transition-colors">
                       <td className="py-4 px-4">
@@ -186,25 +195,16 @@ export const FilesPage = () => {
                         })}
                       </td>
                       <td className="py-4 px-4 text-body-sm hidden lg:table-cell">
-                        {expireDate ? (() => {
-                            const msLeft = expireDate - Date.now();
-                            const hoursLeft = Math.floor(msLeft / 3600000);
-                            const minsLeft  = Math.floor((msLeft % 3600000) / 60000);
-                            const relativeLabel = msLeft > 0
-                              ? (hoursLeft > 0 ? `dans ${hoursLeft}h ${minsLeft}min` : `dans ${minsLeft}min`)
-                              : 'Expiré';
-                            return (
-                              <span className={isExpiringSoon ? 'text-warning font-label-bold' : 'text-on-surface-variant'} title={relativeLabel}>
-                                {expireDate.toLocaleDateString('fr-FR', {
-                                  day: '2-digit', month: 'short',
-                                  hour: '2-digit', minute: '2-digit'
-                                })}
-                                {isExpiringSoon && (
-                                  <span className="block text-[10px] text-warning">({relativeLabel})</span>
-                                )}
-                              </span>
-                            );
-                          })()
+                        {expireDateLabel ? (
+                          <span
+                            className={isExpiringSoon ? 'text-warning font-label-bold' : 'text-on-surface-variant'}
+                            title={expireRelativeLabel}
+                          >
+                            {expireDateLabel}
+                            {isExpiringSoon && (
+                              <span className="block text-[10px] text-warning">({expireRelativeLabel})</span>
+                            )}
+                          </span>
                         ) : (
                           <span className="text-on-surface-variant">—</span>
                         )}
