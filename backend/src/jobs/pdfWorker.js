@@ -235,12 +235,14 @@ pdfQueue.process(async (job) => {
       case 'reorder_pages':
         // Réorganisation des pages par l'utilisateur (D&D dans PageReorderViewer)
         // options.nouvelOrdre : tableau 1-indexed de la nouvelle séquence
+        // Note : le déchiffrement qpdf est déjà appliqué sur cheminsFichiers[0]
+        //        avant le switch — ne pas re-passer motDePassePdf ici.
         resultat = await reorderPagesService(
           cheminsFichiers[0],
-          options.nouvelOrdre,
-          motDePassePdf
+          options.nouvelOrdre
         );
         break;
+
 
       case 'extract_pages':
         // Extraction de pages = alias sémantique de split en mode 'single'

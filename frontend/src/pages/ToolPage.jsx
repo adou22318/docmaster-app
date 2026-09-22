@@ -149,6 +149,14 @@ export const ToolPage = () => {
     setStep('selection');
   };
 
+  // Scroll vers le haut à chaque changement d'étape
+  // Couvre toutes les transitions : selection, configuration, traitement, résultat, reset
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+  }, [step]);
+
   const handleBack = () => navigate('/dashboard');
 
   // Affichage pendant la vérification Pro

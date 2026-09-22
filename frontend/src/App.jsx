@@ -28,11 +28,20 @@ const ToolPageWrapper = () => {
   return <ToolPage key={toolId} />;
 };
 
-// Revenir en haut de page à chaque changement de route
+// Revenir en haut de page à chaque changement de route.
+// On désactive history.scrollRestoration pour que le navigateur ne restaure
+// pas lui-même la position précédente (comportement par défaut des SPA).
 const ScrollToTop = () => {
   const { pathname } = useLocation();
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'instant' });
+    // Désactivation de la restauration automatique du navigateur
+    if ('scrollRestoration' in history) {
+      history.scrollRestoration = 'manual';
+    }
+    // Scroll sur tous les conteneurs possibles pour couvrir tous les navigateurs
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
   }, [pathname]);
   return null;
 };

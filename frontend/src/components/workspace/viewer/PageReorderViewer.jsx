@@ -1,4 +1,4 @@
-﻿import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import axiosClient from '../../../services/api/axiosClient';
 
@@ -7,34 +7,35 @@ import 'react-pdf/dist/Page/TextLayer.css';
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.mjs`;
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// Miniature individuelle avec lazy loading (IntersectionObserver)
-// Utilise le contexte du <Document> parent â€” pas de <Document> imbriquÃ©.
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-const LazyPageThumbnail = ({ pageNum, thumbWidth, isDragging, isDropTarget }) => {
-  const [isVisible, setIsVisible] = useState(false);
-  const [isRendered, setIsRendered] = useState(false);
-  const ref = useRef(null);
+// ────────────────────────────────────────────────────────────────
+// Barre de progression globale du chargement des vignettes
+// Pattern identique à PdfThumbnailViewer
+// ────────────────────────────────────────────────────────────────
+const LoadingProgress = ({ loaded, total }) => {
+  if (total === 0) return null;
+  const pct = Math.round((loaded / total) * 100);
+  return (
+    <div className="flex items-center gap-3 p-3 bg-surface-container rounded-xl mb-4">
+      <span className="material-symbols-outlined text-[18px] text-primary animate-spin">progress_activity</span>
+      <div className="flex-1">
+        <div className="h-1.5 bg-outline-variant rounded-full overflow-hidden">
+          <div className="h-full bg-primary rounded-full transition-all duration-300" style={{ width: `${pct}%` }} />
+        </div>
+      </div>
+      <span className="text-label-sm text-on-surface-variant whitespace-nowrap">
+        {loaded} / {total} pages
+      </span>
+    </div>
+  );
+};
 
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const obs = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsVisible(true);
-          obs.disconnect();
-        }
-      },
-      { rootMargin: '300px 0px' }
-    );
-    obs.observe(el);
-    return () => obs.disconnect();
-  }, []);
-
+// ────────────────────────────────────────────────────────────────
+// Miniature individuelle — isVisible piloté par l'observer parent
+// Pattern identique à PdfThumbnailViewer
+// ────────────────────────────────────────────────────────────────
+const PageThumbnail = ({ pageNum, thumbWidth, isDragging, isDropTarget, isVisible, onRenderSuccess }) => {
   return (
     <div
-      ref={ref}
       className={[
         'relative rounded-xl overflow-hidden border-2 transition-all duration-150',
         isDragging
@@ -45,19 +46,27 @@ const LazyPageThumbnail = ({ pageNum, thumbWidth, isDragging, isDropTarget }) =>
       ].join(' ')}
       style={{ width: thumbWidth, height: Math.round(thumbWidth * 1.41) }}
     >
-      {!isRendered && (
-        <div className="absolute inset-0 bg-surface-container animate-pulse rounded-xl" />
-      )}
-      {isVisible && (
+      {isVisible ? (
         <Page
           pageNumber={pageNum}
           width={thumbWidth}
           renderTextLayer={false}
           renderAnnotationLayer={false}
-          onRenderSuccess={() => setIsRendered(true)}
+          loading={
+            <div
+              className="bg-surface-container animate-pulse rounded-xl"
+              style={{ width: thumbWidth, height: Math.round(thumbWidth * 1.41) }}
+            />
+          }
+          onRenderSuccess={onRenderSuccess}
+        />
+      ) : (
+        <div
+          className="bg-surface-container animate-pulse rounded-xl"
+          style={{ width: thumbWidth, height: Math.round(thumbWidth * 1.41) }}
         />
       )}
-      {/* IcÃ´ne drag handle */}
+
       <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
         <span className="material-symbols-outlined text-[16px] text-on-surface/60 drop-shadow">drag_indicator</span>
       </div>
@@ -65,25 +74,31 @@ const LazyPageThumbnail = ({ pageNum, thumbWidth, isDragging, isDropTarget }) =>
   );
 };
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// Carte d'une page â€” HTML5 DnD natif (pas de bibliothÃ¨que externe)
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ────────────────────────────────────────────────────────────────
+// Carte d'une page — HTML5 DnD natif
+// thumbRef fourni par le parent pour l'IntersectionObserver global
+// ────────────────────────────────────────────────────────────────
 const PageCard = React.memo(({
   pageNumOriginal,
   positionActuelle,
   thumbWidth,
   isDragging,
   isDropTarget,
+  isVisible,
+  thumbRef,
   onDragStart,
   onDragEnter,
   onDragOver,
   onDrop,
   onDragEnd,
+  onRenderSuccess,
 }) => {
-  const positionModifiee = positionActuelle !== pageNumOriginal;
+  const positionModifiée = positionActuelle !== pageNumOriginal;
 
   return (
     <div
+      ref={thumbRef}
+      data-page={pageNumOriginal}
       draggable
       onDragStart={onDragStart}
       onDragEnter={onDragEnter}
@@ -91,20 +106,21 @@ const PageCard = React.memo(({
       onDrop={onDrop}
       onDragEnd={onDragEnd}
       className="group flex flex-col items-center gap-2 select-none cursor-grab active:cursor-grabbing"
-      style={{ width: thumbWidth }}
     >
-      <LazyPageThumbnail
+      <PageThumbnail
         pageNum={pageNumOriginal}
         thumbWidth={thumbWidth}
         isDragging={isDragging}
         isDropTarget={isDropTarget}
+        isVisible={isVisible}
+        onRenderSuccess={onRenderSuccess}
       />
 
       <span className="text-label-xs text-on-surface-variant">
         Page {pageNumOriginal}
       </span>
 
-      {positionModifiee && (
+      {positionModifiée && (
         <span className="inline-flex items-center gap-0.5 px-2 py-0.5 bg-amber-500/15 text-amber-600 dark:text-amber-400 rounded-full text-label-xs font-label-bold">
           <span className="material-symbols-outlined text-[10px]">arrow_forward</span>
           Pos.&nbsp;{positionActuelle}
@@ -116,15 +132,16 @@ const PageCard = React.memo(({
 
 PageCard.displayName = 'PageCard';
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ════════════════════════════════════════════════════════════════
 // COMPOSANT PRINCIPAL : PageReorderViewer
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-/**
- * @param {string}   fileId         - UUID du fichier source
- * @param {string}   motDePassePdf  - mot de passe si PDF protÃ©gÃ©
- * @param {Function} onOrderChange  - callback(newOrder: number[]) Ã©mis aprÃ¨s chaque dÃ©placement
- * @param {Function} onLoadSuccess  - callback(numPages: number) Ã©mis une fois au chargement
- */
+// Pattern de chargement identique à PdfThumbnailViewer :
+//   - axiosClient + arraybuffer
+//   - Un seul IntersectionObserver global (observerRef / sentinelRefs)
+//   - visiblePages = Set des numéros de pages dans le viewport
+//   - Stratégie "once-visible-always-visible" : une page chargée reste chargée
+//   - LoadingProgress : barre de progression identique
+//   - Grille CSS auto-fill identique
+// ════════════════════════════════════════════════════════════════
 export const PageReorderViewer = ({ fileId, motDePassePdf, onOrderChange, onLoadSuccess }) => {
   const [numPages, setNumPages] = useState(null);
   const [pageOrder, setPageOrder] = useState([]);
@@ -133,15 +150,20 @@ export const PageReorderViewer = ({ fileId, motDePassePdf, onOrderChange, onLoad
   const [pdfData, setPdfData] = useState(null);
   const [pdfLoading, setPdfLoading] = useState(false);
 
+  // Progression du rendu des vignettes (comme PdfThumbnailViewer)
+  const [renderedCount, setRenderedCount] = useState(0);
+
+  // Observer unique global — même pattern que PdfThumbnailViewer
+  const observerRef = useRef(null);
+  const sentinelRefs = useRef({});
+  const [visiblePages, setVisiblePages] = useState(new Set());
+
   // Drag state
   const draggingIndexRef = useRef(null);
   const [draggingIndex, setDraggingIndex] = useState(null);
   const [overIndex, setOverIndex] = useState(null);
 
-  // Ref pour Ã©viter le setState-pendant-render dans handleLoadSuccess
-  const pendingCallbacksRef = useRef(null);
-
-  // â”€â”€ TÃ©lÃ©chargement du PDF via axiosClient (JWT inclus) â”€â”€
+  // ── Téléchargement du PDF via axiosClient (JWT inclus) ──
   useEffect(() => {
     if (!fileId) return;
     let cancelled = false;
@@ -150,6 +172,8 @@ export const PageReorderViewer = ({ fileId, motDePassePdf, onOrderChange, onLoad
     setLoadError(null);
     setNumPages(null);
     setPageOrder([]);
+    setVisiblePages(new Set());
+    setRenderedCount(0);
 
     axiosClient.get(`/files/download/${fileId}`, { responseType: 'arraybuffer' })
       .then((response) => {
@@ -163,8 +187,8 @@ export const PageReorderViewer = ({ fileId, motDePassePdf, onOrderChange, onLoad
           setPdfLoading(false);
           setLoadError(
             err.response?.status === 404
-              ? 'Fichier introuvable ou expirÃ©. RÃ©importez votre PDF.'
-              : 'Impossible de tÃ©lÃ©charger le fichier. VÃ©rifiez votre connexion.'
+              ? 'Fichier introuvable ou expiré. Réimportez votre PDF.'
+              : 'Impossible de télécharger le fichier. Vérifiez votre connexion.'
           );
         }
       });
@@ -172,31 +196,67 @@ export const PageReorderViewer = ({ fileId, motDePassePdf, onOrderChange, onLoad
     return () => { cancelled = true; };
   }, [fileId]);
 
-  // AppelÃ© par react-pdf quand le document est analysÃ©
+  // ── IntersectionObserver global (créé une seule fois) ──
+  useEffect(() => {
+    observerRef.current = new IntersectionObserver(
+      (entries) => {
+        setVisiblePages(prev => {
+          let changed = false;
+          const next = new Set(prev);
+          entries.forEach(entry => {
+            if (entry.isIntersecting) {
+              const pageNum = Number(entry.target.dataset.page);
+              if (!next.has(pageNum)) {
+                next.add(pageNum);
+                changed = true;
+              }
+            }
+            // Ne pas supprimer : une fois chargée, la vignette reste rendue.
+            // Évite le rechargement à chaque scroll / changement de taille.
+          });
+          return changed ? next : prev;
+        });
+      },
+      { rootMargin: '200px 0px' }
+    );
+    return () => observerRef.current?.disconnect();
+  }, []);
+
+  // ── Observer les sentinelles quand numPages change ──
+  // thumbSize exclu volontairement : le resize ne nécessite pas de re-observer
+  // puisque les pages ne se déchargent plus (once-visible-always-visible).
+  useEffect(() => {
+    if (!numPages || !observerRef.current) return;
+    const observer = observerRef.current;
+    Object.values(sentinelRefs.current).forEach(el => {
+      if (el) observer.observe(el);
+    });
+    return () => observer.disconnect();
+  }, [numPages]);
+
+  // ── Callback de rendu de page (incrémente le compteur de progression) ──
+  const onPageRenderSuccess = useCallback(() => {
+    setRenderedCount(c => c + 1);
+  }, []);
+
+  // ── Appelé par react-pdf quand le document est analysé ──
   const handleLoadSuccess = useCallback(({ numPages: n }) => {
     const ordreInitial = Array.from({ length: n }, (_, i) => i + 1);
     setNumPages(n);
     setPageOrder(ordreInitial);
-    // Stocker dans une ref pour Ã©viter setState-during-render
-    pendingCallbacksRef.current = { order: ordreInitial, n };
-  }, []);
-
-  // Notifier le parent APRÃˆS le rendu (useEffect sans dÃ©pendances)
-  useEffect(() => {
-    if (pendingCallbacksRef.current) {
-      const { order, n } = pendingCallbacksRef.current;
-      pendingCallbacksRef.current = null;
-      if (onOrderChange) onOrderChange(order);
+    setRenderedCount(0);
+    // setTimeout(0) : diffère les setState parent hors du cycle de rendu react-pdf
+    setTimeout(() => {
+      if (onOrderChange) onOrderChange(ordreInitial);
       if (onLoadSuccess) onLoadSuccess(n);
-    }
-  });
+    }, 0);
+  }, [onOrderChange, onLoadSuccess]);
 
-  // â”€â”€ Handlers HTML5 DnD natifs â”€â”€
+  // ── Handlers HTML5 DnD natifs ──
   const handleDragStart = useCallback((index) => (e) => {
     draggingIndexRef.current = index;
     setDraggingIndex(index);
     e.dataTransfer.effectAllowed = 'move';
-    // NÃ©cessaire pour Firefox
     e.dataTransfer.setData('text/plain', String(index));
   }, []);
 
@@ -237,7 +297,7 @@ export const PageReorderViewer = ({ fileId, motDePassePdf, onOrderChange, onLoad
     setOverIndex(null);
   }, []);
 
-  // â”€â”€ Remise en ordre original â”€â”€
+  // ── Remise en ordre original ──
   const resetOrder = useCallback(() => {
     if (!numPages) return;
     const original = Array.from({ length: numPages }, (_, i) => i + 1);
@@ -245,18 +305,9 @@ export const PageReorderViewer = ({ fileId, motDePassePdf, onOrderChange, onLoad
     if (onOrderChange) onOrderChange(original);
   }, [numPages, onOrderChange]);
 
-  const ordreModifie = numPages != null && pageOrder.some((p, i) => p !== i + 1);
+  const ordreModifié = numPages != null && pageOrder.some((p, i) => p !== i + 1);
 
-  // â”€â”€ Ã‰tats de chargement / erreur â”€â”€
-  if (pdfLoading) {
-    return (
-      <div className="flex flex-col items-center gap-4 py-16">
-        <span className="material-symbols-outlined text-[48px] text-primary animate-spin">progress_activity</span>
-        <p className="text-body-md text-on-surface-variant">TÃ©lÃ©chargement du documentâ€¦</p>
-      </div>
-    );
-  }
-
+  // ── États de chargement / erreur ──
   if (loadError) {
     return (
       <div className="flex flex-col items-center gap-4 py-12 text-center">
@@ -267,92 +318,122 @@ export const PageReorderViewer = ({ fileId, motDePassePdf, onOrderChange, onLoad
   }
 
   return (
-    <div className="space-y-4">
-      {/* Barre d'outils */}
-      <div className="flex items-center justify-between flex-wrap gap-3 px-1">
-        <div className="flex items-center gap-2">
-          {numPages && (
-            <span className="text-label-sm text-on-surface-variant">
-              {numPages} page{numPages > 1 ? 's' : ''}
-              {ordreModifie ? (
-                <span className="ml-2 inline-flex items-center gap-1 px-2 py-0.5 bg-amber-500/15 text-amber-600 dark:text-amber-400 rounded-full text-label-xs font-label-bold">
-                  <span className="material-symbols-outlined text-[12px]">warning</span> Ordre modifiÃ©
-                </span>
-              ) : (
-                <span className="ml-2 inline-flex items-center gap-1 px-2 py-0.5 bg-surface-container text-on-surface-variant rounded-full text-label-xs">
-                  Ordre original
-                </span>
-              )}
-            </span>
-          )}
+    <div className="w-full space-y-4">
+      {/* Spinner téléchargement (identique à PdfThumbnailViewer) */}
+      {pdfLoading && (
+        <div className="flex flex-col items-center gap-4 py-16">
+          <span className="material-symbols-outlined text-[48px] text-primary animate-spin">progress_activity</span>
+          <p className="text-body-md text-on-surface-variant">Téléchargement du document…</p>
         </div>
+      )}
 
-        <div className="flex items-center gap-3">
-          {ordreModifie && (
-            <button
-              onClick={resetOrder}
-              className="flex items-center gap-1.5 text-label-sm text-on-surface-variant hover:text-primary transition-colors"
-            >
-              <span className="material-symbols-outlined text-[16px]">undo</span>
-              Remettre l&apos;ordre d&apos;origine
-            </button>
-          )}
-          <div className="flex items-center gap-1.5">
-            <span className="material-symbols-outlined text-[14px] text-on-surface-variant">photo_size_select_small</span>
-            <input
-              type="range" min={100} max={220} step={10} value={thumbSize}
-              onChange={e => setThumbSize(Number(e.target.value))}
-              className="w-20 accent-primary"
-            />
-            <span className="material-symbols-outlined text-[14px] text-on-surface-variant">photo_size_select_large</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Instruction */}
-      <div className="flex items-center gap-2 px-3 py-2 bg-primary/5 border border-primary/20 rounded-xl">
-        <span className="material-symbols-outlined text-[16px] text-primary">drag_pan</span>
-        <p className="text-body-sm text-on-surface-variant">
-          Glissez-dÃ©posez les vignettes pour modifier l&apos;ordre des pages. Confirmez via <strong>RÃ©organiser le PDF</strong>.
-        </p>
-      </div>
-
-      {/* Grille D&D */}
       {pdfData && (
         <Document
           file={pdfData}
           onLoadSuccess={handleLoadSuccess}
-          onLoadError={() => setLoadError('Impossible de lire ce PDF. VÃ©rifiez qu\'il n\'est pas corrompu ou protÃ©gÃ© par un mot de passe.')}
+          onLoadError={() => setLoadError("Impossible de lire ce PDF. Vérifiez qu'il n'est pas corrompu.")}
+          onPassword={(callback, reason) => {
+            if (motDePassePdf) {
+              callback(motDePassePdf);
+            } else {
+              setLoadError("Ce fichier est protégé par mot de passe. Veuillez utiliser l'outil Déverrouiller d'abord.");
+            }
+          }}
           loading={
-            <div className="flex items-center gap-3 p-4 text-on-surface-variant">
-              <span className="material-symbols-outlined text-[20px] animate-spin text-primary">progress_activity</span>
-              <span className="text-body-sm">Analyse du documentâ€¦</span>
+            <div className="flex flex-col items-center gap-4 py-16">
+              <span className="material-symbols-outlined text-[48px] text-primary animate-spin">progress_activity</span>
+              <p className="text-body-md text-on-surface-variant">Chargement du document…</p>
             </div>
           }
         >
-          <div
-            className="flex flex-wrap gap-4 p-2"
-            onDragOver={(e) => e.preventDefault()}
-          >
-            {pageOrder.map((pageNumOriginal, index) => (
-              <PageCard
-                key={pageNumOriginal}
-                pageNumOriginal={pageNumOriginal}
-                positionActuelle={index + 1}
-                thumbWidth={thumbSize}
-                isDragging={draggingIndex === index}
-                isDropTarget={overIndex === index && draggingIndex !== index}
-                onDragStart={handleDragStart(index)}
-                onDragEnter={handleDragEnter(index)}
-                onDragOver={handleDragOver(index)}
-                onDrop={handleDrop(index)}
-                onDragEnd={handleDragEnd}
-              />
-            ))}
-          </div>
+          {numPages && (
+            <>
+              {/* Barre d'outils */}
+              <div className="flex items-center justify-between flex-wrap gap-3 px-1 mb-4">
+                <div className="flex items-center gap-2">
+                  <span className="text-label-sm text-on-surface-variant">
+                    {numPages} page{numPages > 1 ? 's' : ''}
+                    {ordreModifié ? (
+                      <span className="ml-2 inline-flex items-center gap-1 px-2 py-0.5 bg-amber-500/15 text-amber-600 dark:text-amber-400 rounded-full text-label-xs font-label-bold">
+                        <span className="material-symbols-outlined text-[12px]">warning</span> Ordre modifié
+                      </span>
+                    ) : (
+                      <span className="ml-2 inline-flex items-center gap-1 px-2 py-0.5 bg-surface-container text-on-surface-variant rounded-full text-label-xs">
+                        Ordre original
+                      </span>
+                    )}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  {ordreModifié && (
+                    <button
+                      onClick={resetOrder}
+                      className="flex items-center gap-1.5 text-label-sm text-on-surface-variant hover:text-primary transition-colors"
+                    >
+                      <span className="material-symbols-outlined text-[16px]">undo</span>
+                      Remettre l&apos;ordre d&apos;origine
+                    </button>
+                  )}
+                  <div className="flex items-center gap-1.5">
+                    <span className="material-symbols-outlined text-[14px] text-on-surface-variant">photo_size_select_small</span>
+                    <input
+                      type="range" min={100} max={220} step={10} value={thumbSize}
+                      onChange={e => setThumbSize(Number(e.target.value))}
+                      className="w-20 accent-primary"
+                    />
+                    <span className="material-symbols-outlined text-[14px] text-on-surface-variant">photo_size_select_large</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Instruction */}
+              <div className="flex items-center gap-2 px-3 py-2 bg-primary/5 border border-primary/20 rounded-xl mb-4">
+                <span className="material-symbols-outlined text-[16px] text-primary">drag_pan</span>
+                <p className="text-body-sm text-on-surface-variant">
+                  Glissez-déposez les vignettes pour modifier l&apos;ordre des pages. Confirmez via <strong>Réorganiser le PDF</strong>.
+                </p>
+              </div>
+
+              {/* Barre de progression des rendus (identique à PdfThumbnailViewer) */}
+              {renderedCount < numPages && (
+                <LoadingProgress loaded={renderedCount} total={numPages} />
+              )}
+
+              {/* Grille de vignettes — auto-fill identique à PdfThumbnailViewer */}
+              <div
+                className="grid gap-4 justify-items-center"
+                style={{
+                  gridTemplateColumns: `repeat(auto-fill, minmax(${thumbSize}px, 1fr))`,
+                }}
+                onDragOver={(e) => e.preventDefault()}
+              >
+                {pageOrder.map((pageNumOriginal, index) => (
+                  <PageCard
+                    key={pageNumOriginal}
+                    pageNumOriginal={pageNumOriginal}
+                    positionActuelle={index + 1}
+                    thumbWidth={thumbSize}
+                    isDragging={draggingIndex === index}
+                    isDropTarget={overIndex === index && draggingIndex !== index}
+                    isVisible={visiblePages.has(pageNumOriginal)}
+                    thumbRef={(el) => {
+                      sentinelRefs.current[pageNumOriginal] = el;
+                      if (el && observerRef.current) observerRef.current.observe(el);
+                    }}
+                    onDragStart={handleDragStart(index)}
+                    onDragEnter={handleDragEnter(index)}
+                    onDragOver={handleDragOver(index)}
+                    onDrop={handleDrop(index)}
+                    onDragEnd={handleDragEnd}
+                    onRenderSuccess={onPageRenderSuccess}
+                  />
+                ))}
+              </div>
+            </>
+          )}
         </Document>
       )}
     </div>
   );
 };
-

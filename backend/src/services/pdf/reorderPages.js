@@ -24,10 +24,13 @@ export const reorderPagesService = async (chemin, nouvelOrdre, motDePasse = null
 
   let pdfDoc;
   try {
-    pdfDoc = await loadPdf(pdfBytes, motDePasse);
+    // loadPdf attend un objet opts, pas un mot de passe brut.
+    // On passe {} si pas de mot de passe (null transmis directement
+    // causerait null.ignoreEncryption dans pdf-lib).
+    pdfDoc = await loadPdf(pdfBytes, motDePasse ? { password: motDePasse } : {});
   } catch (err) {
-    const msg = (err?.message || '').toLowerCase();
-    if (msg.includes('password') || msg.includes('encrypt') || msg.includes('ignoreencryption')) {
+    // loadPdf.js throw new Error('PDF_CHIFFRE') pour les PDFs chiffrés
+    if (err?.message === 'PDF_CHIFFRE') {
       throw new Error('MOT_DE_PASSE_INCORRECT');
     }
     throw new Error('FICHIER_CORROMPU');
