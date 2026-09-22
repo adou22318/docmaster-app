@@ -255,6 +255,12 @@ export const ToolWorkspaceLayout = ({ tool, step, setStep, onReset, onBack }) =>
     navigate('/dashboard/tools/unprotect', { state: { preloadedFile: currentFile } });
   };
 
+  const handlePasswordSubmit = useCallback((pwd) => {
+    useFileStore.setState((state) => ({
+      currentFile: state.currentFile ? { ...state.currentFile, motDePassePdf: pwd } : null
+    }));
+  }, []);
+
   const handleBackClick = () => {
     if (isProcessing) {
       const ok = window.confirm('Quitter maintenant abandonnera le traitement en cours. Continuer ?');
@@ -453,6 +459,7 @@ export const ToolWorkspaceLayout = ({ tool, step, setStep, onReset, onBack }) =>
                     imagePlacements={imagePlacements}
                     setImagePlacements={setImagePlacements}
                     onChangeFile={handleReset}
+                    onPasswordSubmit={handlePasswordSubmit}
                   />
                 </div>
               ) : tool.utiliseVisualiseurSignature ? (
@@ -479,6 +486,7 @@ export const ToolWorkspaceLayout = ({ tool, step, setStep, onReset, onBack }) =>
                     setSignatureSize={setSignatureSize}
                     onPdfCoordsChange={setPdfCoords}
                     onChangeFile={handleReset}
+                    onPasswordSubmit={handlePasswordSubmit}
                   />
                 </div>
               ) : tool.usesReorderViewer ? (
@@ -498,6 +506,7 @@ export const ToolWorkspaceLayout = ({ tool, step, setStep, onReset, onBack }) =>
                       motDePassePdf={currentFile?.motDePassePdf}
                       onOrderChange={setPageOrder}
                       onLoadSuccess={setTotalPages}
+                      onPasswordSubmit={handlePasswordSubmit}
                     />
                   </div>
                 </div>
@@ -522,6 +531,7 @@ export const ToolWorkspaceLayout = ({ tool, step, setStep, onReset, onBack }) =>
                       selectionStyle={tool.selectionStyle || 'blue'}
                       onLoadSuccess={setTotalPages}
                       onChangeFile={handleReset}
+                      onPasswordSubmit={handlePasswordSubmit}
                     />
                   </div>
                 </div>

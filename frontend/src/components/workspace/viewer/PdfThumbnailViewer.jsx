@@ -301,6 +301,7 @@ export const PdfThumbnailViewer = ({
   selectionLabel,
   onLoadSuccess,
   onChangeFile,
+  onPasswordSubmit,
 }) => {
   const [numPages, setNumPages] = useState(null);
   // On conserve le MDP dans un state ET une ref pour éviter les closures stales
@@ -504,7 +505,8 @@ export const PdfThumbnailViewer = ({
     pdfPasswordRef.current = pwd;
     setPdfPassword(pwd);
     setNeedsPassword(false);
-  }, []);
+    if (onPasswordSubmit) onPasswordSubmit(pwd);
+  }, [onPasswordSubmit]);
 
   // ── Render ──
   if (!fileId) {

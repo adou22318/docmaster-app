@@ -8,6 +8,45 @@ import 'react-pdf/dist/Page/TextLayer.css';
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.mjs`;
 
 // ────────────────────────────────────────────────────────────────
+// Dialogue de mot de passe pour PDF protégé
+// ────────────────────────────────────────────────────────────────
+const PasswordDialog = ({ onSubmit }) => {
+  const [password, setPassword] = useState('');
+
+  return (
+    <div className="flex flex-col items-center gap-6 py-16 text-center">
+      <div className="w-20 h-20 rounded-full bg-amber-500/10 flex items-center justify-center">
+        <span className="material-symbols-outlined text-[42px] text-amber-600" style={{ fontVariationSettings: "'FILL' 1" }}>lock</span>
+      </div>
+      <div>
+        <h3 className="font-display-xl text-title-md text-on-surface mb-1">PDF protégé par mot de passe</h3>
+        <p className="text-body-md text-on-surface-variant">Saisissez le mot de passe pour afficher les pages.</p>
+      </div>
+      <form
+        onSubmit={(e) => { e.preventDefault(); onSubmit(password); }}
+        className="flex gap-2 w-full max-w-xs"
+      >
+        <input
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          placeholder="Mot de passe"
+          className="flex-1 px-4 py-3 border border-outline-variant rounded-xl bg-surface text-on-surface focus:outline-none focus:ring-2 focus:ring-primary"
+          autoFocus
+        />
+        <button
+          type="submit"
+          disabled={!password}
+          className="px-4 py-3 bg-primary text-on-primary rounded-xl font-label-bold disabled:opacity-50 transition-all"
+        >
+          <span className="material-symbols-outlined text-[20px]">lock_open</span>
+        </button>
+      </form>
+    </div>
+  );
+};
+
+// ────────────────────────────────────────────────────────────────
 // Barre de progression globale du chargement des vignettes
 // Pattern identique à PdfThumbnailViewer
 // ────────────────────────────────────────────────────────────────
@@ -142,13 +181,17 @@ PageCard.displayName = 'PageCard';
 //   - LoadingProgress : barre de progression identique
 //   - Grille CSS auto-fill identique
 // ════════════════════════════════════════════════════════════════
-export const PageReorderViewer = ({ fileId, motDePassePdf, onOrderChange, onLoadSuccess }) => {
+export const PageReorderViewer = ({ fileId, motDePassePdf, onOrderChange, onLoadSuccess, onPasswordSubmit }) => {
   const [numPages, setNumPages] = useState(null);
   const [pageOrder, setPageOrder] = useState([]);
   const [thumbSize, setThumbSize] = useState(140);
   const [loadError, setLoadError] = useState(null);
   const [pdfData, setPdfData] = useState(null);
   const [pdfLoading, setPdfLoading] = useState(false);
+
+  const [pdfPassword, setPdfPassword] = useState(motDePassePdf || null);
+  const pdfPasswordRef = useRef(motDePassePdf || null);
+  const [needsPassword, setNeedsPassword] = useState(false);
 
   // Progression du rendu des vignettes (comme PdfThumbnailViewer)
   const [renderedCount, setRenderedCount] = useState(0);
@@ -241,6 +284,8 @@ export const PageReorderViewer = ({ fileId, motDePassePdf, onOrderChange, onLoad
 
   // ── Appelé par react-pdf quand le document est analysé ──
   const handleLoadSuccess = useCallback(({ numPages: n }) => {
+    setNeedsPassword(false);
+    setLoadError(null);
     const ordreInitial = Array.from({ length: n }, (_, i) => i + 1);
     setNumPages(n);
     setPageOrder(ordreInitial);
@@ -251,6 +296,18 @@ export const PageReorderViewer = ({ fileId, motDePassePdf, onOrderChange, onLoad
       if (onLoadSuccess) onLoadSuccess(n);
     }, 0);
   }, [onOrderChange, onLoadSuccess]);
+
+  const handleLoadError = useCallback((error) => {
+    const msg = error?.message || '';
+    if (msg.includes('PasswordException') || error?.name === 'PasswordException') {
+      setNeedsPassword(true);
+    } else {
+      setLoadError(
+        'Ce fichier ne peut pas être prévisualisé car il n\'est pas un PDF valide.\n\n' +
+        'Si votre fichier est bien un PDF mais qu\'il s\'affiche pas, il est peut-être corrompu ou protégé par un mot de passe.'
+      );
+    }
+  }, []);
 
   // ── Handlers HTML5 DnD natifs ──
   const handleDragStart = useCallback((index) => (e) => {
@@ -307,12 +364,23 @@ export const PageReorderViewer = ({ fileId, motDePassePdf, onOrderChange, onLoad
 
   const ordreModifié = numPages != null && pageOrder.some((p, i) => p !== i + 1);
 
+  const handlePasswordSubmit = useCallback((pwd) => {
+    pdfPasswordRef.current = pwd;
+    setPdfPassword(pwd);
+    setNeedsPassword(false);
+    if (onPasswordSubmit) onPasswordSubmit(pwd);
+  }, [onPasswordSubmit]);
+
   // ── États de chargement / erreur ──
+  if (needsPassword) {
+    return <PasswordDialog onSubmit={handlePasswordSubmit} />;
+  }
+
   if (loadError) {
     return (
       <div className="flex flex-col items-center gap-4 py-12 text-center">
         <span className="material-symbols-outlined text-[48px] text-error">error</span>
-        <p className="text-body-md text-on-surface-variant max-w-sm">{loadError}</p>
+        <p className="text-body-md text-on-surface-variant max-w-sm whitespace-pre-line">{loadError}</p>
       </div>
     );
   }
@@ -331,12 +399,12 @@ export const PageReorderViewer = ({ fileId, motDePassePdf, onOrderChange, onLoad
         <Document
           file={pdfData}
           onLoadSuccess={handleLoadSuccess}
-          onLoadError={() => setLoadError("Impossible de lire ce PDF. Vérifiez qu'il n'est pas corrompu.")}
+          onLoadError={handleLoadError}
           onPassword={(callback, reason) => {
-            if (motDePassePdf) {
-              callback(motDePassePdf);
+            if (pdfPasswordRef.current) {
+              callback(pdfPasswordRef.current);
             } else {
-              setLoadError("Ce fichier est protégé par mot de passe. Veuillez utiliser l'outil Déverrouiller d'abord.");
+              setNeedsPassword(true);
             }
           }}
           loading={
