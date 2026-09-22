@@ -26,6 +26,7 @@ import { WatermarkOptions } from './options/WatermarkOptions';
 import { AddImageOptions } from './options/AddImageOptions';
 import { SignOptions } from './options/SignOptions';
 import { ReorderOptions } from './options/ReorderOptions';
+import { ExtractPagesOptions } from './options/ExtractPagesOptions';
 import { ImagesToPdfOptions } from './options/ImagesToPdfOptions';
 
 import { PdfThumbnailViewer } from './viewer/PdfThumbnailViewer';
@@ -45,6 +46,7 @@ const OPTIONS_MAP = {
   rotate: RotateOptions,
   add_blank_pages: AddBlankPagesOptions,
   reorder_pages: ReorderOptions,
+  extract_pages: ExtractPagesOptions,
   pdf_to_images: PdfToImagesOptions,
   extract_images: ExtractImagesOptions,
   watermark: WatermarkOptions,

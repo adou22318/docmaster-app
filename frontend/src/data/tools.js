@@ -163,6 +163,34 @@ export const tools = [
     }
   },
   {
+    id: "extract_pages",
+    nom: "Extraire des pages",
+    description: "Sélectionnez et extrayez des pages spécifiques dans un nouveau PDF.",
+    icone: "file_copy",
+    couleur: "default",
+    categorie: "organisation",
+    typeOperation: "extract_pages",
+    typesAcceptes: {
+      mimes: ['application/pdf'],
+      extensions: ['.pdf'],
+      label: 'PDF uniquement'
+    },
+    populaire: false,
+    route: "/dashboard/tools/extract_pages",
+    accepteMultiple: false,
+    utiliseVisualiseur: true,
+    selectionMode: "multiple",
+    selectionStyle: "blue",
+    howItWorks: {
+      etapes: [
+        { titre: "Importez votre PDF", description: "Chargez le document source." },
+        { titre: "Sélectionnez les pages à garder", description: "Cliquez sur les pages à extraire. Elles seront mises en surbrillance." },
+        { titre: "Extrayez et téléchargez", description: "Obtenez un nouveau PDF contenant uniquement les pages choisies." }
+      ],
+      conseil: "Idéal pour isoler un chapitre ou une section d'un long document sans modifier l'original."
+    }
+  },
+  {
     id: "rotate",
     nom: "Rotation de pages",
     description: "Faites pivoter les pages de vos documents PDF.",

@@ -48,6 +48,10 @@ export const OPERATION_MESSAGES = {
     titre:   'Pages réorganisées',
     message: 'Votre PDF a été reconstruit dans le nouvel ordre.',
   },
+  extract_pages: {
+    titre:   'Extraction réussie',
+    message: 'Les pages sélectionnées ont été extraites dans un nouveau PDF.',
+  },
   pdf_to_images: {
     titre:   'Conversion en images terminée',
     message: 'Vos pages PDF ont été exportées en images.',

@@ -242,6 +242,18 @@ pdfQueue.process(async (job) => {
         );
         break;
 
+      case 'extract_pages':
+        // Extraction de pages = alias sémantique de split en mode 'single'
+        // L'utilisateur sélectionne des pages à conserver → 1 PDF résultat
+        // Identique à split/single mais présenté comme un outil distinct dans l'UI
+        resultat = await splitService(
+          cheminsFichiers[0],
+          options.selection,
+          'single',
+          motDePassePdf
+        );
+        break;
+
       default:
         throw new Error(`TYPE_OPERATION_INCONNU:${type_operation}`);
     }
