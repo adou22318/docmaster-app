@@ -1,4 +1,4 @@
-﻿import { PDFDocument } from 'pdf-lib';
+import { PDFDocument } from 'pdf-lib';
 import { loadPdf } from './loadPdf.js';
 import fs from 'fs';
 import path from 'path';
@@ -33,7 +33,7 @@ export const reorderPagesService = async (chemin, nouvelOrdre, motDePasse = null
   const vus = new Set();
   for (const num of nouvelOrdre) {
     if (!Number.isInteger(num) || num < 1 || num > totalPages) {
-      throw new Error(PAGE_INVALIDE:);
+      throw new Error(`PAGE_INVALIDE:${num}`);
     }
     if (vus.has(num)) {
       throw new Error('ORDRE_INVALIDE');
@@ -56,7 +56,7 @@ export const reorderPagesService = async (chemin, nouvelOrdre, motDePasse = null
   copiedPages.forEach(page => newPdf.addPage(page));
 
   const bytesResultat = await newPdf.save();
-  const nomResultat = ${uuidv4()}.pdf;
+  const nomResultat = `${uuidv4()}.pdf`;
   const cheminResultat = path.join(OUTPUT_DIR, nomResultat);
 
   fs.writeFileSync(cheminResultat, bytesResultat);
