@@ -245,6 +245,33 @@ export const tools = [
     }
   },
   {
+    id: "reorder_pages",
+    nom: "Réorganiser les pages",
+    description: "Modifiez l'ordre des pages de votre PDF par glisser-déposer.",
+    icone: "swap_vert",
+    couleur: "default",
+    categorie: "organisation",
+    typeOperation: "reorder_pages",
+    typesAcceptes: {
+      mimes: ['application/pdf'],
+      extensions: ['.pdf'],
+      label: 'PDF uniquement'
+    },
+    populaire: false,
+    route: "/dashboard/tools/reorder_pages",
+    accepteMultiple: false,
+    utiliseVisualiseur: false,
+    usesReorderViewer: true,
+    howItWorks: {
+      etapes: [
+        { titre: "Importez votre PDF", description: "Chargez le document dont vous souhaitez modifier l'ordre des pages." },
+        { titre: "Glissez-déposez les pages", description: "Déplacez les vignettes dans le visualiseur pour définir le nouvel ordre." },
+        { titre: "Confirmez et téléchargez", description: "Le PDF est reconstruit dans l'ordre que vous avez défini." }
+      ],
+      conseil: "Pratique pour remettre en ordre un document numérisé en désordre ou réorganiser un rapport."
+    }
+  },
+  {
     id: "watermark",
     nom: "Ajouter un filigrane",
     description: "Apposez un texte en filigrane sur les pages de votre PDF.",

@@ -7,7 +7,7 @@ import {
 const OPERATIONS_VALIDES = [
   'compress', 'merge', 'split', 'rotate',
   'protect', 'unprotect', 'watermark', 'sign',
-  'remove_pages', 'add_blank_pages',
+  'remove_pages', 'add_blank_pages', 'reorder_pages',
   'extract_images', 'add_image',
   'convert_to_pdf', 'pdf_to_images', 'pdf_to_txt',
   'clean_metadata', 'convert_images_to_pdf'

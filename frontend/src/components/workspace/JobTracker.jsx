@@ -39,6 +39,9 @@ const MESSAGES_ERREUR = {
   ABONNEMENT_REQUIS: "Cette fonctionnalité nécessite un abonnement actif. Consultez la page Tarifs.",
   ABONNEMENT_DEJA_ACTIF: "Vous avez déjà un abonnement Pro actif.",
   PAYDUNYA_ERREUR: "Une erreur est survenue lors de l'initiation du paiement. Réessayez dans quelques instants.",
+  // Réorganisation de pages
+  ORDRE_IDENTIQUE: "L'ordre des pages n'a pas été modifié. Déplacez au moins une page dans le visualiseur avant de valider.",
+  ORDRE_INVALIDE: "L'ordre de pages transmis est invalide. Veuillez réessayer en vérifiant votre sélection.",
 };
 
 // Parseur pour les erreurs avec payload dynamique

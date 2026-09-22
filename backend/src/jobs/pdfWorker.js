@@ -18,6 +18,7 @@ import { pdfToTxtService } from '../services/pdf/pdfToTxt.js';
 import { signService } from '../services/pdf/sign.js';
 import { cleanMetadataService } from '../services/pdf/cleanMetadata.js';
 import { imagesToPdfService } from '../services/pdf/imagesToPdf.js';
+import { reorderPagesService } from '../services/pdf/reorderPages.js';
 import { dechiffrerAvecQpdf, nettoyerFichierTemp } from '../services/pdf/dechiffrer.js';
 
 pdfQueue.process(async (job) => {
@@ -228,6 +229,16 @@ pdfQueue.process(async (job) => {
         resultat = await imagesToPdfService(
           cheminsFichiers,
           options
+        );
+        break;
+
+      case 'reorder_pages':
+        // Réorganisation des pages par l'utilisateur (D&D dans PageReorderViewer)
+        // options.nouvelOrdre : tableau 1-indexed de la nouvelle séquence
+        resultat = await reorderPagesService(
+          cheminsFichiers[0],
+          options.nouvelOrdre,
+          motDePassePdf
         );
         break;
 

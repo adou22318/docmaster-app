@@ -44,6 +44,10 @@ export const OPERATION_MESSAGES = {
     titre:   'Pages vierges insérées',
     message: 'Les pages vierges ont été ajoutées à votre document.',
   },
+  reorder_pages: {
+    titre:   'Pages réorganisées',
+    message: 'Votre PDF a été reconstruit dans le nouvel ordre.',
+  },
   pdf_to_images: {
     titre:   'Conversion en images terminée',
     message: 'Vos pages PDF ont été exportées en images.',

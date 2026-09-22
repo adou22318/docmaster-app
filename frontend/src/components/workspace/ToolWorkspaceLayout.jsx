@@ -25,11 +25,13 @@ import { ExtractImagesOptions } from './options/ExtractImagesOptions';
 import { WatermarkOptions } from './options/WatermarkOptions';
 import { AddImageOptions } from './options/AddImageOptions';
 import { SignOptions } from './options/SignOptions';
+import { ReorderOptions } from './options/ReorderOptions';
 import { ImagesToPdfOptions } from './options/ImagesToPdfOptions';
 
 import { PdfThumbnailViewer } from './viewer/PdfThumbnailViewer';
 import { PdfSignatureViewer } from './viewer/PdfSignatureViewer';
 import { PdfImageViewer } from './viewer/PdfImageViewer';
+import { PageReorderViewer } from './viewer/PageReorderViewer';
 import { SignatureDisclaimer, isDisclaimerAccepted } from './SignatureDisclaimer';
 
 const OPTIONS_MAP = {
@@ -42,6 +44,7 @@ const OPTIONS_MAP = {
   remove_pages: RemovePagesOptions,
   rotate: RotateOptions,
   add_blank_pages: AddBlankPagesOptions,
+  reorder_pages: ReorderOptions,
   pdf_to_images: PdfToImagesOptions,
   extract_images: ExtractImagesOptions,
   watermark: WatermarkOptions,
@@ -134,6 +137,9 @@ export const ToolWorkspaceLayout = ({ tool, step, setStep, onReset, onBack }) =>
   
   // État local pour le statut "non protégé" (BUG-01)
   const [pdfNonProtege, setPdfNonProtege] = useState(false);
+
+  // État local pour la réorganisation de pages (reorder_pages)
+  const [pageOrder, setPageOrder] = useState([]);
 
   const [isStarting, setIsStarting] = useState(false);
 
@@ -473,6 +479,26 @@ export const ToolWorkspaceLayout = ({ tool, step, setStep, onReset, onBack }) =>
                     onChangeFile={handleReset}
                   />
                 </div>
+              ) : tool.usesReorderViewer ? (
+                <div className="space-y-6">
+                  <div>
+                    <h1 className="font-display-xl text-headline-md text-on-surface mb-1">{tool.nom}</h1>
+                    <p className="text-body-md text-on-surface-variant">{tool.description}</p>
+                  </div>
+                  <button onClick={handleReset} className="flex items-center gap-2 text-label-sm text-on-surface-variant hover:text-error transition-colors">
+                    <span className="material-symbols-outlined text-[16px]">swap_horiz</span>
+                    Changer de fichier
+                  </button>
+                  <ErrorBanner error={startError} onUnlock={handleUnlockRedirect} />
+                  <div className="bg-surface border border-outline-variant rounded-2xl overflow-hidden p-4 shadow-sm">
+                    <PageReorderViewer
+                      fileId={currentFile?.fileId}
+                      motDePassePdf={currentFile?.motDePassePdf}
+                      onOrderChange={setPageOrder}
+                      onLoadSuccess={setTotalPages}
+                    />
+                  </div>
+                </div>
               ) : tool.utiliseVisualiseur ? (
                 <div className="space-y-6">
                   <div>
@@ -579,6 +605,8 @@ export const ToolWorkspaceLayout = ({ tool, step, setStep, onReset, onBack }) =>
               onSignatureValide={setSignatureValidee}
               fichierNonProtege={pdfNonProtege}
               onReset={handleReset}
+              // Props pour ReorderOptions
+              pageOrder={pageOrder}
             />
           </div>
         )}
@@ -603,6 +631,8 @@ export const ToolWorkspaceLayout = ({ tool, step, setStep, onReset, onBack }) =>
             onSignatureValide={setSignatureValidee}
             fichierNonProtege={pdfNonProtege}
             onReset={handleReset}
+            // Props pour ReorderOptions
+            pageOrder={pageOrder}
           />
         )}
       </div>
