@@ -192,6 +192,7 @@ export const PageReorderViewer = ({ fileId, motDePassePdf, onOrderChange, onLoad
   const [pdfPassword, setPdfPassword] = useState(motDePassePdf || null);
   const pdfPasswordRef = useRef(motDePassePdf || null);
   const [needsPassword, setNeedsPassword] = useState(false);
+  const originalBufferRef = useRef(null);
 
   // Progression du rendu des vignettes (comme PdfThumbnailViewer)
   const [renderedCount, setRenderedCount] = useState(0);
@@ -221,7 +222,8 @@ export const PageReorderViewer = ({ fileId, motDePassePdf, onOrderChange, onLoad
     axiosClient.get(`/files/download/${fileId}`, { responseType: 'arraybuffer' })
       .then((response) => {
         if (!cancelled) {
-          setPdfData({ data: response.data });
+          originalBufferRef.current = response.data;
+          setPdfData({ data: response.data.slice(0) });
           setPdfLoading(false);
         }
       })
@@ -368,7 +370,9 @@ export const PageReorderViewer = ({ fileId, motDePassePdf, onOrderChange, onLoad
     pdfPasswordRef.current = pwd;
     setPdfPassword(pwd);
     setNeedsPassword(false);
-    setPdfData(prev => prev ? { data: prev.data } : null); // Force react-pdf à recharger
+    if (originalBufferRef.current) {
+      setPdfData({ data: originalBufferRef.current.slice(0) }); // Clone du buffer pour éviter ArrayBuffer detached
+    }
     if (onPasswordSubmit) onPasswordSubmit(pwd);
   }, [onPasswordSubmit]);
 

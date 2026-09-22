@@ -308,6 +308,7 @@ export const PdfThumbnailViewer = ({
   const [pdfPassword, setPdfPassword] = useState(motDePassePdf || null);
   const pdfPasswordRef = React.useRef(motDePassePdf || null);
   const [needsPassword, setNeedsPassword] = useState(false);
+  const originalBufferRef = useRef(null);
   const [loadError, setLoadError] = useState(null);
   const [thumbSize, setThumbSize] = useState(160);
   const [renderedCount, setRenderedCount] = useState(0);
@@ -348,7 +349,8 @@ export const PdfThumbnailViewer = ({
     axiosClient.get(`/files/download/${fileId}`, { responseType: 'arraybuffer' })
       .then((response) => {
         if (!cancelled) {
-          setPdfData({ data: response.data });
+          originalBufferRef.current = response.data;
+          setPdfData({ data: response.data.slice(0) });
           setPdfLoading(false);
         }
       })
@@ -505,7 +507,9 @@ export const PdfThumbnailViewer = ({
     pdfPasswordRef.current = pwd;
     setPdfPassword(pwd);
     setNeedsPassword(false);
-    setPdfData(prev => prev ? { data: prev.data } : null); // Force react-pdf à recharger
+    if (originalBufferRef.current) {
+      setPdfData({ data: originalBufferRef.current.slice(0) }); // Clone du buffer pour éviter ArrayBuffer detached
+    }
     if (onPasswordSubmit) onPasswordSubmit(pwd);
   }, [onPasswordSubmit]);
 
