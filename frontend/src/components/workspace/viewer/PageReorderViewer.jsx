@@ -27,7 +27,6 @@ const PageCard = ({
   positionActuelle,
   totalPages,
   thumbWidth,
-  pdfData,
   isDragging,
 }) => {
   const [isRendered, setIsRendered] = useState(false);
@@ -51,15 +50,13 @@ const PageCard = ({
       >
         {!isRendered && <ThumbnailSkeleton width={thumbWidth} />}
         <div className={isRendered ? 'block' : 'hidden'}>
-          <Document file={pdfData} loading={null}>
-            <Page
-              pageNumber={pageNumOriginal}
-              width={thumbWidth}
-              renderTextLayer={false}
-              renderAnnotationLayer={false}
-              onRenderSuccess={() => setIsRendered(true)}
-            />
-          </Document>
+          <Page
+            pageNumber={pageNumOriginal}
+            width={thumbWidth}
+            renderTextLayer={false}
+            renderAnnotationLayer={false}
+            onRenderSuccess={() => setIsRendered(true)}
+          />
         </div>
 
         {/* Handle grip */}
@@ -271,7 +268,6 @@ export const PageReorderViewer = ({ fileId, motDePassePdf, onOrderChange, onLoad
                           positionActuelle={index + 1}
                           totalPages={numPages}
                           thumbWidth={thumbSize}
-                          pdfData={pdfData}
                           isDragging={snapshot.isDragging}
                         />
                       </div>
