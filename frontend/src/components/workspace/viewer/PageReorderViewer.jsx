@@ -1,4 +1,4 @@
-﻿import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import axiosClient from '../../../services/api/axiosClient';
@@ -27,7 +27,7 @@ const PageCard = ({
   positionActuelle,
   totalPages,
   thumbWidth,
-  pdfUrl,
+  pdfData,
   isDragging,
 }) => {
   const [isRendered, setIsRendered] = useState(false);
@@ -51,7 +51,7 @@ const PageCard = ({
       >
         {!isRendered && <ThumbnailSkeleton width={thumbWidth} />}
         <div className={isRendered ? 'block' : 'hidden'}>
-          <Document file={pdfUrl} loading={null}>
+          <Document file={pdfData} loading={null}>
             <Page
               pageNumber={pageNumOriginal}
               width={thumbWidth}
@@ -101,9 +101,35 @@ export const PageReorderViewer = ({ fileId, motDePassePdf, onOrderChange, onLoad
   const [thumbSize, setThumbSize] = useState(140);
   const [loadError, setLoadError] = useState(null);
 
-  const pdfUrl = fileId
-    ? { url: `${axiosClient.defaults.baseURL}/files/download/${fileId}`, httpHeaders: {} }
-    : null;
+  const [pdfData, setPdfData] = useState(null);
+  const [pdfLoading, setPdfLoading] = useState(false);
+
+  useEffect(() => {
+    if (!fileId) return;
+    let cancelled = false;
+    setPdfLoading(true);
+    setPdfData(null);
+    setLoadError(null);
+    setNumPages(null);
+
+    axiosClient.get(`/files/download/${fileId}`, { responseType: 'arraybuffer' })
+      .then((response) => {
+        if (!cancelled) {
+          setPdfData({ data: response.data });
+          setPdfLoading(false);
+        }
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setPdfLoading(false);
+          setLoadError(err.response?.status === 404
+            ? 'Fichier introuvable ou expiré.'
+            : 'Impossible de charger le fichier.');
+        }
+      });
+
+    return () => { cancelled = true; };
+  }, [fileId]);
 
   // Charge le PDF et initialise l ordre
   const handleLoadSuccess = useCallback(({ numPages: n }) => {
@@ -208,7 +234,7 @@ export const PageReorderViewer = ({ fileId, motDePassePdf, onOrderChange, onLoad
 
       {/* Grille D&D */}
       <Document
-        file={pdfUrl}
+        file={pdfData}
         onLoadSuccess={handleLoadSuccess}
         onLoadError={() => setLoadError(true)}
         loading={
@@ -245,7 +271,7 @@ export const PageReorderViewer = ({ fileId, motDePassePdf, onOrderChange, onLoad
                           positionActuelle={index + 1}
                           totalPages={numPages}
                           thumbWidth={thumbSize}
-                          pdfUrl={pdfUrl}
+                          pdfData={pdfData}
                           isDragging={snapshot.isDragging}
                         />
                       </div>
