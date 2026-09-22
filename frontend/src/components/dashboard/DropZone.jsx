@@ -1,4 +1,4 @@
-﻿import React, { useState, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import axiosClient from '../../services/api/axiosClient';
 import { useFileStore } from '../../store/useFileStore';
@@ -21,18 +21,18 @@ export const DropZone = ({ toolId, onPdfNonProtege }) => {
   const [isCancelling, setIsCancelling] = useState(false);
   const [modalePdfProtege, setModalePdfProtege] = useState(false);
   const [fichierEnAttente, setFichierEnAttente] = useState(null);
-  // Erreur de format spÃ©cifique Ã  la validation locale (avant upload)
+  // Erreur de format spécifique à la validation locale (avant upload)
   const [formatError, setFormatError] = useState(null);
   const fileInputRef = useRef(null);
   const { ref: scrollRef, inView } = useScrollAnimation(0.1);
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Traiter un fichier prÃ©chargÃ© (ex: depuis la modale PDF protÃ©gÃ©)
+  // Traiter un fichier préchargé (ex: depuis la modale PDF protégé)
   React.useEffect(() => {
     if (location.state?.preloadedFile) {
       processFile(location.state.preloadedFile);
-      // Nettoyer l'Ã©tat pour ne pas re-traiter au retour
+      // Nettoyer l'état pour ne pas re-traiter au retour
       window.history.replaceState({}, document.title);
     }
   }, [location.state?.preloadedFile]);
@@ -58,10 +58,10 @@ export const DropZone = ({ toolId, onPdfNonProtege }) => {
       const result = await cancelCurrentFile();
       if (result.success) {
         setShowCancelConfirm(false);
-        toast.info(`Import de Â«Â ${nomFichier}Â Â» annulÃ©.`);
+        toast.info(`Import de « ${nomFichier} » annulé.`);
       } else {
-        // Erreur serveur mais on vide quand mÃªme l'UI pour ne pas bloquer l'utilisateur
-        toast.error(result.error || "L'annulation a Ã©chouÃ© cÃ´tÃ© serveur, mais le fichier a Ã©tÃ© retirÃ© localement.");
+        // Erreur serveur mais on vide quand même l'UI pour ne pas bloquer l'utilisateur
+        toast.error(result.error || "L'annulation a échoué côté serveur, mais le fichier a été retiré localement.");
         setShowCancelConfirm(false);
       }
     } finally {
@@ -95,21 +95,21 @@ export const DropZone = ({ toolId, onPdfNonProtege }) => {
         // Message contextuel selon le type d'outil
         let message;
         if (currentTool.id === 'convert_to_pdf') {
-          message = `Le fichier "${file.name}" ne peut pas Ãªtre converti ici.\n\nSeuls les formats Office sont acceptÃ©s : Word (.docx), Excel (.xlsx) et PowerPoint (.pptx).`;
+          message = `Le fichier "${file.name}" ne peut pas être converti ici.\n\nSeuls les formats Office sont acceptés : Word (.docx), Excel (.xlsx) et PowerPoint (.pptx).`;
         } else if (currentTool.id === 'convert_images_to_pdf') {
-          message = `Le fichier "${file.name}" n'est pas une image.\n\nFormats acceptÃ©s : JPG, PNG, BMP, GIF, TIFF.`;
+          message = `Le fichier "${file.name}" n'est pas une image.\n\nFormats acceptés : JPG, PNG, BMP, GIF, TIFF.`;
         } else {
           // Tous les autres outils attendent un PDF
-          message = `Le fichier "${file.name}" n'est pas acceptÃ© par cet outil.\n\nFormat requis : PDF uniquement.\n\nSi votre document est au format Word, Excel ou PowerPoint, convertissez-le d'abord en PDF.`;
+          message = `Le fichier "${file.name}" n'est pas accepté par cet outil.\n\nFormat requis : PDF uniquement.\n\nSi votre document est au format Word, Excel ou PowerPoint, convertissez-le d'abord en PDF.`;
         }
-        // Erreur de FORMAT : utiliser le state local dÃ©diÃ© (affichÃ© via FileFormatError)
+        // Erreur de FORMAT : utiliser le state local dédié (affiché via FileFormatError)
         setFormatError(message);
         return false;
       }
     } else {
-      // Outil sans typesAcceptes dÃ©fini : validation sur la liste globale
+      // Outil sans typesAcceptes défini : validation sur la liste globale
       if (!ALLOWED_EXTENSIONS.includes(fileExt)) {
-        setFormatError(`Le fichier "${file.name}" n'est pas dans un format supportÃ©.\n\nFormats acceptÃ©s : PDF, JPG, PNG, DOCX, XLSX, PPTX, TIFF.`);
+        setFormatError(`Le fichier "${file.name}" n'est pas dans un format supporté.\n\nFormats acceptés : PDF, JPG, PNG, DOCX, XLSX, PPTX, TIFF.`);
         return false;
       }
     }
@@ -123,7 +123,7 @@ export const DropZone = ({ toolId, onPdfNonProtege }) => {
   };
 
   const processFile = async (file, motDePasse = null) => {
-    // RÃ©initialiser les erreurs prÃ©cÃ©dentes
+    // Réinitialiser les erreurs précédentes
     setFormatError(null);
     if (!validateFile(file)) return;
 
@@ -135,7 +135,7 @@ export const DropZone = ({ toolId, onPdfNonProtege }) => {
           if (onPdfNonProtege) {
             onPdfNonProtege(file);
           } else {
-            setUploadError("Ce PDF n'est pas protÃ©gÃ©. Aucun dÃ©verrouillage n'est nÃ©cessaire.");
+            setUploadError("Ce PDF n'est pas protégé. Aucun déverrouillage n'est nécessaire.");
           }
           return;
         }
@@ -154,7 +154,7 @@ export const DropZone = ({ toolId, onPdfNonProtege }) => {
     const formData = new FormData();
     formData.append('file', file);
 
-    // Construire l'URL avec toolId en query param â€” le fileFilter de Multer
+    // Construire l'URL avec toolId en query param — le fileFilter de Multer
     // lit req.query.tool car req.body n'est pas dispo au moment du fileFilter
     const uploadUrl = toolId ? `/files/upload?tool=${encodeURIComponent(toolId)}` : '/files/upload';
 
@@ -171,7 +171,7 @@ export const DropZone = ({ toolId, onPdfNonProtege }) => {
 
       if (response.data.success) {
         const fileData = response.data.data;
-        // Backend RETURNING id_files (pas "id") â€” voir createFileService
+        // Backend RETURNING id_files (pas "id") — voir createFileService
         const resolvedId =
           fileData?.file?.id_files ||
           fileData?.file?.id ||
@@ -179,7 +179,7 @@ export const DropZone = ({ toolId, onPdfNonProtege }) => {
           fileData?.id;
 
         if (!resolvedId) {
-          setUploadError("Upload rÃ©ussi mais identifiant fichier manquant. RÃ©essayez.");
+          setUploadError("Upload réussi mais identifiant fichier manquant. Réessayez.");
           return;
         }
 
@@ -195,7 +195,7 @@ export const DropZone = ({ toolId, onPdfNonProtege }) => {
       if (serverMsg) {
         setUploadError(serverMsg);
       } else {
-        setUploadError("Erreur rÃ©seau lors de l'upload. VÃ©rifiez votre connexion et rÃ©essayez.");
+        setUploadError("Erreur réseau lors de l'upload. Vérifiez votre connexion et réessayez.");
       }
     }
   };
@@ -226,7 +226,7 @@ export const DropZone = ({ toolId, onPdfNonProtege }) => {
 
 
 
-  // DÃ©termine les outils compatibles avec le type de fichier uploadÃ©
+  // Détermine les outils compatibles avec le type de fichier uploadé
   const getSuggestedTools = () => {
     if (!currentFile) return tools.filter(t => t.populaire).slice(0, 4);
     
@@ -247,7 +247,7 @@ export const DropZone = ({ toolId, onPdfNonProtege }) => {
 
   return (
     <section ref={scrollRef} className={`relative group animate-fade-up ${inView ? 'visible' : ''}`}>
-      {/* Erreur de FORMAT : banniÃ¨re inline identique au PDF protÃ©gÃ© */}
+      {/* Erreur de FORMAT : bannière inline identique au PDF protégé */}
       {formatError && uploadStatus !== 'uploading' && uploadStatus !== 'done' && (
         <div className="mb-4">
           <FileFormatError
@@ -258,8 +258,8 @@ export const DropZone = ({ toolId, onPdfNonProtege }) => {
         </div>
       )}
 
-      {/* Erreurs non-format (rÃ©seau, taille, etc.) */}
-      {uploadError && uploadStatus === 'error' && uploadError !== "Ce PDF n'est pas protÃ©gÃ©. Aucun dÃ©verrouillage n'est nÃ©cessaire." && (
+      {/* Erreurs non-format (réseau, taille, etc.) */}
+      {uploadError && uploadStatus === 'error' && uploadError !== "Ce PDF n'est pas protégé. Aucun déverrouillage n'est nécessaire." && (
         <ErrorBanner 
           message={uploadError} 
           onDismiss={() => setUploadError(null)} 
@@ -280,7 +280,7 @@ export const DropZone = ({ toolId, onPdfNonProtege }) => {
       >
         <div className="absolute inset-0 dropzone-pattern opacity-5 pointer-events-none"></div>
         
-        {/* Ã‰TAT IDLE */}
+        {/* ÉTAT IDLE */}
         {uploadStatus === 'idle' && (
           <div className="z-10 flex flex-col items-center pointer-events-none">
             <div className="mb-8 p-6 bg-secondary-container/10 rounded-full text-secondary scale-125 transition-transform group-hover:scale-150 duration-700">
@@ -288,7 +288,7 @@ export const DropZone = ({ toolId, onPdfNonProtege }) => {
             </div>
             <h3 className="font-display-xl text-headline-md text-primary mb-4">Glissez vos plans et dossiers techniques</h3>
             <p className="text-body-md text-on-surface-variant max-w-md mb-8">
-              {currentTool?.typesAcceptes ? `Formats acceptÃ©s : ${currentTool.typesAcceptes.label}.` : "Format PDF, JPG, PNG, DOCX, XLSX, PPTX, TIFF."} Jusqu'Ã  50 Mo par fichier.
+              {currentTool?.typesAcceptes ? `Formats acceptés : ${currentTool.typesAcceptes.label}.` : "Format PDF, JPG, PNG, DOCX, XLSX, PPTX, TIFF."} Jusqu'à 50 Mo par fichier.
             </p>
             <div className="flex gap-4 pointer-events-auto">
               <button 
@@ -304,7 +304,7 @@ export const DropZone = ({ toolId, onPdfNonProtege }) => {
           </div>
         )}
 
-        {/* Ã‰TAT ERROR */}
+        {/* ÉTAT ERROR */}
         {uploadStatus === 'error' && (
           <div className="z-10 flex flex-col items-center pointer-events-none">
             <div className="mb-8 p-6 bg-secondary-container/10 rounded-full text-secondary scale-125 transition-transform group-hover:scale-150 duration-700">
@@ -312,7 +312,7 @@ export const DropZone = ({ toolId, onPdfNonProtege }) => {
             </div>
             <h3 className="font-display-xl text-headline-md text-primary mb-4">Glissez vos plans et dossiers techniques</h3>
             <p className="text-body-md text-on-surface-variant max-w-md mb-8">
-              {currentTool?.typesAcceptes ? `Formats acceptÃ©s : ${currentTool.typesAcceptes.label}.` : "Format PDF, JPG, PNG, DOCX, XLSX, PPTX, TIFF."} Jusqu'Ã  50 Mo par fichier.
+              {currentTool?.typesAcceptes ? `Formats acceptés : ${currentTool.typesAcceptes.label}.` : "Format PDF, JPG, PNG, DOCX, XLSX, PPTX, TIFF."} Jusqu'à 50 Mo par fichier.
             </p>
             <div className="flex gap-4 pointer-events-auto">
               <button 
@@ -322,7 +322,7 @@ export const DropZone = ({ toolId, onPdfNonProtege }) => {
                   handleClick();
                 }}
               >
-                RÃ©essayer l'import
+                Réessayer l'import
               </button>
               <button 
                 className="px-8 py-4 border-2 border-outline text-primary font-label-bold rounded-lg hover:border-secondary hover:text-secondary transition-all active:scale-95 disabled:opacity-50"
@@ -338,14 +338,14 @@ export const DropZone = ({ toolId, onPdfNonProtege }) => {
           </div>
         )}
 
-        {/* Ã‰TAT UPLOADING */}
+        {/* ÉTAT UPLOADING */}
         {uploadStatus === 'uploading' && (
           <div className="z-10 flex flex-col items-center w-full max-w-md">
             <div className="mb-6 p-4 bg-secondary-container/20 rounded-full text-secondary animate-pulse">
               <span className="material-symbols-outlined text-4xl animate-bounce">upload</span>
             </div>
-            <h3 className="font-headline-md text-title-lg text-primary mb-2">TÃ©lÃ©chargement en cours...</h3>
-            <p className="text-body-sm text-on-surface-variant mb-6">{uploadProgress}% complÃ©tÃ©</p>
+            <h3 className="font-headline-md text-title-lg text-primary mb-2">Téléchargement en cours...</h3>
+            <p className="text-body-sm text-on-surface-variant mb-6">{uploadProgress}% complété</p>
             <div className="w-full bg-surface-container-high rounded-full h-2 mb-2 overflow-hidden">
               <div 
                 className="bg-secondary h-2 rounded-full transition-all duration-300"
@@ -355,12 +355,12 @@ export const DropZone = ({ toolId, onPdfNonProtege }) => {
           </div>
         )}
 
-        {/* Ã‰TAT DONE â€” AperÃ§u + Choix d'outil */}
+        {/* ÉTAT DONE — Aperçu + Choix d'outil */}
         {uploadStatus === 'done' && currentFile && (
           <div className="z-10 flex flex-col items-center w-full max-w-3xl pointer-events-auto" onClick={(e) => e.stopPropagation()}>
-            {/* AperÃ§u du fichier */}
+            {/* Aperçu du fichier */}
             <div className="flex items-center gap-4 bg-surface-container-low rounded-xl p-4 w-full mb-6 border border-outline-variant">
-              <div className="p-3 bg-green-500/15 text-green-600 dark:text-green-400 rounded-lg shrink-0">
+              <div className="p-3 bg-green-100 text-green-600 rounded-lg shrink-0">
                 <span className="material-symbols-outlined">check_circle</span>
               </div>
               <div className="text-left flex-grow min-w-0">
@@ -415,7 +415,7 @@ export const DropZone = ({ toolId, onPdfNonProtege }) => {
         />
       </div>
 
-      {/* MODALE POUR PDF PROTÃ‰GÃ‰ */}
+      {/* MODALE POUR PDF PROTÉGÉ */}
       {modalePdfProtege && (
         <ModalePdfProtege
           fichier={fichierEnAttente}
@@ -434,18 +434,18 @@ export const DropZone = ({ toolId, onPdfNonProtege }) => {
         />
       )}
 
-      {/* MODALE D'ERREUR SPÃ‰CIFIQUE (ex: unprotect sur fichier non protÃ©gÃ©) */}
-      {uploadError === "Ce PDF n'est pas protÃ©gÃ©. Aucun dÃ©verrouillage n'est nÃ©cessaire." && (
+      {/* MODALE D'ERREUR SPÉCIFIQUE (ex: unprotect sur fichier non protégé) */}
+      {uploadError === "Ce PDF n'est pas protégé. Aucun déverrouillage n'est nécessaire." && (
         <>
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 animate-fade" onClick={() => setUploadError(null)} />
           <div className="fixed inset-0 flex items-center justify-center p-4 z-50 animate-scale pointer-events-none">
             <div className="bg-surface rounded-2xl shadow-xl max-w-sm w-full p-6 text-center pointer-events-auto">
-              <div className="w-16 h-16 bg-primary/10 text-primary rounded-full flex items-center justify-center mx-auto mb-4">
+              <div className="w-16 h-16 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="material-symbols-outlined text-3xl">info</span>
               </div>
-              <h3 className="font-display-xl text-title-md text-on-surface mb-2">Fichier non protÃ©gÃ©</h3>
+              <h3 className="font-display-xl text-title-md text-on-surface mb-2">Fichier non protégé</h3>
               <p className="text-body-md text-on-surface-variant mb-6">
-                Ce PDF n'a pas de mot de passe. Aucun dÃ©verrouillage n'est nÃ©cessaire.
+                Ce PDF n'a pas de mot de passe. Aucun déverrouillage n'est nécessaire.
               </p>
               <button 
                 onClick={() => setUploadError(null)}
@@ -469,7 +469,7 @@ export const DropZone = ({ toolId, onPdfNonProtege }) => {
             <div className="bg-surface rounded-2xl shadow-xl max-w-md w-full p-6">
               <h3 className="font-display-xl text-title-lg text-on-surface mb-2">Annuler l'importation</h3>
               <p className="text-body-md text-on-surface-variant mb-6">
-                Voulez-vous vraiment annuler ? Le fichier sÃ©lectionnÃ© sera retirÃ© de l'atelier de travail.
+                Voulez-vous vraiment annuler ? Le fichier sélectionné sera retiré de l'atelier de travail.
               </p>
               <div className="flex justify-end gap-3">
                 <button 
@@ -495,4 +495,3 @@ export const DropZone = ({ toolId, onPdfNonProtege }) => {
     </section>
   );
 };
-
