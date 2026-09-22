@@ -21,7 +21,19 @@ export const reorderPagesService = async (chemin, nouvelOrdre, motDePasse = null
   }
 
   const pdfBytes = fs.readFileSync(chemin);
-  const pdfDoc = await loadPdf(pdfBytes, motDePasse);
+
+  let pdfDoc;
+  try {
+    pdfDoc = await loadPdf(pdfBytes, motDePasse);
+  } catch (err) {
+    const msg = (err?.message || '').toLowerCase();
+    if (msg.includes('password') || msg.includes('encrypt') || msg.includes('ignoreencryption')) {
+      throw new Error('MOT_DE_PASSE_INCORRECT');
+    }
+    throw new Error('FICHIER_CORROMPU');
+  }
+
+  if (!pdfDoc) throw new Error('FICHIER_CORROMPU');
   const totalPages = pdfDoc.getPageCount();
 
   // Vérification de la longueur
