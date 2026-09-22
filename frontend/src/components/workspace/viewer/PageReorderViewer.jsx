@@ -368,6 +368,7 @@ export const PageReorderViewer = ({ fileId, motDePassePdf, onOrderChange, onLoad
     pdfPasswordRef.current = pwd;
     setPdfPassword(pwd);
     setNeedsPassword(false);
+    setPdfData(prev => prev ? { data: prev.data } : null); // Force react-pdf à recharger
     if (onPasswordSubmit) onPasswordSubmit(pwd);
   }, [onPasswordSubmit]);
 

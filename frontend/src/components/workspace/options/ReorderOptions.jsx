@@ -1,8 +1,8 @@
-﻿import React from 'react';
+import React from 'react';
 
 /**
- * ReorderOptions — Panneau lateral pour la Reorganisation de pages
- * Recoit pageOrder (etat actuel de l ordre) depuis ToolWorkspaceLayout
+ * ReorderOptions — Panneau latéral pour la Réorganisation de pages
+ * Reçoit pageOrder (état actuel de l'ordre) depuis ToolWorkspaceLayout
  * et appelle onStart avec { nouvelOrdre: pageOrder }
  */
 export const ReorderOptions = ({ onStart, isProcessing, pageOrder = [], totalPages = 0 }) => {
@@ -18,35 +18,35 @@ export const ReorderOptions = ({ onStart, isProcessing, pageOrder = [], totalPag
     <div className="flex flex-col h-full">
       <div className="flex-1 p-6 space-y-6">
         <div>
-          <h3 className="font-display-xl text-title-md text-on-surface mb-1">Reorganiser les pages</h3>
+          <h3 className="font-display-xl text-title-md text-on-surface mb-1">Réorganiser les pages</h3>
           <p className="text-body-sm text-on-surface-variant">
-            Glissez-deposez les vignettes dans le visualiseur pour definir le nouvel ordre, puis confirmez.
+            Glissez-déposez les vignettes dans le visualiseur pour définir le nouvel ordre, puis confirmez.
           </p>
         </div>
 
-        {/* Indicateur etat de l ordre */}
+        {/* Indicateur état de l'ordre */}
         <div className="p-4 bg-surface-container rounded-xl space-y-2">
-          <p className="text-label-sm text-on-surface-variant uppercase tracking-wide">Etat de l&apos;ordre</p>
+          <p className="text-label-sm text-on-surface-variant uppercase tracking-wide">État de l&apos;ordre</p>
           {pageOrder.length === 0 ? (
             <p className="text-body-sm text-on-surface-variant italic">En attente du chargement du document…</p>
           ) : ordreModifie ? (
             <div className="flex items-center gap-2">
               <span className="material-symbols-outlined text-[18px] text-amber-500">swap_vert</span>
               <p className="text-body-md font-label-bold text-on-surface">
-                Ordre modifie
+                Ordre modifié
               </p>
             </div>
           ) : (
             <div className="flex items-center gap-2">
               <span className="material-symbols-outlined text-[18px] text-on-surface-variant">check_circle</span>
               <p className="text-body-sm text-on-surface-variant italic">
-                Ordre d&apos;origine — deplacez au moins une page
+                Ordre d&apos;origine — déplacez au moins une page
               </p>
             </div>
           )}
         </div>
 
-        {/* Apercu du nouvel ordre (si modifie) */}
+        {/* Aperçu du nouvel ordre (si modifié) */}
         {ordreModifie && (
           <div className="p-4 bg-surface-container rounded-xl space-y-2">
             <p className="text-label-sm text-on-surface-variant uppercase tracking-wide">Nouvel ordre</p>
@@ -79,11 +79,11 @@ export const ReorderOptions = ({ onStart, isProcessing, pageOrder = [], totalPag
         </div>
       </div>
 
-      {/* Bouton d action */}
+      {/* Bouton d'action */}
       <div className="p-6 border-t border-outline-variant">
         {!ordreModifie && pageOrder.length > 0 && (
           <p className="text-label-sm text-on-surface-variant text-center mb-3">
-            Deplacez au moins une page dans le visualiseur pour continuer.
+            Déplacez au moins une page dans le visualiseur pour continuer.
           </p>
         )}
         <button
@@ -94,12 +94,12 @@ export const ReorderOptions = ({ onStart, isProcessing, pageOrder = [], totalPag
           {isProcessing ? (
             <>
               <span className="material-symbols-outlined text-[20px] animate-spin">progress_activity</span>
-              Reorganisation en cours…
+              Réorganisation en cours…
             </>
           ) : (
             <>
               <span className="material-symbols-outlined text-[20px]">swap_vert</span>
-              Reorganiser le PDF
+              Réorganiser le PDF
             </>
           )}
         </button>
