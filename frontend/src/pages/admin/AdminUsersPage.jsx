@@ -1,14 +1,21 @@
 import React, { useEffect, useState, useRef } from 'react';
 import axiosClient from '../../services/api/axiosClient';
+import { useToast } from '../../context/ToastContext';
 
 // ─── Modale de confirmation ───────────────────────────────────
 const ConfirmModal = ({ user, onConfirm, onCancel }) => {
   const willDeactivate = user?.compte_actif;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-on-surface/40 backdrop-blur-sm" onClick={onCancel} />
-      <div className="relative bg-surface border border-outline-variant rounded-2xl shadow-lg p-6 max-w-sm w-full animate-scale visible">
-        <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 ${willDeactivate ? 'bg-error/10' : 'bg-secondary-container'}`}>
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+      {/* Fond opaque — pas de backdrop-blur qui laisse voir à travers */}
+      <div
+        className="absolute inset-0 bg-black/60"
+        onClick={onCancel}
+      />
+      <div className="relative bg-surface border border-outline-variant rounded-2xl shadow-xl p-6 max-w-sm w-full animate-scale visible">
+        <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 ${
+          willDeactivate ? 'bg-error/10' : 'bg-secondary-container'
+        }`}>
           <span
             className={`material-symbols-outlined text-[24px] ${willDeactivate ? 'text-error' : 'text-secondary'}`}
             style={{ fontVariationSettings: "'FILL' 1" }}
@@ -16,14 +23,15 @@ const ConfirmModal = ({ user, onConfirm, onCancel }) => {
             {willDeactivate ? 'block' : 'check_circle'}
           </span>
         </div>
-        <h3 className="font-label-bold text-title-md text-primary mb-1">
+        <h3 className="font-label-bold text-title-md text-primary mb-2">
           {willDeactivate ? 'Désactiver ce compte ?' : 'Réactiver ce compte ?'}
         </h3>
         <p className="text-body-sm text-on-surface-variant mb-6">
-          {willDeactivate
-            ? <>L'utilisateur <strong>{user.email}</strong> ne pourra plus se connecter. Il pourra être réactivé à tout moment.</>
-            : <>L'utilisateur <strong>{user.email}</strong> pourra à nouveau accéder à la plateforme.</>
-          }
+          {willDeactivate ? (
+            <>L'utilisateur <strong className="text-primary">{user.email}</strong> ne pourra plus se connecter. Réactivable à tout moment.</>
+          ) : (
+            <>L'utilisateur <strong className="text-primary">{user.email}</strong> pourra à nouveau accéder à la plateforme.</>
+          )}
         </p>
         <div className="flex gap-3 justify-end">
           <button
@@ -73,12 +81,13 @@ const RoleBadge = ({ role }) => (
 
 // ─── Page ────────────────────────────────────────────────────
 const AdminUsersPage = () => {
-  const [users, setUsers]       = useState([]);
-  const [loading, setLoading]   = useState(true);
-  const [errorMsg, setErrorMsg] = useState(null);
-  const [search, setSearch]     = useState('');
-  const [pendingUser, setPendingUser] = useState(null); // user en attente de confirmation
+  const [users, setUsers]           = useState([]);
+  const [loading, setLoading]       = useState(true);
+  const [errorMsg, setErrorMsg]     = useState(null);
+  const [search, setSearch]         = useState('');
+  const [pendingUser, setPendingUser] = useState(null);
   const searchTimer = useRef(null);
+  const toast = useToast();
 
   const fetchUsers = async (q = search) => {
     try {
@@ -95,7 +104,6 @@ const AdminUsersPage = () => {
 
   useEffect(() => { fetchUsers(''); }, []);
 
-  // Recherche avec debounce 300ms
   const handleSearch = (val) => {
     setSearch(val);
     clearTimeout(searchTimer.current);
@@ -104,6 +112,7 @@ const AdminUsersPage = () => {
 
   const confirmToggle = async () => {
     if (!pendingUser) return;
+    const willDeactivate = pendingUser.compte_actif;
     try {
       await axiosClient.patch(`/admin/users/${pendingUser.id_users}/status`, {
         compte_actif: !pendingUser.compte_actif
@@ -111,8 +120,15 @@ const AdminUsersPage = () => {
       setUsers(u => u.map(x =>
         x.id_users === pendingUser.id_users ? { ...x, compte_actif: !pendingUser.compte_actif } : x
       ));
+      toast.success(
+        willDeactivate
+          ? `Compte de « ${pendingUser.email} » désactivé.`
+          : `Compte de « ${pendingUser.email} » réactivé.`
+      );
     } catch (error) {
-      setErrorMsg(error.response?.data?.message || "Erreur lors de la modification.");
+      const msg = error.response?.data?.message || "Erreur lors de la modification.";
+      setErrorMsg(msg);
+      toast.error(msg);
     } finally {
       setPendingUser(null);
     }
@@ -147,7 +163,7 @@ const AdminUsersPage = () => {
           value={search}
           onChange={(e) => handleSearch(e.target.value)}
           placeholder="Rechercher par email ou nom…"
-          className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-outline-variant bg-surface-container text-on-surface text-body-md placeholder:text-on-surface-variant focus:outline-none focus:border-secondary transition-colors"
+          className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-outline-variant bg-surface-container text-on-surface text-body-md placeholder:text-on-surface-variant focus:outline-none focus:border-secondary transition-colors"
         />
         {search && (
           <button

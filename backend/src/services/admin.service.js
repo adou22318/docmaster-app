@@ -164,29 +164,42 @@ export const updateUserStatus = async (adminId, userId, compteActif) => {
 };
 
 // ─── SUBSCRIPTIONS ──────────────────────────────────────────
+// On affiche TOUS les utilisateurs (y compris free) avec leur plan et jours restants
 export const getSubscriptions = async (limit = 50, offset = 0) => {
   const result = await pool.query(
-    `SELECT a.id_abonnements, a.statut, a.plan, a.date_debut_essai, a.date_fin_essai, a.date_renouvellement, u.email 
-     FROM abonnements a
-     JOIN users u ON a.user_id = u.id_users
-     ORDER BY a.date_renouvellement DESC NULLS LAST
+    `SELECT 
+       u.id_users, u.email, u.nom_complet, u.plan, u.created_at,
+       a.statut, a.date_debut_essai, a.date_fin_essai, a.date_renouvellement,
+       CASE
+         WHEN a.statut = 'essai'  THEN GREATEST(0, CEIL(EXTRACT(EPOCH FROM (a.date_fin_essai    - NOW())) / 86400))
+         WHEN a.statut = 'actif'  THEN GREATEST(0, CEIL(EXTRACT(EPOCH FROM (a.date_renouvellement - NOW())) / 86400))
+         ELSE NULL
+       END AS jours_restants
+     FROM users u
+     LEFT JOIN abonnements a ON u.id_users = a.user_id
+     ORDER BY u.created_at DESC
      LIMIT $1 OFFSET $2`,
     [limit, offset]
   );
 
-  const countRes = await pool.query(`SELECT COUNT(*) FROM abonnements`);
+  const countRes = await pool.query(`SELECT COUNT(*) FROM users`);
   return { subscriptions: result.rows, total: parseInt(countRes.rows[0].count, 10) };
 };
 
 // ─── JOBS ───────────────────────────────────────────────────
 export const getJobs = async (limit = 50, offset = 0, failedOnly = false) => {
+  // duree_secondes : calculée uniquement pour les jobs terminés (done ou error)
+  const durationExpr = `CASE WHEN j.statut IN ('done','error')
+    THEN EXTRACT(EPOCH FROM (j.updated_at - j.created_at))::integer
+    ELSE NULL END AS duree_secondes`;
+
   const query = failedOnly
-    ? `SELECT j.id_jobs, j.type_operation, j.statut, j.erreur_message, j.created_at, j.updated_at, u.email 
+    ? `SELECT j.id_jobs, j.type_operation, j.statut, j.erreur_message, j.created_at, j.updated_at, ${durationExpr}, u.email 
        FROM jobs j 
        LEFT JOIN users u ON j.user_id = u.id_users 
        WHERE j.statut = 'error' 
        ORDER BY j.created_at DESC LIMIT $1 OFFSET $2`
-    : `SELECT j.id_jobs, j.type_operation, j.statut, j.erreur_message, j.created_at, j.updated_at, u.email 
+    : `SELECT j.id_jobs, j.type_operation, j.statut, j.erreur_message, j.created_at, j.updated_at, ${durationExpr}, u.email 
        FROM jobs j 
        LEFT JOIN users u ON j.user_id = u.id_users 
        ORDER BY j.created_at DESC LIMIT $1 OFFSET $2`;
