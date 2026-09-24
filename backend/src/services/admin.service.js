@@ -204,12 +204,12 @@ export const getJobs = async (limit = 50, offset = 0, failedOnly = false) => {
     ELSE NULL END AS duree_secondes`;
 
   const query = failedOnly
-    ? `SELECT j.id_jobs, j.type_operation, j.statut, j.erreur_message, j.created_at, j.updated_at, ${durationExpr}, u.email 
+    ? `SELECT j.id_jobs, j.type_operation, j.statut, j.erreur_message, j.created_at, j.completed_at, ${durationExpr}, u.email 
        FROM jobs j 
        LEFT JOIN users u ON j.user_id = u.id_users 
        WHERE j.statut = 'error' 
        ORDER BY j.created_at DESC LIMIT $1 OFFSET $2`
-    : `SELECT j.id_jobs, j.type_operation, j.statut, j.erreur_message, j.created_at, j.updated_at, ${durationExpr}, u.email 
+    : `SELECT j.id_jobs, j.type_operation, j.statut, j.erreur_message, j.created_at, j.completed_at, ${durationExpr}, u.email 
        FROM jobs j 
        LEFT JOIN users u ON j.user_id = u.id_users 
        ORDER BY j.created_at DESC LIMIT $1 OFFSET $2`;
