@@ -1,13 +1,15 @@
 import React from 'react';
-import { Navigate, Outlet } from 'react-router-dom';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../../store/useAuthStore';
 
 const ProtectedAdminRoute = () => {
   const user = useAuthStore((state) => state.user);
 
+  const location = useLocation();
+
   // S'il n'est pas connecté du tout, renvoyer au login
   if (!user) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   // S'il est connecté mais n'est pas admin, renvoyer au dashboard normal

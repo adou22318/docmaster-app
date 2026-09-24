@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
 import { useToast } from '../context/ToastContext';
 
@@ -9,6 +9,7 @@ export const Login = () => {
   const [validationError, setValidationError] = useState(null);
   const { loginUser, error, clearError } = useAuthStore();
   const navigate = useNavigate();
+  const location = useLocation();
   const toast = useToast();
 
   // Nettoyer l'erreur quand le composant est monté
@@ -44,7 +45,8 @@ export const Login = () => {
 
     if (result.success) {
       toast.success('Connexion réussie !');
-      navigate('/dashboard');
+      const from = location.state?.from?.pathname || '/dashboard';
+      navigate(from, { replace: true });
     }
   };
 
