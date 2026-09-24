@@ -28,7 +28,7 @@ export const AppLayout = () => {
     );
   }
 
-  const isExpired = planInfo?.statut === 'expire' || planInfo?.statut === 'annule' || (planInfo?.joursRestants !== null && planInfo?.joursRestants <= 0);
+  const isExpired = planInfo && !planInfo.actif;
 
   if (isExpired) {
     return (
