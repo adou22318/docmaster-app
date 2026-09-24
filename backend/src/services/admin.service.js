@@ -169,10 +169,10 @@ export const getSubscriptions = async (limit = 50, offset = 0) => {
   const result = await pool.query(
     `SELECT 
        u.id_users, u.email, u.nom_complet, u.plan, u.created_at,
-       a.statut, a.date_debut_essai, a.date_fin_essai, a.date_renouvellement,
+       a.statut, a.date_debut_essai, a.date_fin_essai, a.date_fin_plan,
        CASE
          WHEN a.statut = 'essai'  THEN GREATEST(0, CEIL(EXTRACT(EPOCH FROM (a.date_fin_essai    - NOW())) / 86400))
-         WHEN a.statut = 'actif'  THEN GREATEST(0, CEIL(EXTRACT(EPOCH FROM (a.date_renouvellement - NOW())) / 86400))
+         WHEN a.statut = 'actif'  THEN GREATEST(0, CEIL(EXTRACT(EPOCH FROM (a.date_fin_plan - NOW())) / 86400))
          ELSE NULL
        END AS jours_restants
      FROM users u
@@ -190,7 +190,7 @@ export const getSubscriptions = async (limit = 50, offset = 0) => {
 export const getJobs = async (limit = 50, offset = 0, failedOnly = false) => {
   // duree_secondes : calculée uniquement pour les jobs terminés (done ou error)
   const durationExpr = `CASE WHEN j.statut IN ('done','error')
-    THEN EXTRACT(EPOCH FROM (j.updated_at - j.created_at))::integer
+    THEN EXTRACT(EPOCH FROM (j.completed_at - j.started_at))::integer
     ELSE NULL END AS duree_secondes`;
 
   const query = failedOnly

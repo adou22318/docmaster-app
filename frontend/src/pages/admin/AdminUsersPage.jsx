@@ -1,12 +1,13 @@
 import React, { useEffect, useState, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import axiosClient from '../../services/api/axiosClient';
 import { useToast } from '../../context/ToastContext';
 
 // ─── Modale de confirmation ───────────────────────────────────
 const ConfirmModal = ({ user, onConfirm, onCancel }) => {
   const willDeactivate = user?.compte_actif;
-  return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
       {/* Fond opaque — pas de backdrop-blur qui laisse voir à travers */}
       <div
         className="absolute inset-0 bg-black/60"
@@ -52,7 +53,8 @@ const ConfirmModal = ({ user, onConfirm, onCancel }) => {
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

@@ -76,8 +76,8 @@ const AdminSubscriptionsPage = () => {
   const tabs = [
     { id: 'tous',  label: 'Tous',          count: subs.length },
     { id: 'pro',   label: 'Pro',           count: subs.filter(s => s.plan === 'pro' && s.statut === 'actif').length },
-    { id: 'essai', label: 'Essai',         count: subs.filter(s => s.statut === 'essai').length },
-    { id: 'free',  label: 'Gratuit',       count: subs.filter(s => !s.statut || s.plan === 'free').length },
+    { id: 'essai', label: 'Essais',        count: subs.filter(s => s.statut === 'essai').length },
+    { id: 'free',  label: 'Standards',     count: subs.filter(s => !s.statut || s.plan === 'free').length },
   ];
 
   return (
@@ -122,7 +122,7 @@ const AdminSubscriptionsPage = () => {
                 <th className="py-3 px-4 text-label-sm font-label-bold text-on-surface-variant uppercase tracking-wider">Utilisateur</th>
                 <th className="py-3 px-4 text-label-sm font-label-bold text-on-surface-variant uppercase tracking-wider">Plan</th>
                 <th className="py-3 px-4 text-label-sm font-label-bold text-on-surface-variant uppercase tracking-wider hidden md:table-cell">Durée restante</th>
-                <th className="py-3 px-4 text-label-sm font-label-bold text-on-surface-variant uppercase tracking-wider hidden lg:table-cell">Renouvellement</th>
+                <th className="py-3 px-4 text-label-sm font-label-bold text-on-surface-variant uppercase tracking-wider hidden lg:table-cell">Fin du plan</th>
               </tr>
             </thead>
             <tbody>
@@ -141,8 +141,8 @@ const AdminSubscriptionsPage = () => {
                     <JoursRestants jours={sub.jours_restants} statut={sub.statut} />
                   </td>
                   <td className="py-4 px-4 text-body-sm text-on-surface-variant hidden lg:table-cell">
-                    {sub.date_renouvellement
-                      ? new Date(sub.date_renouvellement).toLocaleDateString('fr-FR')
+                    {sub.date_fin_plan
+                      ? new Date(sub.date_fin_plan).toLocaleDateString('fr-FR')
                       : sub.date_fin_essai
                       ? new Date(sub.date_fin_essai).toLocaleDateString('fr-FR')
                       : '—'}
