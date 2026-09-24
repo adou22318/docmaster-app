@@ -11,24 +11,16 @@ const PlanBadge = ({ plan, statut }) => {
       </span>
     );
   }
-  if (statut === 'essai') {
-    return (
-      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-label-sm font-label-bold bg-secondary-container text-on-secondary-container">
-        <span className="material-symbols-outlined text-[12px]">schedule</span>
-        Essai
-      </span>
-    );
-  }
   return (
-    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-label-sm font-label-bold bg-surface-container-high text-on-surface-variant">
-      <span className="material-symbols-outlined text-[12px]">person</span>
-      Gratuit
+    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-label-sm font-label-bold bg-secondary-container text-on-secondary-container">
+      <span className="material-symbols-outlined text-[12px]">schedule</span>
+      Essai
     </span>
   );
 };
 
 // ─── Jours restants ───────────────────────────────────────────
-const JoursRestants = ({ jours, statut }) => {
+const JoursRestants = ({ jours }) => {
   if (jours === null || jours === undefined) return <span className="text-on-surface-variant">—</span>;
   const n = Number(jours);
   if (n <= 0) return (
@@ -57,7 +49,7 @@ const JoursRestants = ({ jours, statut }) => {
 const AdminSubscriptionsPage = () => {
   const [subs, setSubs]       = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter]   = useState('tous'); // 'tous' | 'pro' | 'essai' | 'free'
+  const [filter, setFilter]   = useState('tous'); // 'tous' | 'pro' | 'essai'
 
   useEffect(() => {
     axiosClient.get('/admin/subscriptions?limit=200')
@@ -68,16 +60,14 @@ const AdminSubscriptionsPage = () => {
   const filtered = subs.filter(s => {
     if (filter === 'tous')  return true;
     if (filter === 'pro')   return s.plan === 'pro' && s.statut === 'actif';
-    if (filter === 'essai') return s.statut === 'essai';
-    if (filter === 'free')  return !s.statut || s.plan === 'free';
+    if (filter === 'essai') return !(s.plan === 'pro' && s.statut === 'actif');
     return true;
   });
 
   const tabs = [
     { id: 'tous',  label: 'Tous',          count: subs.length },
     { id: 'pro',   label: 'Pro',           count: subs.filter(s => s.plan === 'pro' && s.statut === 'actif').length },
-    { id: 'essai', label: 'Essais',        count: subs.filter(s => s.statut === 'essai').length },
-    { id: 'free',  label: 'Standards',     count: subs.filter(s => !s.statut || s.plan === 'free').length },
+    { id: 'essai', label: 'Essais',        count: subs.filter(s => !(s.plan === 'pro' && s.statut === 'actif')).length },
   ];
 
   return (

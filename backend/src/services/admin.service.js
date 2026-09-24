@@ -167,17 +167,27 @@ export const updateUserStatus = async (adminId, userId, compteActif) => {
 // On affiche TOUS les utilisateurs (y compris free) avec leur plan et jours restants
 export const getSubscriptions = async (limit = 50, offset = 0) => {
   const result = await pool.query(
-    `SELECT 
-       u.id_users, u.email, u.nom_complet, u.plan, u.created_at,
-       a.statut, a.date_debut_essai, a.date_fin_essai, a.date_fin_plan,
-       CASE
-         WHEN a.statut = 'essai'  THEN GREATEST(0, CEIL(EXTRACT(EPOCH FROM (a.date_fin_essai    - NOW())) / 86400))
-         WHEN a.statut = 'actif'  THEN GREATEST(0, CEIL(EXTRACT(EPOCH FROM (a.date_fin_plan - NOW())) / 86400))
-         ELSE NULL
-       END AS jours_restants
-     FROM users u
-     LEFT JOIN abonnements a ON u.id_users = a.user_id
-     ORDER BY u.created_at DESC
+    `SELECT * FROM (
+       SELECT DISTINCT ON (u.id_users)
+         u.id_users, u.email, u.nom_complet,
+         CASE WHEN a.plan IS NOT NULL THEN a.plan ELSE u.plan END AS plan,
+         u.created_at,
+         a.statut, a.date_debut_essai, a.date_fin_essai, a.date_fin_plan,
+         CASE
+           WHEN a.statut = 'essai'  THEN GREATEST(0, CEIL(EXTRACT(EPOCH FROM (a.date_fin_essai    - NOW())) / 86400))
+           WHEN a.statut = 'actif'  THEN GREATEST(0, CEIL(EXTRACT(EPOCH FROM (a.date_fin_plan - NOW())) / 86400))
+           ELSE NULL
+         END AS jours_restants
+       FROM users u
+       LEFT JOIN abonnements a ON u.id_users = a.user_id
+       ORDER BY u.id_users, 
+         CASE a.statut 
+           WHEN 'actif' THEN 1 
+           WHEN 'essai' THEN 2 
+           ELSE 3 
+         END, a.created_at DESC
+     ) t
+     ORDER BY t.created_at DESC
      LIMIT $1 OFFSET $2`,
     [limit, offset]
   );

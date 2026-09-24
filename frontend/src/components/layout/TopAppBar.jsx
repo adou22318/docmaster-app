@@ -8,7 +8,7 @@ import { useToast } from '../../context/ToastContext';
 import { useTheme } from '../../hooks/useTheme';
 import { getStatutAbonnement } from '../../services/api/paymentApi.js';
 
-export const TopAppBar = () => {
+export const TopAppBar = ({ externalPlanInfo }) => {
   const user = useAuthStore((state) => state.user);
   const logoutUser = useAuthStore((state) => state.logoutUser);
   const navigate = useNavigate();
@@ -17,7 +17,7 @@ export const TopAppBar = () => {
 
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
-  const [planInfo, setPlanInfo] = useState(null);
+  const [localPlanInfo, setLocalPlanInfo] = useState(null);
 
   // Notifications depuis le store Zustand (in-memory)
   const getNonLues = useNotificationStore((state) => state.getNonLues);
@@ -38,16 +38,20 @@ export const TopAppBar = () => {
     toutMarquerCommeLu();
   };
 
-  // Statut d'abonnement — UNE SEULE fois au montage
+  // Statut d'abonnement
   useEffect(() => {
+    if (externalPlanInfo) return; // Déjà fourni par un parent (ex: AppLayout)
+    
     let cancelled = false;
     getStatutAbonnement()
       .then(res => {
-        if (!cancelled) setPlanInfo(res.data.data);
+        if (!cancelled) setLocalPlanInfo(res.data.data);
       })
       .catch(() => {});
     return () => { cancelled = true; };
-  }, []);
+  }, [externalPlanInfo]);
+
+  const planInfo = externalPlanInfo || localPlanInfo;
 
   const isPro = planInfo?.statut === 'actif';
   const isEssai = planInfo?.statut === 'essai';
