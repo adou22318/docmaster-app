@@ -82,6 +82,13 @@ export const login = async (req, res) => {
         });
     }
 
+    if (error.message === 'COMPTE_INACTIF') {
+        return res.status(403).json({
+            success: false,
+            message: 'Ce compte a été désactivé par un administrateur.'
+        });
+    }
+
     console.error('Erreur login:', error);
     return res.status(500).json({
       success: false,

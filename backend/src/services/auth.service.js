@@ -91,7 +91,8 @@ export const generateTokens = (user) => {
       id: user.id_users,
       email: user.email,
       nom_complet: user.nom_complet,
-      plan: user.plan
+      plan: user.plan,
+      role: user.role
     },
     process.env.JWT_SECRET,
     { expiresIn: '15m' }
@@ -127,6 +128,11 @@ export const loginService = async (email, mot_de_passe) => {
 
 
   const user = result.rows[0];
+
+  // Si le compte est désactivé par un admin
+  if (user.compte_actif === false) {
+    throw new Error('COMPTE_INACTIF');
+  }
 
   if (user.oauth_provider === 'google' && !user.mot_de_passe) {
      throw new Error('OAUTH_ACCOUNT');
@@ -170,6 +176,7 @@ export const loginService = async (email, mot_de_passe) => {
       email: user.email,
       nom_complet: user.nom_complet,
       plan: user.plan,
+      role: user.role,
       photo_url: user.photo_url
     }
   };
@@ -212,11 +219,16 @@ export const refreshTokenService = async (refreshToken) => {
 
   const user = userResult.rows[0];
 
+  // Si le compte a été désactivé entre temps
+  if (user.compte_actif === false) {
+    throw new Error('COMPTE_INACTIF');
+  }
+
   // Étape 4 — Générer un nouvel access token uniquement
   // On ne régénère PAS le refresh token — il reste valide
   // jusqu'à son expiration ou un logout
   const accessToken = jwt.sign(
-    { id: user.id_users, email: user.email, nom_complet: user.nom_complet, plan: user.plan },
+    { id: user.id_users, email: user.email, nom_complet: user.nom_complet, plan: user.plan, role: user.role },
     process.env.JWT_SECRET,
     { expiresIn: '15m' }
   );

@@ -31,8 +31,9 @@ backend/apply_sql.js
 docs/bilan-technique-s5.md
 docs/bilan-technique-s5.html
 docs/contexte-memoire.md
-Documentation_Technique_Soutenance.md
+CDC_DocMaster_AbdoulayeMaiga.md
 
 # Configurations déploiement non finalisées
 render.yaml
-frontend/vercel.json*CDC*.md
+frontend/vercel.json
+*CDC*.md

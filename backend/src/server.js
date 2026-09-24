@@ -12,6 +12,7 @@ import jobsRoutes from './routes/jobs.routes.js';
 import { nettoyerFichiersExpires } from './jobs/cronCleanup.js';
 import { limiterGeneral, limiterUpload } from './middlewares/rateLimiter.js';
 import paymentRoutes from './routes/payment.routes.js';
+import adminRoutes from './routes/admin.routes.js';
 
 // Lancer le nettoyage toutes les heures
 // 3600000 ms = 1 heure
@@ -58,6 +59,8 @@ app.use("/api/auth", authRoutes);
 app.use('/api/files', filesRoutes);
 app.use('/api/jobs', jobsRoutes);
 app.use('/api/payments', paymentRoutes);
+app.use('/api/admin', adminRoutes);
+
 app.use(limiterGeneral);
 app.use('/api/files', limiterUpload);
 app.use('/api/jobs', limiterUpload);

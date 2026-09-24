@@ -20,6 +20,15 @@ import { HelpPage } from './pages/HelpPage';
 import PricingPage from './pages/PricingPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 
+// Imports Admin
+import ProtectedAdminRoute from './components/auth/ProtectedAdminRoute';
+import AdminLayout from './components/layout/AdminLayout';
+import AdminDashboardPage from './pages/admin/AdminDashboardPage';
+import AdminUsersPage from './pages/admin/AdminUsersPage';
+import AdminSubscriptionsPage from './pages/admin/AdminSubscriptionsPage';
+import AdminJobsPage from './pages/admin/AdminJobsPage';
+import AdminAuditLogPage from './pages/admin/AdminAuditLogPage';
+
 // Wrapper qui force le remontage complet de ToolPage lors d'un changement d'outil.
 // Sans cela, React réutilise le même composant et l'état de l'outil précédent
 // contamine le nouvel outil (page blanche, étape incorrecte, etc.)
@@ -80,6 +89,18 @@ function App() {
             <Route path="tools/:toolId" element={<ToolPageWrapper />} />
             <Route path="files" element={<FilesPage />} />
             <Route path="settings" element={<SettingsPage />} />
+          </Route>
+        </Route>
+
+        {/* Routes Administration */}
+        <Route path="/admin" element={<ProtectedAdminRoute />}>
+          <Route element={<AdminLayout />}>
+            <Route index element={<AdminDashboardPage />} />
+            <Route path="dashboard" element={<AdminDashboardPage />} />
+            <Route path="users" element={<AdminUsersPage />} />
+            <Route path="subscriptions" element={<AdminSubscriptionsPage />} />
+            <Route path="jobs" element={<AdminJobsPage />} />
+            <Route path="audit-log" element={<AdminAuditLogPage />} />
           </Route>
         </Route>
 

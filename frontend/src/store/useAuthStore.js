@@ -63,6 +63,7 @@ export const useAuthStore = create((set, get) => ({
           id: payload.id,
           email: payload.email,
           plan: payload.plan,
+          role: payload.role,
           // nom_complet et photo_url sont maintenant dans le token
           nom_complet: payload.nom_complet || payload.email, 
         },
