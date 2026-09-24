@@ -6,7 +6,8 @@ export const getAdminUsers = async (req, res) => {
     const limit = parseInt(req.query.limit, 10) || 50;
     const offset = (page - 1) * limit;
 
-    const result = await getUsers(limit, offset);
+    const search = req.query.search || '';
+    const result = await getUsers(limit, offset, search);
     return res.status(200).json({ success: true, data: result.users, total: result.total, page, limit });
   } catch (error) {
     console.error("Erreur getAdminUsers:", error);

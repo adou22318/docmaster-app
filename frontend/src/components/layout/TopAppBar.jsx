@@ -100,6 +100,16 @@ export const TopAppBar = () => {
               )}
             </button>
 
+            {user?.role === 'admin' && (
+              <Link to="/admin"
+                className="w-10 h-10 flex items-center justify-center text-on-surface-variant hover:bg-surface-container hover:text-primary transition-colors rounded-full"
+                title="Panneau d'administration">
+                <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 0" }}>
+                  admin_panel_settings
+                </span>
+              </Link>
+            )}
+
             <Link to="/dashboard/settings"
               className="w-10 h-10 flex items-center justify-center text-primary hover:bg-surface-container transition-colors rounded-full"
               title="Paramètres">
