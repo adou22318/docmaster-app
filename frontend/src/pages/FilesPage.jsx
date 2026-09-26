@@ -103,7 +103,7 @@ export const FilesPage = () => {
         <div className="mb-6 flex items-start justify-between gap-4">
           <div>
             <h1 className="font-display-xl text-headline-md text-primary">Fichiers actifs</h1>
-            <p className="text-on-surface-variant mt-1">Vos fichiers uploads et résultats en cours de vie (max 24h).</p>
+            <p className="text-on-surface-variant mt-1">Vos fichiers uploadés et résultats de traitements.</p>
           </div>
           <button
             onClick={fetchFiles}
@@ -114,13 +114,13 @@ export const FilesPage = () => {
           </button>
         </div>
 
-        {/* Bannière 24h */}
+        {/* Bannière de confidentialité */}
         <div className="flex items-start gap-3 bg-secondary-container/20 border border-secondary/30 px-4 py-3 rounded-xl mb-8 text-body-sm">
-          <span className="material-symbols-outlined text-secondary text-[20px] mt-0.5 flex-shrink-0">schedule</span>
+          <span className="material-symbols-outlined text-secondary text-[20px] mt-0.5 flex-shrink-0">verified_user</span>
           <p className="text-on-surface-variant">
-            <span className="font-label-bold text-primary">Suppression automatique : </span>
-            conformément à notre politique de confidentialité, tous vos fichiers sont{' '}
-            <strong>définitivement supprimés 24h après leur création</strong>. Téléchargez vos résultats avant ce délai.
+            <span className="font-label-bold text-primary">Confidentialité totale : </span>
+            Conformément à notre politique privacy-first, vous avez le plein contrôle de vos fichiers. 
+            <strong>Aucune suppression n'est effectuée à votre insu.</strong> Pensez à supprimer manuellement vos fichiers quand vous n'en avez plus besoin.
           </p>
         </div>
 
@@ -140,7 +140,7 @@ export const FilesPage = () => {
             <span className="material-symbols-outlined text-[52px] text-on-surface-variant mb-4 block">folder_off</span>
             <h3 className="font-label-bold text-title-md text-primary mb-2">Aucun fichier actif</h3>
             <p className="text-on-surface-variant max-w-sm mx-auto">
-              Vos fichiers apparaîtront ici après avoir utilisé un outil. Ils sont conservés pendant 24h.
+              Vos fichiers apparaîtront ici après avoir utilisé un outil.
             </p>
           </div>
         ) : (
@@ -151,38 +151,23 @@ export const FilesPage = () => {
                   <th className="py-3 px-4 text-label-sm font-label-bold text-on-surface-variant uppercase tracking-wider">Nom du fichier</th>
                   <th className="py-3 px-4 text-label-sm font-label-bold text-on-surface-variant uppercase tracking-wider hidden sm:table-cell">Taille</th>
                   <th className="py-3 px-4 text-label-sm font-label-bold text-on-surface-variant uppercase tracking-wider hidden md:table-cell">Créé le</th>
-                  <th className="py-3 px-4 text-label-sm font-label-bold text-on-surface-variant uppercase tracking-wider hidden lg:table-cell">Expire</th>
                   <th className="py-3 px-4 text-label-sm font-label-bold text-on-surface-variant uppercase tracking-wider text-right">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {files.map((file) => {
                   const fileId = file.id_files || file.id;
-                  const expireDate = file.expire_le ? new Date(file.expire_le) : null;
-                  const isExpiringSoon = expireDate && (expireDate - Date.now()) < 2 * 60 * 60 * 1000;
-                  let expireDateLabel = null;
-                  let expireRelativeLabel = null;
-                  if (expireDate) {
-                    const msLeft = expireDate - Date.now();
-                    const h = Math.floor(msLeft / 3600000);
-                    const m = Math.floor((msLeft % 3600000) / 60000);
-                    expireDateLabel = expireDate.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
-                    expireRelativeLabel = msLeft > 0 ? (h > 0 ? 'dans ' + h + 'h ' + m + 'min' : 'dans ' + m + 'min') : 'Expire';
-                  }
                   return (
                     <tr key={fileId} className="border-b border-outline-variant/50 hover:bg-surface-container-low transition-colors">
                       <td className="py-4 px-4">
                         <div className="flex items-center gap-3">
-                          <span className={`material-symbols-outlined ${isExpiringSoon ? 'text-warning' : 'text-secondary-container'}`}>
+                          <span className="material-symbols-outlined text-secondary-container">
                             {file.type_mime?.includes('zip') ? 'folder_zip' : 'picture_as_pdf'}
                           </span>
                           <div>
                             <span className="font-label-bold text-body-sm text-primary max-w-[180px] sm:max-w-[280px] truncate block" title={file.nom_original}>
                               {file.nom_original}
                             </span>
-                            {isExpiringSoon && (
-                              <span className="text-[10px] text-warning font-label-bold">⚠ Expire bientôt</span>
-                            )}
                           </div>
                         </div>
                       </td>
@@ -194,21 +179,7 @@ export const FilesPage = () => {
                           day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
                         })}
                       </td>
-                      <td className="py-4 px-4 text-body-sm hidden lg:table-cell">
-                        {expireDateLabel ? (
-                          <span
-                            className={isExpiringSoon ? 'text-warning font-label-bold' : 'text-on-surface-variant'}
-                            title={expireRelativeLabel}
-                          >
-                            {expireDateLabel}
-                            {isExpiringSoon && (
-                              <span className="block text-[10px] text-warning">({expireRelativeLabel})</span>
-                            )}
-                          </span>
-                        ) : (
-                          <span className="text-on-surface-variant">—</span>
-                        )}
-                      </td>
+
                       <td className="py-4 px-4 text-right space-x-1">
                         <button
                           onClick={() => handleDownload(fileId, file.nom_original)}

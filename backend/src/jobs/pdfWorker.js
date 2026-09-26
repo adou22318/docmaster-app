@@ -273,8 +273,8 @@ pdfQueue.process(async (job) => {
 
     // Enregistrer le fichier résultat dans la table files
     const fileResult = await pool.query(
-      `INSERT INTO files (owner_id, nom_original, nom_stockage, chemin, taille_octets, type_mime, expire_le)
-       VALUES ($1, $2, $3, $4, $5, $6, NOW() + INTERVAL '24 hours')
+      `INSERT INTO files (owner_id, nom_original, nom_stockage, chemin, taille_octets, type_mime)
+       VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING id_files`,
       [job.data.userId, `resultat_${type_operation}.${extension}`, resultat.nomStockage, resultat.chemin, resultat.tailleOctets, typeMime]
     );

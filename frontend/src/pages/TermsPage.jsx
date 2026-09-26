@@ -70,7 +70,7 @@ export const TermsPage = () => {
 
           <Section title="Responsabilité">
             <p>
-              L'utilisateur est seul responsable de l'usage qu'il fait des documents traités via DocMaster. La plateforme ne peut être tenue responsable d'une utilisation frauduleuse ou contraire aux lois en vigueur. Les fichiers sont supprimés automatiquement 24h après traitement — DocMaster ne peut en garantir la disponibilité au-delà.
+              L'utilisateur est seul responsable de l'usage qu'il fait des documents traités via DocMaster. La plateforme ne peut être tenue responsable d'une utilisation frauduleuse ou contraire aux lois en vigueur. Les fichiers restent stockés jusqu'à suppression manuelle par l'utilisateur — DocMaster n'y accède à aucun moment.
             </p>
           </Section>
 

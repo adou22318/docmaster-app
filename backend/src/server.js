@@ -9,17 +9,9 @@ import passport from './config/passport.js';
 import verifyToken from "./middlewares/verifyToken.js";
 import filesRoutes from './routes/files.routes.js';
 import jobsRoutes from './routes/jobs.routes.js';
-import { nettoyerFichiersExpires } from './jobs/cronCleanup.js';
 import { limiterGeneral, limiterUpload } from './middlewares/rateLimiter.js';
 import paymentRoutes from './routes/payment.routes.js';
 import adminRoutes from './routes/admin.routes.js';
-
-// Lancer le nettoyage toutes les heures
-// 3600000 ms = 1 heure
-setInterval(nettoyerFichiersExpires, 3600000);
-
-// Lancer une première fois au démarrage
-nettoyerFichiersExpires();
 
 const app = express();
 const port = process.env.PORT || 3001;

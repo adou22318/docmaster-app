@@ -12,13 +12,13 @@ export const createFileService = async (fileData, userId) => {
     mimetype
   } = fileData;
 
-  // Fichier temporaire qui expire dans 24h conformément au CDC
+  // Fichier permanent conformément à la politique privacy-first (l'utilisateur gère ses suppressions)
   const result = await pool.query(
     `INSERT INTO files
       (owner_id, nom_original, nom_stockage, chemin,
-       taille_octets, type_mime, expire_le)
-     VALUES ($1, $2, $3, $4, $5, $6, NOW() + INTERVAL '24 hours')
-     RETURNING id_files, nom_original, taille_octets, type_mime, created_at, expire_le`,
+       taille_octets, type_mime)
+     VALUES ($1, $2, $3, $4, $5, $6)
+     RETURNING id_files, nom_original, taille_octets, type_mime, created_at`,
     [userId, originalname, filename, filePath, size, mimetype]
   );
 

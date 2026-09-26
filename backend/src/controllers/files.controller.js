@@ -269,7 +269,7 @@ export const getUserFiles = async (req, res) => {
     const limit = parseInt(req.query.limit) || 100;
     
     const result = await pool.query(
-      'SELECT id_files as id, nom_original, taille_octets, type_mime, created_at, expire_le FROM files WHERE owner_id = $1 ORDER BY created_at DESC LIMIT $2',
+      'SELECT id_files as id, nom_original, taille_octets, type_mime, created_at FROM files WHERE owner_id = $1 ORDER BY created_at DESC LIMIT $2',
       [userId, limit]
     );
 

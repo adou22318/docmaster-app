@@ -16,7 +16,7 @@ const faqs = [
       },
       {
         q: "Que se passe-t-il après la période d'essai ?",
-        a: "Après 7 jours, si vous n'avez pas souscrit au plan Pro, certaines fonctionnalités avancées seront restreintes. Vos fichiers traités restent disponibles pendant 24h conformément à notre politique de rétention."
+        a: "Après 7 jours, si vous n'avez pas souscrit au plan Pro, certaines fonctionnalités avancées seront restreintes. Vos fichiers traités restent néanmoins sous votre contrôle dans votre espace."
       },
       {
         q: "Comment annuler mon abonnement ?",
@@ -30,7 +30,7 @@ const faqs = [
     items: [
       {
         q: "Où sont stockés mes fichiers ?",
-        a: "Tous les fichiers sont stockés de manière sécurisée sur notre serveur backend. Conformément à notre politique stricte, ils sont automatiquement supprimés 24h après leur traitement."
+        a: "Tous les fichiers sont stockés de manière sécurisée sur notre serveur backend. Conformément à notre politique stricte (Privacy-First), c'est vous qui avez la main pour les supprimer manuellement quand vous n'en avez plus besoin."
       },
       {
         q: "Quelle est la taille maximale d'un fichier ?",
@@ -70,7 +70,7 @@ const faqs = [
     items: [
       {
         q: "Mes fichiers sont-ils partagés avec des tiers ?",
-        a: "Non. Vos fichiers sont traités exclusivement sur nos serveurs et ne sont jamais partagés, vendus ou analysés par des tiers. Ils sont supprimés automatiquement après 24h."
+        a: "Non. Vos fichiers sont traités exclusivement sur nos serveurs et ne sont jamais partagés, vendus ou analysés par des tiers. Vous pouvez les supprimer à tout moment via votre tableau de bord."
       },
       {
         q: "Le paiement est-il sécurisé ?",

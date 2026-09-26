@@ -38,7 +38,7 @@ export const UnifiedFooter = () => {
             © {currentYear} PDF DocMaster — Projet ENI-ABT G.I.T.
           </p>
           <p className="text-[11px] text-on-surface-variant/50">
-            Traitement local · Suppression automatique 24h
+            Traitement local · Suppression manuelle
           </p>
         </div>
 

@@ -52,7 +52,7 @@ export const PrivacyPage = () => {
 
           <Section title="Traitement et Rétention des Fichiers">
             <p>
-              Vos fichiers sont traités exclusivement sur nos serveurs sécurisés et <strong className="text-on-surface">supprimés automatiquement 24h</strong> après leur traitement. Nous ne conservons ni ne partageons vos documents avec des tiers.
+              Vos fichiers sont traités exclusivement sur nos serveurs sécurisés et restent <strong className="text-on-surface">sous votre entier contrôle (suppression manuelle via votre espace)</strong>. Nous ne conservons ni ne partageons vos documents avec des tiers.
             </p>
           </Section>
 

@@ -25,7 +25,7 @@ export const FreePage = () => {
             </div>
             <h2 className="font-display-xl text-headline-sm text-on-surface mb-4">Ce qui est inclus</h2>
             <ul className="space-y-4">
-              {['Tous les outils de traitement PDF', 'Stockage temporaire sécurisé (24h)', 'Espace de travail personnalisé', 'Signature électronique simple'].map((item, i) => (
+              {['Tous les outils de traitement PDF', 'Stockage sécurisé Privacy-First', 'Espace de travail personnalisé', 'Signature électronique simple'].map((item, i) => (
                 <li key={i} className="flex items-start gap-3">
                   <span className="material-symbols-outlined text-secondary text-[20px] mt-0.5">done</span>
                   <span className="text-body-md text-on-surface-variant">{item}</span>

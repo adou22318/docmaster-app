@@ -27,7 +27,7 @@ export const PublicFooter = () => {
           © {currentYear} PDF DocMaster — Projet ENI-ABT G.I.T.
         </p>
         <p className="text-on-surface-variant/70 font-label-sm max-w-xs text-center md:text-left text-[11px]">
-          Traitement local · Suppression 24h · Projet ENI-ABT
+          Traitement local · Suppression manuelle · Projet ENI-ABT
         </p>
       </div>
       <nav className="flex flex-wrap justify-center gap-8">
