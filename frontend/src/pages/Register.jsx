@@ -142,7 +142,7 @@ export const Register = () => {
           <form className="space-y-10" onSubmit={handleSubmit}>
             <div className="group">
               <label className="block font-label-bold text-label-bold text-on-surface-variant mb-2 uppercase tracking-wide transition-colors group-focus-within:text-secondary" htmlFor="full-name">NOM COMPLET <span className="text-error">*</span></label>
-              <input className="w-full py-4 input-underline font-body-md text-primary placeholder:text-outline-variant/60" id="full-name" name="full-name" placeholder="Jean Dupont" required type="text" onChange={() => { clearError(); setValidationError(null); }} />
+              <input className="w-full py-4 input-underline font-body-md text-primary placeholder:text-outline-variant/60" id="full-name" name="full-name" placeholder="Adou KOITA" required type="text" onChange={() => { clearError(); setValidationError(null); }} />
             </div>
             
             <div className="group">

@@ -79,7 +79,7 @@ docker-compose up -d
 cd backend
 cp .env.example .env   # Renseigner les variables
 npm install
-npm run dev            # API sur http://localhost:3000
+npm run dev            # API sur http://localhost:5001
 ```
 
 Dans un second terminal :
@@ -101,29 +101,54 @@ npm run dev            # App sur http://localhost:5173
 ## Variables d'environnement backend (`.env`)
 
 ```env
-# Base de données
-DATABASE_URL=postgresql://postgres:motdepasse@localhost:5434/docmaster-app
+# Base de données (variables lues par src/config/db.js)
+HOST=localhost
+USER=postgres
+PASSWORD=votre_mot_de_passe
+DATABASE=docmaster-app
+DBPORT=5434
 
 # JWT
 JWT_SECRET=votre_secret_jwt
 JWT_REFRESH_SECRET=votre_secret_refresh
 
-# Redis
-REDIS_URL=redis://localhost:6379
+# Redis (variables lues par Bull Queue)
+REDIS_HOST=localhost
+REDIS_PORT=6379
 
 # Uploads
 UPLOAD_DIR=./tmp/uploads
 
+# URLs
+PORT=5001
+FRONTEND_URL=http://localhost:5173
+BACKEND_URL=http://localhost:5001
+
 # Google OAuth (optionnel)
 GOOGLE_CLIENT_ID=...
 GOOGLE_CLIENT_SECRET=...
+GOOGLE_CALLBACK_URL=http://localhost:5001/api/auth/google/callback
 
-# PayDunya (optionnel - désactiver avec PAYMENT_ENABLED=false)
+# Ghostscript (gswin64c sur Windows, gs sur Linux)
+GS_COMMAND=gswin64c
+
+# Chiffrement (clé AES-256-CBC pour le token PayDunya en base)
+ENCRYPTION_KEY=...
+
+# PayDunya (désactiver avec PAYMENT_ENABLED=false)
 PAYMENT_ENABLED=false
+MONTANT_PRO_XOF=5000
 PAYDUNYA_MASTER_KEY=...
+PAYDUNYA_PUBLIC_KEY=...
 PAYDUNYA_PRIVATE_KEY=...
 PAYDUNYA_TOKEN=...
 PAYDUNYA_MODE=test
+
+# Sécurité admin (protège GET /api/payments/admin/logs)
+ADMIN_TOKEN=...
+
+# CORS (laisser vide en local)
+ALLOWED_ORIGINS=
 ```
 
 ---
@@ -168,7 +193,7 @@ Disponible dans le dossier [`docs/`](./docs/) :
 | Fichier | Contenu |
 |---------|---------|
 | `docs/api/endpoints.md` | Tous les endpoints REST |
-| `docs/api/payment.md` | Système d'abonnement + PayDunya |
+| `docs/api/payments.md` | Système d'abonnement + PayDunya |
 | `docs/pdf/*.md` | Documentation de chaque opération PDF |
 | `docs/frontend/securite-lifecycle.md` | Sécurité, JWT, cycle de vie fichiers |
 | `docs/jobs/bullqueue.md` | File d'attente asynchrone Bull Queue |

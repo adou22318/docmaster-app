@@ -28,7 +28,25 @@ export const AppLayout = () => {
     );
   }
 
-  const isExpired = planInfo && !planInfo.actif;
+  const isExpired = planInfo && !planInfo.actif && planInfo.statut !== 'en_attente';
+  const isPending = planInfo && !planInfo.actif && planInfo.statut === 'en_attente';
+
+  if (isPending) {
+    return (
+      <div className="fixed inset-0 z-[9999] bg-surface flex flex-col items-center justify-center p-6 text-center">
+        <span className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mb-6"></span>
+        <h1 className="text-headline-lg font-display-xl text-primary mb-3">
+          Paiement en cours de validation
+        </h1>
+        <p className="text-body-lg text-on-surface-variant mb-8 max-w-md">
+          Nous attendons la confirmation de votre paiement par l'opérateur. Cela ne prend généralement que quelques instants.
+        </p>
+        <button onClick={() => window.location.reload()} className="px-6 py-3 rounded-xl bg-primary text-on-primary font-label-bold hover:bg-primary/90 transition-colors">
+          Actualiser la page
+        </button>
+      </div>
+    );
+  }
 
   if (isExpired) {
     return (

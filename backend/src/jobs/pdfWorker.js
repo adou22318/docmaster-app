@@ -353,7 +353,19 @@ pdfQueue.process(async (job) => {
     console.error(`❌ Job ${jobId} échoué:`, error.message);
     throw error;
   } finally {
-    // Nettoyage des fichiers temporaires de déchiffrement
+    // 1. Purger le mot de passe du job stocké dans Redis (Bull) pour des raisons de sécurité
+    // Cela évite qu'il reste en clair dans l'historique des jobs (notamment en cas d'échec)
+    if (job.data.options && job.data.options.motDePassePdf) {
+      delete job.data.options.motDePassePdf;
+      try {
+        await job.update(job.data);
+        console.log(`🔒 Mot de passe purgé de la file Redis pour le job ${jobId}`);
+      } catch (err) {
+        console.warn('Impossible de purger le mot de passe dans Redis:', err.message);
+      }
+    }
+
+    // 2. Nettoyage des fichiers temporaires de déchiffrement
     for (const { temp, original } of fichiersTempANettoyer) {
       nettoyerFichierTemp(temp, original);
     }

@@ -62,7 +62,9 @@ export const UnprotectOptions = ({ onStart, isProcessing, fichierCharge, fichier
   const handleSubmit = async () => {
     if (!password.trim()) return;
     setLoading(true);
-    await onStart({ motDePasseActuel: password });
+    const mdp = password;
+    setPassword(''); // Purger immédiatement le mot de passe du DOM
+    await onStart({ motDePasseActuel: mdp });
     setLoading(false);
   };
 

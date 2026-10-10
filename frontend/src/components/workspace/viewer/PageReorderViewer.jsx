@@ -284,6 +284,21 @@ export const PageReorderViewer = ({ fileId, motDePassePdf, onOrderChange, onLoad
     setRenderedCount(c => c + 1);
   }, []);
 
+  // ── Notifier le parent après chaque changement d'ordre ──
+  // useEffect garantit que l'appel a lieu APRÈS le rendu,
+  // évitant le "setState during render" si onOrderChange met à jour ToolWorkspaceLayout.
+  const isFirstOrderRef = useRef(true);
+  useEffect(() => {
+    if (pageOrder.length === 0) return;
+    if (isFirstOrderRef.current) {
+      // Le premier setPageOrder vient de handleLoadSuccess qui appelle déjà
+      // onOrderChange via setTimeout — on ne le rappelle pas ici.
+      isFirstOrderRef.current = false;
+      return;
+    }
+    if (onOrderChange) onOrderChange(pageOrder);
+  }, [pageOrder]); // onOrderChange intentionnellement absent : prop stable
+
   // ── Appelé par react-pdf quand le document est analysé ──
   const handleLoadSuccess = useCallback(({ numPages: n }) => {
     setNeedsPassword(false);
@@ -324,11 +339,16 @@ export const PageReorderViewer = ({ fileId, motDePassePdf, onOrderChange, onLoad
     setOverIndex(index);
   }, []);
 
+  const overIndexRef = useRef(null);
+
   const handleDragOver = useCallback((index) => (e) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
-    if (overIndex !== index) setOverIndex(index);
-  }, [overIndex]);
+    if (overIndexRef.current !== index) {
+      overIndexRef.current = index;
+      setOverIndex(index);
+    }
+  }, []);
 
   const handleDrop = useCallback((index) => (e) => {
     e.preventDefault();
@@ -338,17 +358,20 @@ export const PageReorderViewer = ({ fileId, motDePassePdf, onOrderChange, onLoad
       setOverIndex(null);
       return;
     }
+    // Calculer le nouvel ordre AVANT d'appeler setPageOrder
+    // pour éviter d'appeler onOrderChange() à l'intérieur du setter
+    // (ce qui déclencherait un setState parent pendant un rendu enfant)
     setPageOrder(prev => {
       const items = Array.from(prev);
       const [moved] = items.splice(from, 1);
       items.splice(index, 0, moved);
-      if (onOrderChange) onOrderChange(items);
       return items;
     });
+    // onOrderChange appelé dans un useEffect qui réagit à pageOrder
     draggingIndexRef.current = null;
     setDraggingIndex(null);
     setOverIndex(null);
-  }, [onOrderChange]);
+  }, []);
 
   const handleDragEnd = useCallback(() => {
     draggingIndexRef.current = null;

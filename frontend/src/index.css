@@ -1,5 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700&family=Syne:wght@700;800&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
+/* Polices chargées via <link> dans index.html (non-bloquant, avec fallback offline) */
 
 @tailwind base;
 @tailwind components;

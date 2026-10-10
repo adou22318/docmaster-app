@@ -357,18 +357,18 @@ Récupère l'historique des 50 derniers jobs soumis par l'utilisateur connecté.
 
 ## 4. Paiement et Abonnement (S5)
 
-### POST `/api/payment/initiate`
+### POST `/api/payments/initiate`
 Initie un paiement PayDunya (sandbox/test).
 - **Body** : `{ "plan": "pro" }`
 - **Réponse (200)** : `{ "success": true, "payment_url": "https://paydunya.com/..." }`
 
-### POST `/api/payment/webhook`
+### POST `/api/payments/webhook`
 Reçu automatiquement par PayDunya après paiement réussi. Active le plan Pro.
 
-### POST `/api/payment/confirm-return`
+### POST `/api/payments/confirm-return`
 Confirmation complémentaire au retour utilisateur depuis PayDunya.
 
-### GET `/api/payment/status`
+### GET `/api/payments/status`
 Retourne le statut d'abonnement de l'utilisateur connecté.
 - **Réponse (200)** :
   ```json

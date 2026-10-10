@@ -63,18 +63,18 @@ Certains outils nécessitent en plus `plan = 'pro'` (ex: `extract_images`). La v
 
 | Méthode | Route | Description |
 |---------|-------|-------------|
-| POST | `/api/payment/initiate` | Crée un enregistrement paiement + appelle PayDunya API → retourne une URL de paiement |
-| POST | `/api/payment/webhook` | Reçoit la confirmation PayDunya après paiement |
-| POST | `/api/payment/confirm-return` | Confirmation directe au retour de l'utilisateur (complément au webhook) |
+| POST | `/api/payments/initiate` | Crée un enregistrement paiement + appelle PayDunya API → retourne une URL de paiement |
+| POST | `/api/payments/webhook` | Reçoit la confirmation PayDunya après paiement |
+| POST | `/api/payments/confirm-return` | Confirmation directe au retour de l'utilisateur (complément au webhook) |
 
 ### Séquence d'un paiement réussi
 
 ```
-1. Frontend → POST /api/payment/initiate
+1. Frontend → POST /api/payments/initiate
 2. Backend → appel API PayDunya sandbox → retourne { payment_url }
 3. Frontend → redirige l'utilisateur vers payment_url
 4. Utilisateur → paie sur la page PayDunya (Orange Money, Wave, Moov...)
-5. PayDunya → POST /api/payment/webhook (confirmation)
+5. PayDunya → POST /api/payments/webhook (confirmation)
 6. Backend → vérifie signature → UPDATE abonnements SET statut='actif', plan='pro'
 7. Utilisateur → redirigé vers l'app → plan Pro activé
 ```
