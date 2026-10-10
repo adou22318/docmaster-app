@@ -38,9 +38,6 @@ const calculerTailleRaw = (w, h) => {
 };
 
 export const ExtractImagesOptions = ({ onStart, isProcessing, selection = [], totalPages }) => {
-  // ── Périmètre ──
-  const [extractMode, setExtractMode] = useState('all');
-
   // ── Dimensionnement ──
   const [sizeMode, setSizeMode] = useState('original');
   const [largeur, setLargeur] = useState('');
@@ -73,7 +70,9 @@ export const ExtractImagesOptions = ({ onStart, isProcessing, selection = [], to
 
   const handleLaunch = () => {
     const options = {};
-    if (extractMode === 'selection' && selection.length > 0) {
+    // Si des pages sont sélectionnées dans le visualiseur, on les utilise.
+    // Sinon, le backend extrait de tout le document.
+    if (selection.length > 0 && selection.length < totalPages) {
       const selString = traduireSelection(selection);
       options.pages = selString;
       options.selection = selString;
@@ -89,7 +88,7 @@ export const ExtractImagesOptions = ({ onStart, isProcessing, selection = [], to
     onStart(options);
   };
 
-  const canLaunch = !isProcessing && !(extractMode === 'selection' && selection.length === 0);
+  const canLaunch = !isProcessing;
 
   // Valeurs numériques pour l'aperçu
   const previewW = parseInt(largeur, 10) || 0;
@@ -113,31 +112,19 @@ export const ExtractImagesOptions = ({ onStart, isProcessing, selection = [], to
           </p>
         </div>
 
-        {/* ── Périmètre ── */}
-        <div className="space-y-3">
-          <p className="text-label-md font-label-bold text-on-surface">Périmètre</p>
-          {[
-            { value: 'all', label: 'Toutes les pages', desc: `Extraire les images de l'ensemble du document (${totalPages || '…'} pages).` },
-            { value: 'selection', label: 'Pages sélectionnées uniquement', desc: selection.length > 0 ? `${selection.length} page${selection.length > 1 ? 's' : ''} sélectionnée${selection.length > 1 ? 's' : ''}` : 'Cliquez sur les pages dans le visualiseur' },
-          ].map(opt => (
-            <label key={opt.value} className={`flex items-start gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all ${
-              extractMode === opt.value ? 'border-primary bg-primary/5' : 'border-outline-variant hover:border-primary/50'
-            }`}>
-              <input type="radio" name="extractMode" checked={extractMode === opt.value}
-                onChange={() => setExtractMode(opt.value)} className="mt-0.5 accent-primary" />
-              <div>
-                <p className="text-label-md font-label-bold text-on-surface">{opt.label}</p>
-                <p className="text-body-sm text-on-surface-variant">{opt.desc}</p>
-              </div>
-            </label>
-          ))}
-          {extractMode === 'selection' && selection.length === 0 && (
-            <div className="flex items-start gap-2 p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl">
-              <span className="material-symbols-outlined text-[16px] text-amber-600 mt-0.5">info</span>
-              <p className="text-body-sm text-amber-700">Sélectionnez au moins une page dans le visualiseur.</p>
-            </div>
-          )}
-        </div>
+        {/* Info pages sélectionnées — passive, sans radio redondant */}
+          <div className={`flex items-start gap-2 p-3 rounded-xl border ${
+            selection.length > 0
+              ? 'bg-primary/5 border-primary/20'
+              : 'bg-surface-container border-outline-variant'
+          }`}>
+            <span className="material-symbols-outlined text-[16px] text-primary mt-0.5 flex-shrink-0">layers</span>
+            <p className="text-body-sm text-on-surface-variant">
+              {selection.length > 0
+                ? <><strong className="text-on-surface">{selection.length} page{selection.length > 1 ? 's' : ''} sélectionnée{selection.length > 1 ? 's' : ''}</strong> — seules ces pages seront traitées.</>
+                : <>Cliquez sur les pages dans le visualiseur pour cibler une sélection. Sans sélection, <strong className="text-on-surface">toutes les pages</strong> ({totalPages || '…'}) seront traitées.</>}
+            </p>
+          </div>
 
         {/* ── Dimensionnement ── */}
         <div className="space-y-3">

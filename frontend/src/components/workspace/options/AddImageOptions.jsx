@@ -17,6 +17,7 @@ export const AddImageOptions = ({
   onStart,
   isProcessing,
   totalPages,
+  selection = [],           // Sélection visuelle depuis le visualiseur
   // Props partagées avec PdfImageViewer (remontées depuis ToolWorkspaceLayout)
   imagePreview,
   setImagePreview,
@@ -39,11 +40,10 @@ export const AddImageOptions = ({
   const [uploadError, setUploadError] = useState(null);
 
   // Mode de sélection des pages
-  // 'current'  → page courante seulement (imagePage)
-  // 'all'      → toutes les pages
-  // 'custom'   → saisie manuelle "1-3, 7"
+  // 'current'   → page courante seulement (imagePage)
+  // 'all'       → toutes les pages
+  // 'selection' → pages sélectionnées dans le visualiseur
   const [pageMode, setPageMode] = useState('current');
-  const [customPages, setCustomPages] = useState('');
 
   const handleImageSelect = useCallback((e) => {
     const file = e.target.files?.[0];
@@ -102,12 +102,11 @@ export const AddImageOptions = ({
   };
 
   const handleLaunch = async () => {
-    if (!imageFile || !pdfCoords) return;
+    if (!imageFile) return;
     setUploading(true);
     setUploadError(null);
 
     try {
-      // Upload temporaire de l'image
       const formData = new FormData();
       formData.append('file', imageFile);
       const uploadRes = await axiosClient.post('/files/upload-temp', formData, {
@@ -116,53 +115,54 @@ export const AddImageOptions = ({
       if (!uploadRes.data.success) throw new Error(uploadRes.data.message || 'Erreur upload');
       const imageId = uploadRes.data.data.id_files;
 
-      const hasMultiplePlacements = imagePlacements && imagePlacements.size > 0;
+      const hasPlac = imagePlacements && imagePlacements.size > 0;
 
-      if (hasMultiplePlacements && pageMode !== 'current') {
-        // ── Mode hybride : toutes les pages sélectionnées reçoivent l'image ──
-        // Disponible uniquement pour "Tout le document" et "Pages spécifiques"
-        // Pages validées → position personnalisée
-        // Pages non validées → centrage automatique par le backend
-        const total = totalPages ?? 1;
-        let targetPages = [];
-        if (pageMode === 'all') {
-          targetPages = Array.from({ length: total }, (_, i) => i + 1);
-        } else if (pageMode === 'custom' && customPages.trim()) {
-          targetPages = parsePagesSyntax(customPages.trim(), total);
-        }
+      // ── Page courante : toujours la position de drag, page visible uniquement ──
+      if (pageMode === 'current') {
+        if (!pdfCoords) { setUploadError('Positionnez l\'image sur la page avant de lancer.'); return; }
+        onStart({
+          x: pdfCoords.x, y: pdfCoords.y,
+          largeur: pdfCoords.largeur, hauteur: pdfCoords.hauteur,
+          pages: String(imagePage ?? 1),
+        }, [imageId]);
+        return;
+      }
 
-        // Construire le tableau complet de placements
+      // ── Tout le document ou Pages sélectionnées ──
+      // Déterminer le jeu de pages cibles
+      const total = totalPages ?? 1;
+      let targetPages = [];
+      if (pageMode === 'all') {
+        targetPages = Array.from({ length: total }, (_, i) => i + 1);
+      } else if (pageMode === 'selection') {
+        targetPages = [...selection].sort((a, b) => a - b);
+      }
+
+      if (hasPlac) {
+        // Mode hybride : pages validées → position précise, autres → centre
         const placementsArray = targetPages.map(page => {
           if (imagePlacements.has(page)) {
-            // Position personnalisée validée par l'utilisateur
-            return imagePlacements.get(page);
-          } else {
-            // Position par défaut : centrage automatique par le backend
-            // On n'envoie PAS x/y → le backend utilise position:'centre'
-            return {
-              page,
-              position: 'centre',
-              largeur: pdfCoords.largeur,
-              hauteur: pdfCoords.hauteur,
-            };
+            return imagePlacements.get(page); // coordonnées personnalisées
           }
+          // Dimensions issues du dernier drag ou du premier placement
+          const refCoords = pdfCoords || Array.from(imagePlacements.values())[0];
+          return {
+            page,
+            position: 'centre',
+            largeur: refCoords?.largeur ?? 150,
+            hauteur: refCoords?.hauteur ?? 150,
+          };
         });
-
         onStart({ placements: placementsArray }, [imageId]);
       } else {
-        // ── Mode classique : coordonnées simples + sélection de pages ──
+        // Mode classique : même position pour toutes les pages cibles
+        if (!pdfCoords) { setUploadError('Positionnez l\'image sur la page avant de lancer.'); return; }
         const options = {
-          x: pdfCoords.x,
-          y: pdfCoords.y,
-          largeur: pdfCoords.largeur,
-          hauteur: pdfCoords.hauteur,
+          x: pdfCoords.x, y: pdfCoords.y,
+          largeur: pdfCoords.largeur, hauteur: pdfCoords.hauteur,
         };
-        if (pageMode === 'current') {
-          options.pages = String(imagePage ?? 1);
-        } else if (pageMode === 'custom' && customPages.trim()) {
-          options.pages = customPages.trim();
-        }
-        // 'all' → pas de pages → le backend applique à tout le document
+        if (pageMode === 'selection') options.pages = traduireSelection(selection);
+        // pageMode === 'all' → pas de pages → backend applique à tout
         onStart(options, [imageId]);
       }
     } catch (err) {
@@ -173,7 +173,11 @@ export const AddImageOptions = ({
   };
 
   const hasMultiplePlacements = imagePlacements && imagePlacements.size > 0;
-  const canLaunch = imageFile && (hasMultiplePlacements || pdfCoords) && !isProcessing && !uploading;
+  const canLaunch = imageFile && !isProcessing && !uploading && (
+    (pageMode === 'current' && !!pdfCoords) ||
+    (pageMode === 'all' && (hasMultiplePlacements || !!pdfCoords)) ||
+    (pageMode === 'selection' && selection.length > 0 && (hasMultiplePlacements || !!pdfCoords))
+  );
 
   return (
     <div className="flex flex-col h-full">
@@ -260,22 +264,17 @@ export const AddImageOptions = ({
           </div>
         )}
 
-        {/* Sélection de pages (uniquement si aucun placement multi-page) */}
-        {imagePreview && !hasMultiplePlacements && (
+        {/* Sélection de pages — toujours visible dès qu'une image est importée */}
+        {imagePreview && (
           <div className="space-y-2">
             <label className="text-label-md font-label-bold text-on-surface">Pages cibles</label>
             <div className="space-y-2">
               {/* Page courante */}
               <label className="flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all
                   border-outline-variant hover:border-primary/40 has-[:checked]:border-primary has-[:checked]:bg-primary/5">
-                <input
-                  type="radio"
-                  name="pageMode"
-                  value="current"
-                  checked={pageMode === 'current'}
-                  onChange={() => setPageMode('current')}
-                  className="accent-primary"
-                />
+                <input type="radio" name="pageMode" value="current"
+                  checked={pageMode === 'current'} onChange={() => setPageMode('current')}
+                  className="accent-primary" />
                 <div>
                   <p className="text-label-sm font-label-bold text-on-surface">Page courante</p>
                   <p className="text-label-xs text-on-surface-variant">
@@ -284,51 +283,46 @@ export const AddImageOptions = ({
                 </div>
               </label>
 
-              {/* Toutes les pages */}
+              {/* Tout le document */}
               <label className="flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all
                   border-outline-variant hover:border-primary/40 has-[:checked]:border-primary has-[:checked]:bg-primary/5">
-                <input
-                  type="radio"
-                  name="pageMode"
-                  value="all"
-                  checked={pageMode === 'all'}
-                  onChange={() => setPageMode('all')}
-                  className="accent-primary"
-                />
+                <input type="radio" name="pageMode" value="all"
+                  checked={pageMode === 'all'} onChange={() => setPageMode('all')}
+                  className="accent-primary" />
                 <div>
                   <p className="text-label-sm font-label-bold text-on-surface">Tout le document</p>
                   <p className="text-label-xs text-on-surface-variant">
-                    Image incrustée sur chacune des {totalPages ?? '…'} pages
+                    {hasMultiplePlacements
+                      ? `${totalPages ?? '…'} pages — positions validées sur ${imagePlacements.size}, centre sur les autres`
+                      : `Image incrustée sur chacune des ${totalPages ?? '…'} pages`}
                   </p>
                 </div>
               </label>
 
-              {/* Pages personnalisées */}
-              <label className="flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all
-                  border-outline-variant hover:border-primary/40 has-[:checked]:border-primary has-[:checked]:bg-primary/5">
-                <input
-                  type="radio"
-                  name="pageMode"
-                  value="custom"
-                  checked={pageMode === 'custom'}
-                  onChange={() => setPageMode('custom')}
-                  className="accent-primary"
-                />
+              {/* Pages sélectionnées */}
+              <label className={`flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all
+                  border-outline-variant hover:border-primary/40 has-[:checked]:border-primary has-[:checked]:bg-primary/5
+                  ${pageMode === 'selection' && selection.length === 0 ? 'opacity-50' : ''}`}>
+                <input type="radio" name="pageMode" value="selection"
+                  checked={pageMode === 'selection'} onChange={() => setPageMode('selection')}
+                  className="accent-primary" />
                 <div className="flex-1">
-                  <p className="text-label-sm font-label-bold text-on-surface">Pages spécifiques</p>
-                  <p className="text-label-xs text-on-surface-variant">ex : 1-3, 7, 10</p>
+                  <p className="text-label-sm font-label-bold text-on-surface">Pages sélectionnées</p>
+                  <p className="text-label-xs text-on-surface-variant">
+                    {selection.length > 0
+                      ? hasMultiplePlacements
+                        ? `${selection.length} page${selection.length > 1 ? 's' : ''} — positions validées utilisées si disponibles`
+                        : `${selection.length} page${selection.length > 1 ? 's' : ''} sélectionnée${selection.length > 1 ? 's' : ''} dans le visualiseur`
+                      : 'Cliquez sur des pages dans le visualiseur'}
+                  </p>
                 </div>
               </label>
 
-              {pageMode === 'custom' && (
-                <input
-                  type="text"
-                  placeholder="ex : 1-3, 7, 10"
-                  value={customPages}
-                  onChange={(e) => setCustomPages(e.target.value)}
-                  className="w-full px-3 py-2 bg-surface-container border border-outline-variant rounded-lg text-body-sm text-on-surface focus:outline-none focus:border-primary"
-                  autoFocus
-                />
+              {pageMode === 'selection' && selection.length === 0 && (
+                <div className="flex items-start gap-2 p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl">
+                  <span className="material-symbols-outlined text-[16px] text-amber-600 mt-0.5">info</span>
+                  <p className="text-body-sm text-amber-700">Cliquez sur au moins une page dans le visualiseur.</p>
+                </div>
               )}
             </div>
           </div>
@@ -395,9 +389,15 @@ export const AddImageOptions = ({
 
       {/* Footer */}
       <div className="p-6 border-t border-outline-variant space-y-2">
-        {imageFile && !pdfCoords && (
+        {/* Indication si aucune position et aucun placement */}
+        {imageFile && !pdfCoords && !hasMultiplePlacements && (
           <p className="text-label-sm text-on-surface-variant text-center">
             Positionnez l'image sur la page pour continuer.
+          </p>
+        )}
+        {imageFile && !pdfCoords && hasMultiplePlacements && pageMode === 'current' && (
+          <p className="text-label-sm text-amber-600 text-center">
+            Positionnez l'image sur la page courante, ou choisissez "Tout le document".
           </p>
         )}
         <button

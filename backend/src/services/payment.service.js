@@ -14,8 +14,20 @@ const loggerEvenement = async (type, userId, ip, details = '') => {
 };
 
 export const getStatutAbonnement = async (userId) => {
+  // Le calcul de joursRestants est fait dans PostgreSQL (via son propre NOW())
+  // pour éviter tout décalage d'horloge entre le conteneur Docker et Node.js Windows.
+  // L'admin panel fait la même chose — les deux vues sont ainsi cohérentes.
   const result = await pool.query(
-    `SELECT * FROM abonnements
+    `SELECT *,
+       NOW() AS pg_now,
+       CASE
+         WHEN statut = 'essai' THEN
+           GREATEST(0, CEIL(EXTRACT(EPOCH FROM (date_fin_essai - NOW())) / 86400))::int
+         WHEN statut = 'actif' THEN
+           GREATEST(0, CEIL(EXTRACT(EPOCH FROM (date_fin_plan - NOW())) / 86400))::int
+         ELSE NULL
+       END AS jours_restants_calc
+     FROM abonnements
      WHERE user_id = $1
      ORDER BY created_at DESC
      LIMIT 1`,
@@ -29,17 +41,20 @@ export const getStatutAbonnement = async (userId) => {
     const insertResult = await pool.query(
       `INSERT INTO abonnements (user_id, statut, plan, date_debut_essai, date_fin_essai)
        VALUES ($1, 'essai', 'free', NOW(), NOW() + INTERVAL '7 days')
-       RETURNING *`,
+       RETURNING *,
+         NOW() AS pg_now,
+         CEIL(EXTRACT(EPOCH FROM (date_fin_essai - NOW())) / 86400)::int AS jours_restants_calc`,
       [userId]
     );
     abonnement = insertResult.rows[0];
   }
 
-  const now = new Date();
+  // Comparaisons basées sur l'horloge PostgreSQL (cohérence avec jours_restants_calc)
+  const now = new Date(abonnement.pg_now);
 
   // 3. Si statut = 'essai' ET date_fin_essai > NOW()
   if (abonnement.statut === 'essai' && new Date(abonnement.date_fin_essai) > now) {
-    const joursRestants = Math.ceil((new Date(abonnement.date_fin_essai) - now) / 86400000);
+    const joursRestants = abonnement.jours_restants_calc ?? 0;
     return { statut: 'essai', plan: 'free', joursRestants, actif: true };
   }
 
@@ -54,7 +69,7 @@ export const getStatutAbonnement = async (userId) => {
 
   // 5. Si statut = 'actif' ET date_fin_plan > NOW()
   if (abonnement.statut === 'actif' && new Date(abonnement.date_fin_plan) > now) {
-    const joursRestants = Math.ceil((new Date(abonnement.date_fin_plan) - now) / 86400000);
+    const joursRestants = abonnement.jours_restants_calc ?? 0;
     return { statut: 'actif', plan: 'pro', joursRestants, actif: true, dateExpiration: abonnement.date_fin_plan };
   }
 
